@@ -1,6 +1,6 @@
 from flask_jwt_extended import create_access_token
 from app.models import db, User, Invitation
-from passlib.hash import bcrypt
+from app.infrastructure import bcrypt
 from app.helpers.decorators import transaction
 from app.helpers.exceptions import LogicException
 
@@ -14,13 +14,14 @@ def register_user(data):
     # Проверить наличие приглашения
     invite = find_invitation(data['invite'])
     if not invite:
-        raise ValueError("Недействительный или использованный инвайт")
+        raise LogicException("Недействительный или использованный инвайт", 401)
 
+    hashed_password = bcrypt.generate_password_hash(data['password']).decode('utf-8')
     # Создать нового пользователя
     new_user = User(
         name=data['name'],
         email=data['email'],
-        password=bcrypt.hash(data['password']),
+        password=hashed_password,
         role=invite.role
     )
     db.session.add(new_user)
@@ -40,7 +41,7 @@ def login_user(data):
     if not user:
         raise LogicException("Пользователь с указанным email не найден", 401)
 
-    if not bcrypt.verify(data['password'], user.password):
+    if not bcrypt.check_password_hash(user.password, data['password']):
         raise LogicException("Неверный пароль", 401)
 
-    return create_access_token(identity=user.id)
+    return create_access_token(identity=str(user.id))

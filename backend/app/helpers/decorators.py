@@ -2,7 +2,7 @@ from functools import wraps
 from flask import request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models import User
-from app.database import db
+from app.infrastructure import db
 
 
 # Декоратор для валидации данных
@@ -21,7 +21,6 @@ def requires_user(func):
     @wraps(func)
     @jwt_required()  # Проверка токена
     def wrapper(*args, **kwargs):
-
         current_user_id = get_jwt_identity()
         if not current_user_id:
             return jsonify({'error': 'Неавторизованный доступ'}), 401

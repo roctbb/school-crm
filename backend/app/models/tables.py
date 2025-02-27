@@ -1,4 +1,4 @@
-from app.database import db
+from app.infrastructure import db
 
 users_objects = db.Table(
     'users_objects',  # Убедимся, что это имя будет использоваться везде

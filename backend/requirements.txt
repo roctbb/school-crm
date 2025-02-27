@@ -9,6 +9,6 @@ marshmallow
 flask-marshmallow
 marshmallow-sqlalchemy
 flask-jwt-extended
-passlib
+flask-bcrypt
 pytest
-bcrypt
+

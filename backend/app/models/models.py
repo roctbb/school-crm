@@ -140,3 +140,4 @@ class Invitation(db.Model):
     created_by = db.relationship('User', foreign_keys=[creator_id])
     deleted_by = db.relationship('User', foreign_keys=[deleter_id])
     used_by = db.relationship('User', foreign_keys=[user_id])
+    object = db.relationship('Object')

@@ -27,4 +27,4 @@ def login(credentials):
 @auth_blueprint.route('/me', methods=['GET'])
 @requires_user
 def profile(user):
-    return present_user(user)
+    return present_user(user), 200

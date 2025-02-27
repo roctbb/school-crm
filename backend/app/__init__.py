@@ -1,15 +1,12 @@
 from flask import Flask, jsonify
-from flask_cors import CORS
 from flask_migrate import Migrate
 from werkzeug.exceptions import HTTPException
-from flask_jwt_extended import JWTManager
-from app.database import db
+from app.infrastructure import db, jwt, bcrypt
 from app.models import *
 from app.config import get_config
 from app.helpers.exceptions import LogicException
 from app.blueprints import api_blueprint
-
-jwt = JWTManager()
+from flask_cors import CORS
 
 
 def create_app(config_name=None):
@@ -24,10 +21,10 @@ def create_app(config_name=None):
     @app.errorhandler(HTTPException)
     def handle_http_exception(e):
         if e.code == 404:
-            response = {"message": "Маршрут не найден"}  # Пользовательское сообщение
+            response = {"message": "Маршрут не найден"}
         else:
-            response = {"message": e.description}  # Описание других ошибок
-        return jsonify(response), e.code  # Код HTTP (например, 404, 405)
+            response = {"message": e.description}
+        return jsonify(response), e.code
 
     # Обработчик для всех остальных необработанных исключений
     @app.errorhandler(Exception)
@@ -38,7 +35,9 @@ def create_app(config_name=None):
 
     # Загрузка конфигурации из config.py
     app.config.from_object(get_config(config_name))
+
     jwt.init_app(app)
+    bcrypt.init_app(app)
 
     # Инициализация базы данных и инструментов миграции
     db.init_app(app)
