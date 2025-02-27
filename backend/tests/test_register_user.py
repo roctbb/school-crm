@@ -1,9 +1,7 @@
-from uu import decode
-
 import pytest
 from flask_jwt_extended import create_access_token
 from app.models import User, Invitation, db
-from passlib.hash import bcrypt
+from app.infrastructure import bcrypt
 from datetime import datetime
 from app import create_app
 
@@ -65,7 +63,7 @@ def test_user():
     user = User(
         name="Test User",
         email="test@example.com",
-        password=bcrypt.hash("password123"),
+        password=bcrypt.generate_password_hash("password123").decode('utf-8'),
         role="user"
     )
     db.session.add(user)
@@ -85,7 +83,7 @@ def test_existing_user():
     user = User(
         name="Existing User",
         email="existing_user@example.com",
-        password=bcrypt.hash("password123"),
+        password=bcrypt.generate_password_hash("password123").decode('utf-8'),
         role="user"
     )
     db.session.add(user)

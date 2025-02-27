@@ -26,7 +26,7 @@ def requires_user(func):
             return jsonify({'error': 'Неавторизованный доступ'}), 401
 
         # Получение пользователя из базы данных
-        user = User.query.get(current_user_id)
+        user = db.session.get(User, current_user_id)
         if not user:
             return jsonify({'error': 'Пользователь не найден'}), 401
 
