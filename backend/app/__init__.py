@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, Blueprint
+from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_migrate import Migrate
 from werkzeug.exceptions import HTTPException
@@ -6,8 +6,8 @@ from flask_jwt_extended import JWTManager
 from app.database import db
 from app.models import *
 from app.config import get_config
-from app.exceptions import LogicException
-from app.routes import api
+from app.helpers.exceptions import LogicException
+from app.blueprints import api_blueprint
 
 jwt = JWTManager()
 
@@ -47,6 +47,6 @@ def create_app(config_name=None):
     # Настройка CORS
     CORS(app)
 
-    app.register_blueprint(api, url_prefix='/api')
+    app.register_blueprint(api_blueprint)
 
     return app

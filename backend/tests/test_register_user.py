@@ -1,83 +1,215 @@
 import pytest
-from app import create_app, db
-from app.models import User, Entity, EntityType, Role
-from flask_migrate import upgrade
+from flask_jwt_extended import create_access_token
+from app.models import User, Invitation, db
+from passlib.hash import bcrypt
+from datetime import datetime
+from app import create_app
 
 
-@pytest.fixture(scope='function')
-def test_client():
-    """Фикстура для создания тестового клиента Flask и управления сессией"""
-    app = create_app('testing')  # Создаём приложение с тестовой конфигурацией
+@pytest.fixture(scope='module')
+def client():
+    """Фикстура для создания тестового клиента Flask."""
+    app = create_app('testing')  # Инициализация тестовой конфигурации
     client = app.test_client()
 
-    with app.app_context():
-        # Полностью сбрасываем базу
-        db.session.remove()  # Убираем рабочую сессию
-        db.drop_all()  # Удаляем схемы
-        db.create_all()  # Заново создаем на основе модели
-        upgrade()  # Накатываем миграции
+    # Создаём контекст приложения
+    context = app.app_context()
+    context.push()
 
-        # Работа с текущей транзакцией
-        connection = db.engine.connect()
-        transaction = connection.begin()
+    # Сбрасываем и создаём тестовую базу данных
+    db.create_all()
 
-        db.session.bind = connection
+    yield client
 
-        yield client
+    db.session.remove()
+    db.drop_all()
+    context.pop()
 
-        transaction.rollback()  # Откатываем изменения
-        connection.close()
-        db.session.remove()
 
 @pytest.fixture
-def test_data():
-    """Фикстура для заполнения тестовых данных (Entity, Role и т.д.)"""
-    # Создаём тестовый тип сущности
-    entity_type = EntityType(name="Test EntityType")
-    db.session.add(entity_type)
-    db.session.commit()
-
-    # Создаём тестовые сущности
-    entity = Entity(
-        name='Test Entity',
-        invite_code='test-entity-code',
-        type_id=entity_type.id  # Обязательно указываем type_id
+def test_invite():
+    """Фикстура для создания тестового инвайта"""
+    invite = Invitation(
+        email="invite@example.com",
+        key="valid-invite-code",
+        role="user",
+        object_id=None,
+        used_at=None
     )
-    db.session.add(entity)
-
-    # Создаём тестовые роли
-    role1 = Role(name='Admin', invite_code='test-role-code')
-    role2 = Role(name='Editor', invite_code='test-role-code')
-    db.session.add_all([role1, role2])
-
+    db.session.add(invite)
     db.session.commit()
-
-    return {
-        'entity': entity,
-        'entity_type': entity_type,
-        'roles': [role1, role2]
-    }
+    return invite
 
 
+@pytest.fixture
+def used_invite():
+    """Фикстура для создания использованного инвайта"""
+    invite = Invitation(
+        email="used-invite@example.com",
+        key="used-invite-code",
+        role="user",
+        object_id=None,
+        used_at=datetime.utcnow()  # Метка об использовании
+    )
+    db.session.add(invite)
+    db.session.commit()
+    return invite
 
-def test_register_user_with_entity(test_client, test_data):
-    """Тест: регистрация пользователя с invite_code для Entity"""
-    # Отправляем запрос с данными для регистрации
-    response = test_client.post('/api/auth/signup', json={
-        'name': 'John Doe',
-        'email': 'john.doe@example.com',
-        'password': 'securepassword',
-        'invite_code': 'test-entity-code'
+
+@pytest.fixture
+def test_user():
+    """Фикстура для создания тестового пользователя"""
+    user = User(
+        name="Test User",
+        email="test@example.com",
+        password=bcrypt.hash("password123"),
+        role="user"
+    )
+    db.session.add(user)
+    db.session.commit()
+    return user
+
+
+@pytest.fixture
+def access_token(test_user):
+    """Фикстура для создания токена доступа для тестового пользователя"""
+    return create_access_token(identity=test_user.id)
+
+
+@pytest.fixture
+def test_existing_user():
+    """Фикстура для создания пользователя с занятой почтой"""
+    user = User(
+        name="Existing User",
+        email="existing_user@example.com",
+        password=bcrypt.hash("password123"),
+        role="user"
+    )
+    db.session.add(user)
+    db.session.commit()
+    return user
+
+
+# Тесты регистрации
+def test_signup_success(client, test_invite):
+    """Тест: успешная регистрация с валидным инвайтом"""
+    response = client.post('/signup', json={
+        "name": "John Doe",
+        "email": "john.doe@example.com",
+        "password": "securepassword",
+        "invite": "valid-invite-code"
     })
 
-    print(response.json)
-
-    # Проверяем, что запрос успешен
     assert response.status_code == 201
-    assert response.json['message'] == 'Пользователь успешно зарегистрирован'
-    assert 'access_token' in response.json
+    data = response.get_json()
+    assert data["id"] > 0  # Убедимся, что пользователь зарегистрирован
+    assert data["name"] == "John Doe"
+    assert data["email"] == "john.doe@example.com"
 
-    # Проверяем, что пользователь создан в базе данных
-    user = User.query.filter_by(email='john.doe@example.com').first()
-    assert user is not None
-    assert user
+    # Проверяем, что инвайт помечен как использованный
+    invite = Invitation.query.filter_by(key="valid-invite-code").first()
+    assert invite.used_at is not None
+
+
+def test_signup_used_invite(client, used_invite):
+    """Тест: ошибка регистрации с уже использованным инвайтом"""
+    response = client.post('/signup', json={
+        "name": "Jane Doe",
+        "email": "jane.doe@example.com",
+        "password": "securepassword",
+        "invite": "used-invite-code"
+    })
+
+    assert response.status_code == 400
+    data = response.get_json()
+    assert data["message"] == "Недействительный или использованный инвайт"
+
+
+def test_signup_invalid_data(client, test_invite):
+    """Тест: ошибка при передаче некорректных данных"""
+    response = client.post('/signup', json={
+        "name": "",  # Пустое имя
+        "email": "invalid-email",  # Некорректный email
+        "password": "short",  # Слишком короткий пароль
+        "invite": "valid-invite-code"  # Валидный инвайт
+    })
+
+    assert response.status_code == 400
+    data = response.get_json()
+    assert "Поле" in data["message"]  # Ошибки валидации
+
+
+def test_signup_existing_email(client, test_existing_user, test_invite):
+    """Тест: ошибка регистрации, если email уже занят"""
+    response = client.post('/signup', json={
+        "name": "New User",
+        "email": "existing_user@example.com",  # Email уже занят
+        "password": "securepassword",
+        "invite": "valid-invite-code"
+    })
+
+    assert response.status_code == 400
+    data = response.get_json()
+    assert data["message"] == "Значение поля email уже занято"
+
+
+# Тесты входа
+def test_login_success(client, test_user):
+    """Тест: успешный вход пользователя с корректными данными"""
+    response = client.post('/login', json={
+        "email": "test@example.com",
+        "password": "password123"
+    })
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert "access_token" in data
+    assert data["access_token"] is not None
+
+
+def test_login_wrong_password(client, test_user):
+    """Тест: ошибка входа с неверным паролем"""
+    response = client.post('/login', json={
+        "email": "test@example.com",
+        "password": "wrongpassword"
+    })
+
+    assert response.status_code == 400
+    data = response.get_json()
+    assert data["message"] == "Неверный пароль"
+
+
+def test_login_user_not_found(client):
+    """Тест: ошибка входа с несуществующим email"""
+    response = client.post('/login', json={
+        "email": "nonexistent@example.com",
+        "password": "password123"
+    })
+
+    assert response.status_code == 400
+    data = response.get_json()
+    assert data["message"] == "Пользователь с указанным email не найден"
+
+
+# Тесты профиля
+def test_profile_success(client, test_user, access_token):
+    """Тест: успешное получение профиля с корректным токеном"""
+    # Отправляем запрос с заголовком Authorization
+    response = client.get('/me', headers={
+        "Authorization": f"Bearer {access_token}"
+    })
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["id"] == test_user.id
+    assert data["name"] == test_user.name
+    assert data["email"] == test_user.email
+
+
+def test_profile_no_token(client):
+    """Тест: ошибка получения профиля без токена"""
+    response = client.get('/me')
+
+    assert response.status_code == 401
+    data = response.get_json()
+    assert data["message"] == "Missing Authorization Header"
