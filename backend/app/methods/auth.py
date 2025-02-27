@@ -1,13 +1,15 @@
-from werkzeug.security import generate_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import timedelta
 from flask_jwt_extended import create_access_token
 
 from app import LogicException
+from app.decorators import transaction
 from app.models.user import User, Role
 from app.models.entity import Entity
 from app.database import db
 
 
+@transaction
 def register_user(validated_data):
     """Регистрация нового пользователя."""
     # Хеширование пароля
@@ -16,6 +18,7 @@ def register_user(validated_data):
     # Привязка к сущности или ролям через invite_code
     entities = []
     roles = []
+
     if 'invite_code' in validated_data and validated_data['invite_code']:
         entities = Entity.query.filter_by(invite_code=validated_data['invite_code']).all()
 
@@ -41,6 +44,12 @@ def register_user(validated_data):
     if entities:
         new_user.entities.extend(entities)
 
-    db.session.commit()
-
     return new_user
+
+def get_user_by_credentials(credentials):
+    user = User.query.filter_by(email=credentials['email']).first()
+
+    if not user or not check_password_hash(user.password, credentials['password']):
+        raise LogicException('Неверный email или пароль', 401)
+
+    return user

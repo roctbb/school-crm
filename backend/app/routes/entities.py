@@ -1,30 +1,52 @@
-from flask import Blueprint, jsonify, request
-from flask_jwt_extended import jwt_required
-from app.models.entity import Entity, EntityType
-from app.database import db
-from app.schemas.entity import EntitySchema, EntityTypeSchema
+from flask import Blueprint, request, jsonify
+
+from app.decorators import validate_request, requires_user
+from app.validators import validate_entity
+from app.presenters import present_entity
+from app.methods import create_entity, get_entities, get_entity, update_entity, delete_entity
 
 entities_blueprint = Blueprint('entities', __name__)
 
-entity_schema = EntitySchema()
-entities_schema = EntitySchema(many=True)
-entity_type_schema = EntityTypeSchema()
-entity_types_schema = EntityTypeSchema(many=True)
 
-
-# GET /entities - Получить список сущностей
-@entities_blueprint.route('/', methods=['GET'])
-@jwt_required()
-def get_entities():
-    return jsonify(entities_schema.dump(entities))
-
-
-# POST /entities - Создать новую сущность
 @entities_blueprint.route('/', methods=['POST'])
-@jwt_required()
-def create_entity():
-    data = request.json
-    entity = entity_schema.load(data)
-    db.session.add(entity)
-    db.session.commit()
-    return entity_schema.dump(entity), 201
+@requires_user
+@validate_request(validate_entity)
+def create_entity_endpoint(entity_description):
+    """Создание новой сущности."""
+    entity = create_entity(entity_description)
+    return present_entity(entity), 201
+
+
+@entities_blueprint.route('/', methods=['GET'])
+@requires_user
+def get_entities_endpoint(user):
+    """Получение всех сущностей."""
+    entities = get_entities()
+    return jsonify([present_entity(entity) for entity in entities]), 200
+
+
+@entities_blueprint.route('/<int:entity_id>', methods=['GET'])
+@requires_user
+def get_entity_endpoint(user, entity_id):
+    """Получение одной сущности по ID."""
+    entity = get_entity(entity_id)
+    return jsonify(present_entity(entity)), 200
+
+
+@entities_blueprint.route('/<int:entity_id>', methods=['PUT'])
+@requires_user
+@validate_request(validate_entity)
+def update_entity_endpoint(entity_description, user, entity_id):
+    """Обновление сущности."""
+    entity = get_entity(entity_id)
+    update_entity(entity, entity_description)
+    return present_entity(entity), 200
+
+
+@entities_blueprint.route('/<int:entity_id>', methods=['DELETE'])
+@requires_user
+def delete_entity_endpoint(user, entity_id):
+    """Удаление сущности."""
+    entity = get_entity(entity_id)
+    delete_entity(entity)
+    return jsonify({'message': 'Запись удалена'}), 204

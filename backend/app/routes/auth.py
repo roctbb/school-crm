@@ -1,24 +1,19 @@
 from flask import Blueprint, jsonify, request
-from werkzeug.security import check_password_hash, generate_password_hash
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
-from app.models.user import User
-from app.methods import register_user
-from app.schemas.auth import SignupSchema, LoginSchema, UserResponseSchema
-from app.decorators import validate_schema, requires_user
+from app.methods import register_user, get_user_by_credentials
+from app.decorators import validate_request, requires_user
+from app.presenters import present_user
+from app.validators import validate_signup, validate_login
 from datetime import timedelta
 
 auth_blueprint = Blueprint('auth', __name__)
 
-signup_schema = SignupSchema()
-login_schema = LoginSchema()
-user_response_schema = UserResponseSchema()
-
 
 @auth_blueprint.route('/signup', methods=['POST'])
-@validate_schema(signup_schema)
-def signup(validated_data):
+@validate_request(validate_signup)
+def signup(user_description):
     """Маршрут для регистрации пользователя."""
-    user = register_user(validated_data)
+    user = register_user(user_description)
     token = create_access_token(identity=user.id, expires_delta=timedelta(hours=12))
 
     return jsonify({
@@ -29,16 +24,9 @@ def signup(validated_data):
 
 # Вход пользователя (создание токена)
 @auth_blueprint.route('/login', methods=['POST'])
-@validate_schema(login_schema)  # Применяем декоратор
-def login(validated_data):
-    # Поиск пользователя по email
-    user = User.query.filter_by(email=validated_data['email']).first()
-
-    # Проверка пароля
-    if not user or not check_password_hash(user.password, validated_data['password']):
-        return jsonify({'error': 'Неверный email или пароль'}), 401
-
-    # Создание токена
+@validate_request(validate_login)  # Применяем декоратор
+def login(creadentials):
+    user = get_user_by_credentials(creadentials)
     access_token = create_access_token(
         identity=user.id, expires_delta=timedelta(hours=1)
     )
@@ -49,4 +37,4 @@ def login(validated_data):
 @auth_blueprint.route('/me', methods=['GET'])
 @requires_user
 def get_current_user(user):
-    return jsonify(user_response_schema.dump(user))
+    return jsonify(present_user(user))
