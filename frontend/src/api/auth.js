@@ -1,5 +1,5 @@
 // src/api/auth.js
-const API_URL = '/api';
+import {validateResponse, API_URL} from './common.js';
 
 export async function login(email, password) {
     const response = await fetch(`${API_URL}/login`, {
@@ -7,8 +7,8 @@ export async function login(email, password) {
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({email, password}),
     });
-    if (!response.ok) throw new Error('Login failed');
-    return response.json();
+    await validateResponse(response);
+    return (await response.json()).access_token;
 }
 
 export async function register({name, email, password, invite}) {
@@ -17,6 +17,16 @@ export async function register({name, email, password, invite}) {
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({name, email, password, invite}),
     });
-    if (!response.ok) throw new Error('Registration failed');
+    await validateResponse(response);
+    console.log(response)
+    return response.json();
+}
+
+export async function getProfile(token) {
+    const response = await fetch(`${API_URL}/me`, {
+        method: 'GET',
+        headers: {Authorization: `Bearer ${token}`},
+    });
+    await validateResponse(response);
     return response.json();
 }

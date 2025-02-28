@@ -10,6 +10,8 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SECRET_KEY = os.getenv('SECRET_KEY', 'default-secret-key')
     JWT_SECRET_KEY = os.getenv('SECRET_KEY', 'default-secret-key')
+    PORT = os.getenv('PORT', 8081)
+    HOST = os.getenv('HOST', "0.0.0.0")
     DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=12)
 
