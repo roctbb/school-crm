@@ -1,5 +1,6 @@
 from flask import jsonify
 from werkzeug.exceptions import HTTPException
+import traceback
 
 from .exceptions import LogicException
 
@@ -24,6 +25,6 @@ def setup_handlers(app):
     # Обработчик для всех остальных необработанных исключений
     @app.errorhandler(Exception)
     def handle_generic_exception(e):
-        print(e)  # Вывод в консоль для разработки
+        print("".join(traceback.format_exception(type(e), e, e.__traceback__)))  # Печать стека ошибки
         response = {"message": "Произошла ошибка"}
         return jsonify(response), 500

@@ -9,6 +9,14 @@ const routes = [
     {path: '/login', name: 'Login', component: LoginView},
     {path: '/register', name: 'Register', component: RegisterView},
     {path: '/', name: 'Objects', component: ObjectsView, meta: {requiresAuth: true}},
+    {
+        path: '/objects/:object_type/:object_id',
+        name: 'ObjectDetails',
+        component: () => import('../views/ObjectDetailsView.vue'),
+        meta: {requiresAuth: true}
+    },
+
+
 ];
 
 const router = createRouter({
@@ -17,9 +25,9 @@ const router = createRouter({
 });
 
 // Навигационный охранник
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
     const mainStore = useMainStore();
-    if (to.meta.requiresAuth && !mainStore.isAuthenticated) {
+    if (to.meta.requiresAuth && !(await mainStore.checkAuth())) {
         next({name: 'Login'});
     } else {
         next();

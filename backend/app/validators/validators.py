@@ -3,9 +3,9 @@ from validate_email_address import validate_email
 from .common import *
 from app.models import ObjectType, Form, Object
 
+
 def validate_object(data):
     should_have(data, 'name', min_length=1, max_length=100)
-    should_have(data, 'type_id', min_length=1)
 
     # Check "params" and "attributes" are JSON and optional
     if not isinstance(data.get('params', {}), dict):
@@ -13,9 +13,8 @@ def validate_object(data):
     if not isinstance(data.get('attributes', {}), dict):
         raise LogicException("Поле attributes должно быть объектом JSON.", 422)
 
-    should_exist(data, 'type_id', ObjectType, 'id')
-
     return data
+
 
 def validate_form(data):
     should_have(data, 'name', min_length=1, max_length=100)
@@ -27,6 +26,7 @@ def validate_form(data):
         raise LogicException("Поле fields должно быть списком.", 422)
 
     return data
+
 
 def validate_submission(data):
     should_have(data, 'form_id', min_length=1)
