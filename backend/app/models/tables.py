@@ -11,3 +11,9 @@ objects_children = db.Table(
     db.Column('parent_id', db.Integer, db.ForeignKey('objects.id', ondelete="CASCADE"), primary_key=True),
     db.Column('child_id', db.Integer, db.ForeignKey('objects.id', ondelete="CASCADE"), primary_key=True)
 )
+
+object_user_association = db.Table(
+    'object_user_association',
+    db.Column('object_id', db.Integer, db.ForeignKey('objects.id'), primary_key=True),
+    db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True)
+)

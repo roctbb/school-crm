@@ -32,6 +32,13 @@ export async function updateObject(objectId, data) {
     });
 }
 
+export async function updateObjectChildren(objectId, children_ids) {
+    return await api_client.fetch(`/objects/${objectId}/children`, {
+        method: "PUT",
+        body: JSON.stringify({children: children_ids}),
+    });
+}
+
 export async function deleteObject(objectId) {
     return await api_client.fetch(`/objects/${objectId}`, {
         method: "DELETE",

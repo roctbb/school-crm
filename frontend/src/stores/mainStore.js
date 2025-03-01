@@ -102,6 +102,14 @@ const useMainStore = defineStore("mainStore", {
                 this.isLoading = false;
             }
         },
+
+        getObject(typeCode, id) {
+            return this.objects[typeCode].find(obj => obj.id === id);
+        },
+
+        getObjectTypeByCode(code) {
+            return this.objectTypes.find(type => type.code === code);
+        }
     },
 
     getters: {

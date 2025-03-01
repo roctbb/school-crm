@@ -3,6 +3,7 @@ import {formatDateTime} from "@/utils/helpers";
 class Model {
     constructor(description) {
         this.init(description)
+        this._exclude = []
     }
 
     init(description) {
@@ -37,7 +38,7 @@ class Model {
         const descrition = {}
 
         for (let key of Object.keys(this)) {
-            if (typeof this[key] !== "function" && !key.startsWith("_")) {
+            if (typeof this[key] !== "function" && !key.startsWith("_") && !this._exclude.includes(key)) {
                 descrition[key] = this[key]
             }
         }

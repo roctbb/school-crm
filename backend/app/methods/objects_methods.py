@@ -59,3 +59,17 @@ def update_object(obj, data):
     obj.params = data.get("params", obj.params)
 
     return obj
+
+
+@transaction
+def update_object_children(obj, children_ids):
+    children = Object.query.filter(
+        Object.id.in_(children_ids),
+        Object.deleted_at == None
+    ).all()
+
+    if len(children) != len(children_ids):
+        raise LogicException("Некоторые объекты из списка children не найдены или удалены.", 422)
+
+    obj.children = children
+    return obj

@@ -19,11 +19,17 @@ class ApiClient {
         };
     }
 
-    async fetch(url, options = {}) {
-        let headers = {
-            ...options.headers,
-            'Content-Type': 'application/json'
-        };
+    async fetch(url, options = {}, contentType = 'application/json') {
+
+
+        let headers = options.headers
+
+        if (contentType) {
+            headers = {
+                ...headers,
+                'Content-Type': contentType
+            }
+        }
         if (this.token) {
             headers = {
                 ...headers,

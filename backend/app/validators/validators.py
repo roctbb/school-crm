@@ -55,3 +55,12 @@ def validate_invitation(data):
         should_exist(data, 'object_id', Object, 'id')
 
     return data
+
+
+def validate_object_children(data):
+    children = data.get('children', [])
+    if not isinstance(children, list):
+        raise LogicException("Поле children должно быть списком IDs.", 422)
+    if not all(isinstance(child_id, int) for child_id in children):
+        raise LogicException("Каждый элемент в поле children должен быть числом.", 422)
+    return data

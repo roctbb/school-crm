@@ -3,9 +3,9 @@ from flask import Blueprint, jsonify
 from app import LogicException
 from app.helpers.decorators import requires_user, validate_request_with
 from app.methods import get_objects_types, get_object_type_by_code, get_available_objects_by_type_code, create_object, \
-    get_available_objects, get_object_by_id, update_object, delete_object
-from app.presenters.presenters import present_object, present_object_type
-from app.validators import validate_object
+    get_available_objects, get_object_by_id, update_object, delete_object, update_object_children
+from app.presenters.presenters import present_object, present_object_type, present_connected_object
+from app.validators import validate_object, validate_object_children
 
 objects_blueprint = Blueprint('objects', __name__, url_prefix='/objects')
 
@@ -55,3 +55,13 @@ def delete_object_endpoint(user, object_id):
     obj = get_object_by_id(object_id)
     delete_object(obj)
     return jsonify({'deteted': True}), 200
+
+
+@objects_blueprint.route('/<int:object_id>/children', methods=['PUT'])
+@requires_user
+@validate_request_with(validate_object_children)
+def update_object_children_endpoint(validated_data, user, object_id):
+    obj = get_object_by_id(object_id)
+    children_ids = validated_data.get('children', [])
+    updated_object = update_object_children(obj, children_ids)
+    return jsonify([present_connected_object(child) for child in updated_object.children]), 200

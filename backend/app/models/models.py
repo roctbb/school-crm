@@ -1,12 +1,5 @@
 from .tables import *
-
-# Association table for the many-to-many relationship between Object and User
-object_user_association = db.Table(
-    'object_user_association',
-    db.Column('object_id', db.Integer, db.ForeignKey('objects.id'), primary_key=True),
-    db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True)
-)
-
+from datetime import datetime
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -31,6 +24,8 @@ class ObjectType(db.Model):
 
     available_attributes = db.Column(db.JSON, server_default=db.text("'[]'::json"))
     available_params = db.Column(db.JSON, server_default=db.text("'[]'::json"))
+
+    params = db.Column(db.JSON, server_default=db.text("'{}'::json"))
 
     created_at = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, nullable=False, server_default=db.func.now(), onupdate=db.func.now())
@@ -117,7 +112,6 @@ class Submission(db.Model):
     deleted_by = db.relationship('User', foreign_keys=[deleter_id])
 
 
-
 class Invitation(db.Model):
     __tablename__ = 'invitations'
 
@@ -141,3 +135,16 @@ class Invitation(db.Model):
     deleted_by = db.relationship('User', foreign_keys=[deleter_id])
     used_by = db.relationship('User', foreign_keys=[user_id])
     object = db.relationship('Object')
+
+
+class UploadedFile(db.Model):
+    __tablename__ = "uploaded_files"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    original_filename = db.Column(db.String(255), nullable=False)
+    stored_filename = db.Column(db.String(255), nullable=True)
+
+    # Определяем отношение к модели User
+    user = db.relationship("User", backref="uploaded_files")
+

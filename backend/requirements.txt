@@ -11,4 +11,4 @@ marshmallow-sqlalchemy
 flask-jwt-extended
 flask-bcrypt
 pytest
-
+validate_email_address

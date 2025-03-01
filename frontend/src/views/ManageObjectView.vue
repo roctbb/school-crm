@@ -5,6 +5,7 @@
                 {{ isEditMode ? object.name : "добавление записи" }}</h3>
 
             <form @submit.prevent="handleSave">
+                <!-- Поле для имени -->
                 <div class="mb-3">
                     <label class="form-label">Имя</label>
                     <input
@@ -15,19 +16,29 @@
                         required
                     />
                 </div>
+
+                <!-- Редактор атрибутов -->
                 <div class="mb-3">
-                    <label class="form-label">Параметры объекта (JSON)</label>
-                    <textarea
-                        v-model="object.params"
-                        class="form-control"
-                        placeholder='{ "ключ": "значение" }'
-                    ></textarea>
-                </div>
-                <div class="mb-3">
-                    <AttributesEditor v-model:attributes="object.attributes"
-                                      :available-attributes="object_type.available_attributes"/>
+                    <AttributesEditor
+                        v-model:attributes="object.attributes"
+                        :available-attributes="object_type.available_attributes"
+                    />
                 </div>
 
+                <!-- Редакторы для групп детей -->
+                {{ object.children }}
+                <div class="mb-3" v-if="childrenOptions.length">
+                    <div
+                        v-for="group in childrenOptions"
+                        :key="group.code"
+                        class="mb-4"
+                    >
+                        <ChildrenFilterEditor
+                            v-model:children="object.children"
+                            :group="group"
+                        />
+                    </div>
+                </div>
 
                 <button type="submit" class="btn btn-success">
                     Сохранить
@@ -52,9 +63,15 @@ import BaseLayout from "@/components/layouts/BaseLayout.vue";
 import {capitalize} from "@/utils/helpers.js";
 import Loading from "@/components/common/Loading.vue";
 import AttributesEditor from "@/components/objects/AttributesEditor.vue";
+import ChildrenFilterEditor from "@/components/objects/ChildrenFilterEditor.vue";
 
 export default {
-    components: {AttributesEditor: AttributesEditor, Loading, BaseLayout},
+    components: {
+        ChildrenFilterEditor,
+        AttributesEditor,
+        Loading,
+        BaseLayout,
+    },
     props: {
         objectId: {
             type: Number,
@@ -67,8 +84,8 @@ export default {
     },
     computed: {
         isEditMode() {
-            return !!this.objectId; // Редактирование, если есть `objectId`
-        }
+            return !!this.objectId; // Режим редактирования, если указан `objectId`
+        },
     },
     data() {
         return {
@@ -76,7 +93,8 @@ export default {
             object: null,
             object_type: null,
             error: null,
-        }
+            childrenOptions: [], // Группированные дети по типам
+        };
     },
     async created() {
         if (!this.store.objectTypes.length) {
@@ -84,29 +102,46 @@ export default {
             await this.store.fetchObjects();
         }
 
-        this.object_type = this.store.objectTypes.find(type => type.code === this.objectTypeCode);
+        // Установить тип объекта
+        this.object_type = this.store.getObjectTypeByCode(this.objectTypeCode)
 
+        // Установить сам объект
         if (this.isEditMode) {
-            this.object = this.store.objects[this.objectTypeCode]?.find(obj => obj.id === parseInt(this.objectId));
+            this.object = this.store.objects[this.objectTypeCode]?.find(
+                (obj) => obj.id === parseInt(this.objectId)
+            );
         } else {
-            this.object = new CrmObject({'type': this.objectTypeCode});
+            this.object = new CrmObject({type: this.objectTypeCode});
+        }
+
+        // Формируем группы детей (доступные для каждой категории)
+        if (this.object_type.params?.possible_children?.length) {
+            const possibleChildrenCodes = this.object_type.params?.possible_children;
+
+            if (possibleChildrenCodes) {
+                this.childrenOptions = possibleChildrenCodes.map((type_code) => this.store.getObjectTypeByCode(type_code))
+            }
         }
     },
     methods: {
         capitalize,
-        // Сохранение объекта (создание или редактирование)
         async handleSave() {
             try {
-                console.log("saving object", this.object)
                 this.error = null;
-                this.object = await this.object.save()
-                if (!this.isEditMode)
+
+                // Сохраняем объект
+                await this.object.save();
+
+                if (!this.isEditMode) {
                     this.store.objects[this.object.type].push(this.object);
+                }
+
+                this.$router.back();
             } catch (error) {
                 console.error("Ошибка сохранения объекта:", error);
-                this.error = error.message || "Ошибка при сохранении объекта.";
+                this.error =
+                    error.message || "Ошибка при сохранении объекта.";
             }
-            this.$router.back();
         },
 
         resetChanges() {
@@ -115,7 +150,7 @@ export default {
             }
             this.$router.back();
         },
-    }
+    },
 };
 </script>
 

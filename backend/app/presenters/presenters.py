@@ -16,8 +16,17 @@ def present_object_type(object_type):
         'code': object_type.code,
         'available_attributes': object_type.available_attributes,
         'available_params': object_type.available_params,
+        'params': object_type.params,
         'created_at': object_type.created_at.isoformat(),
         'updated_at': object_type.updated_at.isoformat()
+    }
+
+
+def present_connected_object(obj):
+    return {
+        'id': obj.id,
+        'name': obj.name,
+        'type': obj.type.code
     }
 
 
@@ -34,7 +43,8 @@ def present_object(obj):
         'updated_at': obj.updated_at.isoformat(),
         'deleted_at': obj.deleted_at.isoformat() if obj.deleted_at else None,
         'owners': [present_user(owner) for owner in obj.owners],
-        'children': [present_object(child) for child in obj.children]
+        'children': [present_connected_object(child) for child in obj.children],
+        'parents': [present_connected_object(child) for child in obj.parents]
     }
 
 
