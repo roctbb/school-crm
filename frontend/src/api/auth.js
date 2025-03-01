@@ -1,32 +1,23 @@
 // src/api/auth.js
-import {validateResponse, API_URL} from './common.js';
+import {API_URL} from './common.js';
+import api_client from './client.js';
 
 export async function login(email, password) {
-    const response = await fetch(`${API_URL}/login`, {
+    return (await api_client.fetch(`/login`, {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({email, password}),
-    });
-    await validateResponse(response);
-    return (await response.json()).access_token;
+    })).access_token;
 }
 
 export async function register({name, email, password, invite}) {
-    const response = await fetch(`${API_URL}/signup`, {
+    return await api_client.fetch(`/signup`, {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({name, email, password, invite}),
     });
-    await validateResponse(response);
-    console.log(response)
-    return response.json();
 }
 
 export async function getProfile(token) {
-    const response = await fetch(`${API_URL}/me`, {
-        method: 'GET',
-        headers: {Authorization: `Bearer ${token}`},
+    return await api_client.fetch(`/me`, {
+        method: 'GET'
     });
-    await validateResponse(response);
-    return response.json();
 }

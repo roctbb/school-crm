@@ -1,6 +1,8 @@
 import {defineStore} from "pinia";
 import {getProfile} from "@/api/auth.js";
-import {fetchObjectTypes, fetchObjectsByType} from "@/api/objects.js";
+import {fetchObjectTypes, fetchObjectsByType, fetchObjects} from "@/api/objects.js";
+import api_client from "@/api/client.js";
+import CrmObject from "@/models/CrmObject.js";
 
 const useMainStore = defineStore("mainStore", {
     // Состояние
@@ -10,13 +12,15 @@ const useMainStore = defineStore("mainStore", {
         objects: {}, // Объекты, сгруппированные по типу
         objectTypes: [], // Список типов объектов
         isLoading: false, // Состояние загрузки данных
+        objectsLoaded: false,
     }),
 
     actions: {
         async tryLoadProfile() {
+            if (this.profile) return true;
+
             try {
-                console.log("Trying to load profile with token:", this.token);
-                this.profile = await getProfile(this.token);
+                this.profile = await getProfile();
                 console.log("Loaded");
                 return true;
             } catch (e) {
@@ -24,14 +28,20 @@ const useMainStore = defineStore("mainStore", {
             }
         },
 
+        async loadObjects() {
+            if (!this.objectTypes.length) {
+                await this.fetchObjectTypes();
+                await this.fetchObjects();
+            }
+        },
+
         async checkAuth() {
-            if (!this.profile && this.token) await this.tryLoadProfile();
-            if (this.profile) return true;
-            return false;
+            return await this.tryLoadProfile();
         },
 
         async setToken(new_token) {
-            this.token = new_token;
+            api_client.setToken(new_token);
+
             const isValid = await this.tryLoadProfile();
             if (!isValid) {
                 this.logout();
@@ -41,6 +51,8 @@ const useMainStore = defineStore("mainStore", {
         },
 
         logout() {
+            console.log("Logging out");
+            api_client.setToken(null);
             this.token = null;
             this.profile = null;
             this.objects = {};
@@ -48,24 +60,20 @@ const useMainStore = defineStore("mainStore", {
             localStorage.clear();
         },
 
-        loadStateFromLocalStorage() {
+        async loadStateFromLocalStorage() {
             const token = localStorage.getItem("token");
+            console.log("Token from localStorage:", token);
 
             if (token) {
-                this.token = token;
+                await this.setToken(token);
             }
         },
 
-        /**
-         * Загрузка всех типов объектов
-         */
         async fetchObjectTypes() {
             try {
-                if (!this.token) {
-                    throw new Error("Отсутствует токен для авторизации.");
-                }
+                console.log("Loading object types");
                 this.isLoading = true;
-                const types = await fetchObjectTypes(this.token);
+                const types = await fetchObjectTypes();
                 this.objectTypes = types;
             } catch (error) {
                 console.error("Ошибка при загрузке типов объектов:", error);
@@ -74,27 +82,22 @@ const useMainStore = defineStore("mainStore", {
             }
         },
 
-        /**
-         * Загрузка объектов для конкретного типа
-         * @param {string} typeCode - Код типа объектов
-         */
-        async fetchObjectsByType(typeCode) {
+        async fetchObjects() {
             try {
-                if (!this.token) {
-                    throw new Error("Отсутствует токен для авторизации.");
-                }
-                if (this.objects[typeCode]) {
-                    // Если объекты уже загружены, повторную загрузку не выполняем
-                    return;
-                }
                 this.isLoading = true;
-                const objects = await fetchObjectsByType(typeCode, this.token);
-                this.objects = {
-                    ...this.objects,
-                    [typeCode]: objects,
-                };
+                const objects = await fetchObjects();
+
+                for (const type of this.objectTypes) {
+                    this.objects[type.code] = []
+                }
+
+                for (const object of objects) {
+                    this.objects[object.type].push(new CrmObject(object));
+                }
+
+                console.log("Loaded objects:", this.objects)
             } catch (error) {
-                console.error(`Ошибка при загрузке объектов типа ${typeCode}:`, error);
+                console.error(`Ошибка при загрузке объектов:`, error);
             } finally {
                 this.isLoading = false;
             }

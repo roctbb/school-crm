@@ -1,0 +1,49 @@
+import {formatDateTime} from "@/utils/helpers";
+
+class Model {
+    constructor(description) {
+        this.init(description)
+    }
+
+    init(description) {
+        this._backup = description
+
+        if (description) {
+            for (let key of Object.keys(description)) {
+                this[key] = description[key]
+            }
+
+            this.id = parseInt(description.id)
+
+            if (description.created_at) {
+                this.created_at = new Date(description.created_at)
+            }
+
+            if (description.updated_at) {
+                this.updated_at = new Date(description.updated_at)
+            }
+        }
+    }
+
+    save() {
+
+    }
+
+    reset() {
+        this.init(this._backup)
+    }
+
+    _present() {
+        const descrition = {}
+
+        for (let key of Object.keys(this)) {
+            if (typeof this[key] !== "function" && !key.startsWith("_")) {
+                descrition[key] = this[key]
+            }
+        }
+
+        return descrition
+    }
+}
+
+export default Model

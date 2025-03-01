@@ -27,7 +27,7 @@ def present_object(obj):
         'name': obj.name,
         'params': obj.params,
         'attributes': obj.attributes,
-        'type': obj.type.name,
+        'type': obj.type.code,
         'creator': present_user(obj.created_by) if obj.created_by else None,
         'deleter': present_user(obj.deleted_by) if obj.deleted_by else None,
         'created_at': obj.created_at.isoformat(),

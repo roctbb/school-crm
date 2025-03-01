@@ -1,49 +1,45 @@
-// src/api/objects.js
-import {validateResponse, API_URL} from './common'; // Utility helpers (например, validateResponse)
+import api_client from './client.js';
 
-
-export async function fetchObjectTypes(token) {
-    const response = await fetch(`${API_URL}/objects/`, {
-        method: "GET",
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
+export async function fetchObjectTypes() {
+    return await api_client.fetch(`/objects/types`, {
+        method: "GET"
     });
-    await validateResponse(response); // Проверяем ответ через общую функцию в common.js
-    return await response.json();
 }
 
-export async function fetchObjectsByType(objectTypeCode, token) {
-    const response = await fetch(`${API_URL}/objects/${objectTypeCode}/`, {
+export async function fetchObjectsByType(objectTypeCode) {
+    return await api_client.fetch(`/objects/${objectTypeCode}`, {
         method: "GET",
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
     });
-    await validateResponse(response);
-    return await response.json();
 }
 
-export async function createNewObject(data, objectTypeCode, token) {
-    const response = await fetch(`${API_URL}/objects/${objectTypeCode}/create`, {
+export async function fetchObjects() {
+    return await api_client.fetch(`/objects`, {
+        method: "GET",
+    });
+}
+
+export async function createObject(objectTypeCode, data) {
+    return await api_client.fetch(`/objects/${objectTypeCode}/create`, {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify(data),
     });
-    await validateResponse(response);
-    return await response.json();
 }
 
-export async function fetchObjectDetails(objectType, objectId, token) {
-    const response = await fetch(`${API_URL}/objects/${objectType}/${objectId}`, {
-        method: "GET",
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
+export async function updateObject(objectId, data) {
+    return await api_client.fetch(`/objects/${objectId}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
     });
-    await validateResponse(response);
-    return await response.json();
+}
+
+export async function deleteObject(objectId) {
+    return await api_client.fetch(`/objects/${objectId}`, {
+        method: "DELETE",
+    });
+}
+
+export async function fetchObjectDetails(objectId) {
+    return await api_client.fetch(`/objects/${objectId}`, {
+        method: "GET",
+    });
 }
