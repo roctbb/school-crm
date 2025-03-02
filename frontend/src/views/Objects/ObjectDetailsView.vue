@@ -72,9 +72,43 @@
 
                     </div>
 
-                    <div v-for="form_category in object_type.form_categories">
+                    <div v-for="form_category in object_type.form_categories" :key="form_category.id" class="mb-4">
                         <h5 class="pb-2">{{ form_category.name }}</h5>
+
+                        <div class="row">
+                                <div class="col-md-6 col-lg-4 col-xl-3 col-xl-2 mb-4 d-flex align-items-stretch"
+                                     v-for="submission in object._submissions.filter(submission => submission.form.category_id === form_category.id)" :key="submission.id">
+                                    <SubmissionCard :submission="submission" :object="object"/>
+                                </div>
+                            </div>
+
+                        <!-- Выпадающий список форм -->
+                        <div class="btn-group">
+                            <button
+                                class="btn btn-sm btn-light dropdown-toggle"
+                                type="button"
+                                data-bs-toggle="dropdown"
+                                aria-expanded="false"
+                            >
+                                Добавить
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li
+                                    v-for="form in store.getFormCategory(form_category.id).forms"
+                                    :key="form.id"
+                                >
+                                    <a
+                                        class="dropdown-item"
+                                        href="#"
+                                        @click.prevent="goToCreateSubmission(form.id)"
+                                    >
+                                        {{ form.name }}
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
+
                 </div>
                 <div class="col-md-4">
                     <CommentsPanel
@@ -85,7 +119,7 @@
 
 
             <button
-                class="btn btn-secondary btn-sm ms-2"
+                class="btn btn-secondary btn-sm"
                 @click="$router.push(`/${object_type.code}`)"
             >
                 Назад
@@ -104,6 +138,7 @@ import {capitalize} from "../../utils/helpers.js";
 import ObjectCard from "@/components/objects/ObjectCard.vue";
 import AttributePresenter from "@/components/objects/AttributePresenter.vue";
 import CommentsPanel from "@/components/objects/CommentsPanel.vue";
+import SubmissionCard from "@/components/submissions/SubmissionCard.vue";
 
 export default {
     methods: {
@@ -123,6 +158,17 @@ export default {
             console.log("relatives:", relatives)
             return relatives
         },
+        goToCreateSubmission(formId) {
+            // Переход на страницу создания ответа
+            this.$router.push({
+                name: 'CreateSubmission',
+                params: {
+                    object_type: this.object_type.code,
+                    object_id: this.object.id,
+                    formId: formId
+                }
+            });
+        },
         async load() {
             this.connectedTypes = [];
             let {object_type, object_id} = this.$route.params;
@@ -130,6 +176,7 @@ export default {
             await this.store.loadObjects();
             this.object_type = this.store.getObjectTypeByCode(object_type);
             this.object = this.store.getObject(object_type, object_id);
+            await this.object.loadSubmissions();
 
             console.log("object:", this.object)
 
@@ -150,7 +197,7 @@ export default {
             console.log("connected types:", this.connectedTypes)
         }
     },
-    components: {AttributePresenter, ObjectCard, Loading, BaseLayout, CommentsPanel},
+    components: {SubmissionCard, AttributePresenter, ObjectCard, Loading, BaseLayout, CommentsPanel},
     data() {
         return {
             object: null,

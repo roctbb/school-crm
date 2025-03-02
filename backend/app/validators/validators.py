@@ -27,18 +27,13 @@ def validate_form(data):
 
     return data
 
-def validate_submission(data):
-    # Проверяем, что есть form_id и object_id
-    should_have(data, 'form_id', min_length=1)
 
+def validate_submission(data):
     # params, answers должны быть словарями
     if not isinstance(data.get('params', {}), dict):
         raise LogicException("Поле params должно быть объектом JSON.", 422)
     if not isinstance(data.get('answers', {}), dict):
         raise LogicException("Поле answers должно быть объектом JSON.", 422)
-
-    # Проверяем, что form_id и object_id действительно существуют
-    should_exist(data, 'form_id', Form, 'id')
 
     return data
 

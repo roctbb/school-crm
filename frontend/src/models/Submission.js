@@ -1,10 +1,5 @@
 import Model from "@/models/common.js";
-import {
-    createSfffffffffffffffubmission,
-    updateSubmission,
-    deleteSubmission,
-    fetchSubmission,
-} from "@/api/objects_api.js";
+import {createSubmission, deleteSubmission, updateSubmission} from "@/api/submissions_api.js";
 
 class Submission extends Model {
     constructor(description, store) {
@@ -33,11 +28,6 @@ class Submission extends Model {
         return this;
     }
 
-    async fetch(objectId, submissionId) {
-        // Получение данных Submission по ID
-        this.init(await fetchSubmission(objectId, submissionId));
-        return this;
-    }
 
     async delete(objectId) {
         if (this.id) {

@@ -123,11 +123,19 @@ const useMainStore = defineStore("mainStore", {
             }
         },
 
+        getForm(id) {
+            return this.formCategories.map(category => category.forms).flat().find(form => form.id === parseInt(id));
+        },
+
+        getFormCategory(id) {
+            return this.formCategories.find(category => category.id === parseInt(id));
+        },
+
         getObject(typeCode, id) {
             if (!id) {
                 return Object.values(this.objects).flat().find(obj => obj.type === typeCode);
             }
-            return this.objects[typeCode].find(obj => obj.id === id);
+            return this.objects[typeCode].find(obj => obj.id === parseInt(id));
         },
 
         getObjectTypeByCode(code) {

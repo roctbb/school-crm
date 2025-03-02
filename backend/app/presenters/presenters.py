@@ -95,7 +95,10 @@ def present_submission(submission):
         'id': submission.id,
         'params': submission.params,
         'answers': submission.answers,
-        'form': submission.form_id,
+        'form': {
+            'id': submission.form_id,
+            'category_id': submission.form.category_id
+        },
         'creator': present_user(submission.created_by) if submission.created_by else None,
         'deleter': present_user(submission.deleted_by) if submission.deleted_by else None,
         'created_at': submission.created_at.isoformat(),

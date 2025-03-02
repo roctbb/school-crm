@@ -8,6 +8,8 @@ import ObjectDetailsView from "@/views/Objects/ObjectDetailsView.vue";
 import ManageObjectView from "@/views/Objects/ManageObjectView.vue";
 import FormCategoriesView from "@/views/Forms/FormCategoriesView.vue";
 import ManageFormView from "@/views/Forms/ManageFormView.vue";
+import ManageSubmissionView from "@/views/Submissions/ManageSubmissionView.vue";
+import SubmissionDetailsView from "@/views/Submissions/SubmissionDetailsView.vue";
 
 const routes = [
     {path: '/login', name: 'Login', component: LoginView, meta: {withoutAuth: true}},
@@ -72,6 +74,40 @@ const routes = [
         meta: {requiresAuth: true},
         props: true
     },
+    {
+        path: '/:object_type/:object_id/forms/:formId/submissions/create',
+        name: 'CreateSubmission',
+        component: ManageSubmissionView,
+        meta: {requiresAuth: true},
+        props: route => ({
+            objectTypeCode: route.params.object_type,
+            objectId: route.params.object_id,
+            formId: route.params.formId
+        })
+    },
+    {
+        path: '/:object_type/:object_id/submissions/:submissionId/edit',
+        name: 'EditSubmission',
+        component: ManageSubmissionView,
+        meta: {requiresAuth: true},
+        props: route => ({
+            objectTypeCode: route.params.object_type,
+            objectId: route.params.object_id,
+            submissionId: route.params.submissionId
+        })
+    },
+    {
+    path: '/:object_type/:object_id/submissions/:submissionId',
+    name: 'SubmissionDetails',
+    component: SubmissionDetailsView,
+    meta: { requiresAuth: true },
+    props: route => ({
+      objectTypeCode: route.params.object_type,
+      objectId: route.params.object_id,
+      submissionId: route.params.submissionId
+    })
+  },
+
 
 
 ];
