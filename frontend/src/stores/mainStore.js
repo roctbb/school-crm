@@ -1,8 +1,10 @@
 import {defineStore} from "pinia";
-import {getProfile} from "@/api/auth.js";
-import {fetchObjectTypes, fetchObjectsByType, fetchObjects} from "@/api/objects.js";
+import {getProfile} from "@/api/auth_api.js";
+import {fetchObjectTypes, fetchObjectsByType, fetchObjects} from "@/api/objects_api.js";
 import api_client from "@/api/client.js";
 import CrmObject from "@/models/CrmObject.js";
+import {fetchFormCategories} from "@/api/forms_api.js";
+import Form from "@/models/Form.js";
 
 const useMainStore = defineStore("mainStore", {
     // Состояние
@@ -13,6 +15,8 @@ const useMainStore = defineStore("mainStore", {
         objectTypes: [], // Список типов объектов
         isLoading: false, // Состояние загрузки данных
         objectsLoaded: false,
+        forms: {},
+        formCategories: []
     }),
 
     actions: {
@@ -32,6 +36,7 @@ const useMainStore = defineStore("mainStore", {
             if (!this.objectTypes.length) {
                 await this.fetchObjectTypes();
                 await this.fetchObjects();
+                await this.fetchFormCategories();
             }
         },
 
@@ -57,6 +62,7 @@ const useMainStore = defineStore("mainStore", {
             this.profile = null;
             this.objects = {};
             this.objectTypes = [];
+            this.formCategories = [];
             localStorage.clear();
         },
 
@@ -73,8 +79,7 @@ const useMainStore = defineStore("mainStore", {
             try {
                 console.log("Loading object types");
                 this.isLoading = true;
-                const types = await fetchObjectTypes();
-                this.objectTypes = types;
+                this.objectTypes = await fetchObjectTypes();
             } catch (error) {
                 console.error("Ошибка при загрузке типов объектов:", error);
             } finally {
@@ -92,7 +97,7 @@ const useMainStore = defineStore("mainStore", {
                 }
 
                 for (const object of objects) {
-                    this.objects[object.type].push(new CrmObject(object));
+                    this.objects[object.type].push(new CrmObject(object, this));
                 }
 
                 console.log("Loaded objects:", this.objects)
@@ -103,7 +108,25 @@ const useMainStore = defineStore("mainStore", {
             }
         },
 
+        async fetchFormCategories() {
+            try {
+                this.isLoading = true;
+                this.formCategories = await fetchFormCategories();
+
+                for (const category of this.formCategories) {
+                    category.forms = category.forms.map(form => new Form(form, this));
+                }
+            } catch (error) {
+                console.error(`Ошибка при загрузке форм:`, error);
+            } finally {
+                this.isLoading = false;
+            }
+        },
+
         getObject(typeCode, id) {
+            if (!id) {
+                return Object.values(this.objects).flat().find(obj => obj.type === typeCode);
+            }
             return this.objects[typeCode].find(obj => obj.id === id);
         },
 

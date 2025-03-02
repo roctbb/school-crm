@@ -17,12 +17,7 @@
                         {{ capitalize(object_type.name) }}: {{ object.name }}
                     </h2>
                     <div>
-                        <ul>
-                            <li v-for="attribute in object_type.available_attributes.filter(attr => attr.display)"
-                                :key="attribute.code">
-                                <b>{{ attribute.name }}:</b> {{ object.attributes[attribute.code] }}
-                            </li>
-                        </ul>
+                        <AttributePresenter :object="object" :type="object_type"/>
                     </div>
                 </div>
                 <!-- Блок выпадающего списка -->
@@ -59,21 +54,35 @@
                 </div>
             </div>
 
-            <div v-for="type in connectedTypes" :key="type.code">
-                <div v-if="findRelativesByType(type).length" class="mb-3">
-                    <h5>{{ type.name }}</h5>
+            <div class="row">
+                <div class="col-md-8">
+                    <div v-for="type in connectedTypes" :key="type.code">
+                        <div v-if="findRelativesByType(type).length" class="mb-3">
+                            <h5 class="pb-2">{{ type.name }}</h5>
 
-                    <div class="row">
-                        <div class="col-md-3 col-lg-3 col-xl-2 mb-4"
-                             v-for="child in findRelativesByType(type)" :key="child.id">
-                            <ObjectCard :type="type" :object="store.getObject(type.code, child.id)"/>
+                            <div class="row">
+                                <div class="col-md-6 col-lg-4 col-xl-3 col-xl-2 mb-4 d-flex align-items-stretch"
+                                     v-for="child in findRelativesByType(type)" :key="child.id">
+                                    <ObjectCard :type="type" :object="store.getObject(type.code, child.id)"/>
+                                </div>
+                            </div>
+
                         </div>
+
+
                     </div>
 
+                    <div v-for="form_category in object_type.form_categories">
+                        <h5 class="pb-2">{{ form_category.name }}</h5>
+                    </div>
                 </div>
-
-
+                <div class="col-md-4">
+                    <CommentsPanel
+                        :object="object"
+                    />
+                </div>
             </div>
+
 
             <button
                 class="btn btn-secondary btn-sm ms-2"
@@ -88,11 +97,13 @@
 
 <script>
 import useMainStore from "@/stores/mainStore.js";
-import {deleteObject} from "@/api/objects.js";
+import {deleteObject} from "@/api/objects_api.js";
 import BaseLayout from "@/components/layouts/BaseLayout.vue";
 import Loading from "@/components/common/Loading.vue";
-import {capitalize} from "../utils/helpers.js";
+import {capitalize} from "../../utils/helpers.js";
 import ObjectCard from "@/components/objects/ObjectCard.vue";
+import AttributePresenter from "@/components/objects/AttributePresenter.vue";
+import CommentsPanel from "@/components/objects/CommentsPanel.vue";
 
 export default {
     methods: {
@@ -139,7 +150,7 @@ export default {
             console.log("connected types:", this.connectedTypes)
         }
     },
-    components: {ObjectCard, Loading, BaseLayout},
+    components: {AttributePresenter, ObjectCard, Loading, BaseLayout, CommentsPanel},
     data() {
         return {
             object: null,
@@ -162,16 +173,5 @@ export default {
 <style>
 .object-details-page {
     padding: 20px;
-}
-
-ul {
-    list-style-type: none; /* Убирает стандартные маркеры */
-    padding: 0 !important; /* Убирает отступы */
-    margin: 0; /* Убирает внешние отступы */
-}
-
-li {
-    margin: 0; /* Убирает внешние отступы у элементов списка */
-    padding: 0; /* Убирает внутренние отступы у элементов списка */
 }
 </style>

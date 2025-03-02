@@ -1,8 +1,32 @@
 <template>
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <div class="container">
+            <!-- Логотип -->
             <a class="navbar-brand" href="/">Силаэдр CRM</a>
 
+            <!-- Навигационная ссылка -->
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <router-link
+                        to="/"
+                        class="nav-link"
+                        active-class="active"
+                    >
+                        Записи
+                    </router-link>
+                </li>
+                <li class="nav-item">
+                    <router-link
+                        to="/forms"
+                        class="nav-link"
+                        active-class="active"
+                    >
+                        Формы
+                    </router-link>
+                </li>
+            </ul>
+
+            <!-- Профиль пользователя в правой части -->
             <div class="ml-auto dropdown" v-if="profile">
                 <button
                     class="btn btn-light dropdown-toggle"
@@ -26,30 +50,35 @@
 </template>
 
 <script>
-import useMainStore from "@/stores/mainStore.js"; // Подключаем Pinia store
-import {mapActions, mapState} from "pinia"; // Для работы с состоянием из Pinia
+import { mapState, mapActions } from 'pinia'; // Убедимся, что используется Vue 3 версия Pinia
+import useMainStore from "@/stores/mainStore.js";
 
 export default {
     name: "Navbar",
     computed: {
-        ...mapState(useMainStore, ["profile"]), // Отображаем профиль пользователя из стора
+        // Подключаем состояние пользователя из Pinia Store
+        ...mapState(useMainStore, ["profile"]),
     },
     methods: {
-        logout() {
-            useMainStore().logout();
-            this.$router.push("/login");
-        }
+        // Логика выхода
+        ...mapActions(useMainStore, ["logout"]),
+        handleLogout() {
+            this.logout(); // Вызов экшена из Pinia
+            this.$router.push("/login"); // Переход на страницу логина
+        },
     },
 };
 </script>
 
 <style scoped>
 .navbar {
-    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .dropdown-menu-end {
     right: 0;
     left: auto;
 }
+
+
 </style>

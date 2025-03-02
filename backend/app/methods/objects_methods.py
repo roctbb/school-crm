@@ -1,3 +1,4 @@
+from app import Comment
 from app.models import ObjectType, Object, db
 from app.helpers.exceptions import LogicException
 from app.helpers.decorators import transaction
@@ -10,6 +11,14 @@ def get_object_by_id(object_id):
         raise LogicException("Объект не найден", 404)
 
     return obj
+
+def get_comment_by_id(comment_id):
+    comment = Comment.query.filter_by(id=comment_id, deleted_at=None).first()
+
+    if not comment:
+        raise LogicException("Комментарий не найден", 404)
+
+    return comment
 
 
 def get_objects_types():
@@ -73,3 +82,16 @@ def update_object_children(obj, children_ids):
 
     obj.children = children
     return obj
+
+
+@transaction
+def create_comment(user, object, validated_data):
+    comment = Comment(user_id=user.id, text=validated_data["text"], object_id=object.id)
+    db.session.add(comment)
+
+    return comment
+
+
+@transaction
+def delete_comment(obj):
+    obj.deleted_at = db.func.now()

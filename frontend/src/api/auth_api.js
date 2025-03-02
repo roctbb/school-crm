@@ -1,4 +1,4 @@
-// src/api/auth.js
+// src/api/auth_api.js
 import {API_URL} from './common.js';
 import api_client from './client.js';
 

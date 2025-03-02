@@ -43,9 +43,9 @@
 </template>
 
 <script>
-import useMainStore from "@/stores/mainStore"; // Подключаем Pinia-хранилище
+import useMainStore from "@/stores/mainStore.js"; // Подключаем Pinia-хранилище
 import {mapActions} from "pinia"; // Операции Pinia
-import {login} from "@/api/auth.js";
+import {login} from "@/api/auth_api.js";
 
 export default {
     name: "LoginView",

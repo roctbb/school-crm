@@ -82,9 +82,9 @@
 </template>
 
 <script>
-import useMainStore from "@/stores/mainStore"; // Pinia Store
+import useMainStore from "@/stores/mainStore.js"; // Pinia Store
 import {mapActions} from "pinia";
-import {register, login} from "@/api/auth"; // Импорты из auth.js
+import {register, login} from "@/api/auth_api.js"; // Импорты из auth_api.js
 
 export default {
     name: "RegisterView",

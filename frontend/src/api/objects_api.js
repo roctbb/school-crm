@@ -50,3 +50,16 @@ export async function fetchObjectDetails(objectId) {
         method: "GET",
     });
 }
+
+export async function postComment(objectId, comment) {
+    return await api_client.fetch(`/objects/${objectId}/comments`, {
+        method: "POST",
+        body: JSON.stringify({text: comment}),
+    });
+}
+
+export async function deleteComment(objectId, commentId) {
+    return await api_client.fetch(`/objects/${objectId}/comments/${commentId}`, {
+        method: "DELETE",
+    });
+}

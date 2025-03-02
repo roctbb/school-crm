@@ -48,9 +48,10 @@
             <div v-else-if="groupedObjects && Object.keys(groupedObjects).length" class="mt-3">
                 <!-- Группировка объектов -->
                 <div v-for="(objects, group) in groupedObjects" :key="group" class="mb-4">
-                    <h5 class="fw-bold">{{ selectedAttribute.name }}: {{ group }}</h5>
+                    <h5 class="fw-bold pb-2">{{ selectedAttribute.name }}: {{ group }}</h5>
                     <div class="row">
-                        <div v-for="object in objects" :key="object.id" class="col-md-3 col-lg-3 col-xl-2 mb-4">
+                        <div v-for="object in objects" :key="object.id"
+                             class="col-md-3 col-lg-3 col-xl-2 mb-4 d-flex align-items-stretch me-0">
                             <ObjectCard :type="store.getObjectTypeByCode(activeTab)" :object="object"/>
                         </div>
                     </div>
@@ -58,7 +59,8 @@
             </div>
             <div v-else-if="filteredObjects.length" class="row">
                 <!-- Отображение без группировки -->
-                <div v-for="object in filteredObjects" :key="object.id" class="col-md-3 col-lg-3 col-xl-2 mb-4">
+                <div v-for="object in filteredObjects" :key="object.id"
+                     class="col-md-3 col-lg-3 col-xl-2 mb-4 d-flex align-items-stretch me-0">
                     <ObjectCard :object="object" :type="store.getObjectTypeByCode(activeTab)"/>
                 </div>
             </div>
@@ -69,7 +71,7 @@
     </BaseLayout>
 </template>
 <script>
-import useMainStore from "@/stores/mainStore";
+import useMainStore from "@/stores/mainStore.js";
 import BaseLayout from "@/components/layouts/BaseLayout.vue";
 import Loading from "@/components/common/Loading.vue";
 import ObjectCard from "@/components/objects/ObjectCard.vue"; // Импортируем ObjectCard
@@ -102,15 +104,29 @@ export default {
             return activeType ? activeType.available_attributes.filter((attr) => attr.show_off) : [];
         },
         groupedObjects() {
-            // Группировать объекты по выбранному атрибуту
-            if (!this.selectedAttribute.code) return null; // Если фильтр не выбран
+            // Если атрибут для группировки не выбран, возвращаем null
+            if (!this.selectedAttribute.code) return null;
+
             const groups = {};
             this.filteredObjects.forEach((object) => {
-                const groupKey = object.attributes[this.selectedAttribute.code] || "Без группы";
-                if (!groups[groupKey]) {
-                    groups[groupKey] = [];
+                const attributeValue = object.attributes[this.selectedAttribute.code];
+                // Если значение атрибута - массив (например, ["ИТ", "математика"]),
+                // создаём группу для каждого элемента массива
+                if (Array.isArray(attributeValue) && attributeValue.length > 0) {
+                    attributeValue.forEach((item) => {
+                        if (!groups[item]) {
+                            groups[item] = [];
+                        }
+                        groups[item].push(object);
+                    });
+                } else {
+                    // Если значение — не массив (или пустое), используем прежнюю логику
+                    const groupKey = attributeValue || "Без группы";
+                    if (!groups[groupKey]) {
+                        groups[groupKey] = [];
+                    }
+                    groups[groupKey].push(object);
                 }
-                groups[groupKey].push(object);
             });
             return groups;
         },
@@ -122,8 +138,7 @@ export default {
     async created() {
         // Загружаем типы объектов (вкладки) и объекты
         if (!this.store.objectTypes.length) {
-            await this.store.fetchObjectTypes();
-            await this.store.fetchObjects();
+            await this.store.loadObjects();
         }
         // Устанавливаем активную вкладку из маршрута
         const initialTab = this.$route.path.replace("/", ""); // Получаем текущий маршрут
@@ -137,8 +152,10 @@ export default {
     },
     watch: {
         // Следим за изменением маршрута
-        "$route.path"(newPath) {
-            this.activeTab = newPath.replace("/", ""); // Синхронизуем активную вкладку с маршрутом
+        "$route"(newRoute) {
+            if (newRoute.fullPath !== '/' || !this.activeTab)  {
+                this.activeTab = newRoute.path.replace("/", "");
+            }
         },
         selectedAttribute() {
             // Сброс строки поиска при изменении группировки

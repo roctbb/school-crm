@@ -1,11 +1,13 @@
 // src/router/index.js
 import {createRouter, createWebHistory} from 'vue-router';
-import LoginView from '../views/LoginView.vue';
-import RegisterView from '../views/RegisterView.vue';
-import ObjectsView from '../views/ObjectsView.vue';
+import LoginView from '../views/Auth/LoginView.vue';
+import RegisterView from '../views/Auth/RegisterView.vue';
+import ObjectsView from '../views/Objects/ObjectsView.vue';
 import useMainStore from "@/stores/mainStore.js";
-import ObjectDetailsView from "@/views/ObjectDetailsView.vue";
-import ManageObjectView from "@/views/ManageObjectView.vue";
+import ObjectDetailsView from "@/views/Objects/ObjectDetailsView.vue";
+import ManageObjectView from "@/views/Objects/ManageObjectView.vue";
+import FormCategoriesView from "@/views/Forms/FormCategoriesView.vue";
+import ManageFormView from "@/views/Forms/ManageFormView.vue";
 
 const routes = [
     {path: '/login', name: 'Login', component: LoginView, meta: {withoutAuth: true}},
@@ -49,7 +51,29 @@ const routes = [
             objectTypeCode: route.params.object_type,
             objectId: route.params.object_id
         })
-    }
+    },
+    {
+        path: '/forms',
+        name: 'Forms',
+        component: () => FormCategoriesView,
+        meta: {requiresAuth: true},
+    },
+    {
+        path: '/forms/:categoryId/create',
+        name: 'CreateForm',
+        component: () => ManageFormView,
+        meta: {requiresAuth: true},
+        props: true
+    },
+    {
+        path: '/forms/:categoryId/:formId/edit',
+        name: 'EditForm',
+        component: () => ManageFormView,
+        meta: {requiresAuth: true},
+        props: true
+    },
+
+
 ];
 
 const router = createRouter({

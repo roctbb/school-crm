@@ -26,7 +26,6 @@
                 </div>
 
                 <!-- Редакторы для групп детей -->
-                {{ object.children }}
                 <div class="mb-3" v-if="childrenOptions.length">
                     <div
                         v-for="group in childrenOptions"
@@ -41,7 +40,7 @@
                 </div>
 
                 <button type="submit" class="btn btn-success">
-                    Сохранить
+                    <i class="bi bi-save me-1"></i> Сохранить
                 </button>
                 <button
                     type="button"
@@ -57,7 +56,7 @@
 </template>
 
 <script>
-import useMainStore from "@/stores/mainStore"; // Pinia стейт
+import useMainStore from "@/stores/mainStore.js"; // Pinia стейт
 import CrmObject from "@/models/CrmObject.js";
 import BaseLayout from "@/components/layouts/BaseLayout.vue";
 import {capitalize} from "@/utils/helpers.js";
@@ -98,8 +97,7 @@ export default {
     },
     async created() {
         if (!this.store.objectTypes.length) {
-            await this.store.fetchObjectTypes();
-            await this.store.fetchObjects();
+            await this.store.loadObjects()
         }
 
         // Установить тип объекта
@@ -111,7 +109,7 @@ export default {
                 (obj) => obj.id === parseInt(this.objectId)
             );
         } else {
-            this.object = new CrmObject({type: this.objectTypeCode});
+            this.object = new CrmObject({type: this.objectTypeCode}, this.store);
         }
 
         // Формируем группы детей (доступные для каждой категории)

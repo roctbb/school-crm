@@ -27,19 +27,18 @@ def validate_form(data):
 
     return data
 
-
 def validate_submission(data):
+    # Проверяем, что есть form_id и object_id
     should_have(data, 'form_id', min_length=1)
-    should_have(data, 'object_id', min_length=1)
 
-    # Check "params" and "answers" are JSON objects
+    # params, answers должны быть словарями
     if not isinstance(data.get('params', {}), dict):
         raise LogicException("Поле params должно быть объектом JSON.", 422)
     if not isinstance(data.get('answers', {}), dict):
         raise LogicException("Поле answers должно быть объектом JSON.", 422)
 
+    # Проверяем, что form_id и object_id действительно существуют
     should_exist(data, 'form_id', Form, 'id')
-    should_exist(data, 'object_id', Object, 'id')
 
     return data
 
@@ -53,6 +52,12 @@ def validate_invitation(data):
 
     if data.get('object_id') is not None:
         should_exist(data, 'object_id', Object, 'id')
+
+    return data
+
+
+def validate_comment(data):
+    should_have(data, 'text', min_length=1, max_length=1000)
 
     return data
 

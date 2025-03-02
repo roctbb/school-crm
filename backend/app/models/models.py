@@ -1,6 +1,7 @@
 from .tables import *
 from datetime import datetime
 
+
 class User(db.Model):
     __tablename__ = 'users'
 
@@ -29,6 +30,12 @@ class ObjectType(db.Model):
 
     created_at = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, nullable=False, server_default=db.func.now(), onupdate=db.func.now())
+
+    form_categories = db.relationship(
+        'FormCategory',
+        secondary=object_types_form_categories,
+        back_populates='object_types'
+    )
 
 
 class Object(db.Model):
@@ -62,9 +69,38 @@ class Object(db.Model):
 
     # Исправленное отношение с Submission
     submissions = db.relationship('Submission', back_populates='object')
+    comments = db.relationship('Comment', backref='object')
 
     created_by = db.relationship('User', foreign_keys=[creator_id])
     deleted_by = db.relationship('User', foreign_keys=[deleter_id])
+
+
+class FormCategory(db.Model):
+    __tablename__ = 'form_categories'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(256), nullable=True)
+    params = db.Column(db.JSON, server_default=db.text("'{}'::json"))
+    forms = db.relationship('Form', backref='category')
+
+    created_at = db.Column(db.DateTime, nullable=True, server_default=db.func.now())
+    updated_at = db.Column(db.DateTime, nullable=True, server_default=db.func.now(), onupdate=db.func.now())
+    deleted_at = db.Column(db.DateTime, nullable=True)
+
+    # keys
+    creator_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
+    deleter_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
+    category_id = db.Column(db.Integer, db.ForeignKey('form_categories.id', ondelete='CASCADE'), nullable=True)
+
+    # relations
+    created_by = db.relationship('User', foreign_keys=[creator_id])
+    deleted_by = db.relationship('User', foreign_keys=[deleter_id])
+
+    object_types = db.relationship(
+        'ObjectType',
+        secondary=object_types_form_categories,
+        back_populates='form_categories'
+    )
 
 
 class Form(db.Model):
@@ -81,6 +117,7 @@ class Form(db.Model):
     # keys
     creator_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
     deleter_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
+    category_id = db.Column(db.Integer, db.ForeignKey('form_categories.id', ondelete='CASCADE'), nullable=False)
 
     # relations
     created_by = db.relationship('User', foreign_keys=[creator_id])
@@ -148,3 +185,16 @@ class UploadedFile(db.Model):
     # Определяем отношение к модели User
     user = db.relationship("User", backref="uploaded_files")
 
+
+class Comment(db.Model):
+    __tablename__ = "comments"
+
+    id = db.Column(db.Integer, primary_key=True)
+    object_id = db.Column(db.Integer, db.ForeignKey("objects.id", ondelete="CASCADE"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    text = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
+    updated_at = db.Column(db.DateTime, nullable=True, server_default=db.func.now(), onupdate=db.func.now())
+    deleted_at = db.Column(db.DateTime, nullable=True)
+
+    user = db.relationship("User", backref="comments")

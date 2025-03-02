@@ -1,5 +1,5 @@
 <template>
-    <div class="card">
+    <div class="card flex-fill">
         <!-- Если у объекта есть фото -->
         <div class="card-img-container" v-if="canHavePhoto">
             <!-- Если есть фото, показывается изображение -->
@@ -18,32 +18,31 @@
         </div>
 
 
-        <div class="card-body">
+        <div class="card-body flex-grow-1 pb-0">
             <h5 class="card-title">{{ object.name }}</h5>
 
-            <ul>
-                <li
-                    v-for="attribute in getShowOffFields(object)"
-                    :key="attribute.code">
-                    <b>{{ attribute.name }}:</b> {{ object.attributes[attribute.code] }}
-                </li>
-            </ul>
+            <AttributePresenter :object="object" :type="type" :display="false" :show_off="true" />
+        </div>
 
+        <div class="mt-auto py-3 ps-3">
             <router-link
                 :to="`/${type.code}/${object.id}`"
-                class="btn btn-sm btn-light mt-2"
+                class="btn btn-sm btn-light"
             >
                 Подробнее
             </router-link>
         </div>
+
     </div>
 </template>
 
 <script>
-import useMainStore from "@/stores/mainStore.js"; // Подключаем Pinia store
+import useMainStore from "@/stores/mainStore.js";
+import AttributePresenter from "@/components/objects/AttributePresenter.vue"; // Подключаем Pinia store
 
 export default {
     name: "ObjectCard",
+    components: {AttributePresenter},
     props: {
         object: {
             type: Object,

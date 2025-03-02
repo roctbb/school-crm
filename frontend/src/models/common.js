@@ -1,9 +1,10 @@
 import {formatDateTime} from "@/utils/helpers";
 
 class Model {
-    constructor(description) {
+    constructor(description, store) {
         this.init(description)
         this._exclude = []
+        this._store = store;
     }
 
     init(description) {

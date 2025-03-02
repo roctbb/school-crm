@@ -14,6 +14,8 @@ def present_object_type(object_type):
         'id': object_type.id,
         'name': object_type.name,
         'code': object_type.code,
+        'form_categories': [present_related_form_category(category) for category in object_type.form_categories if
+                            not category.deleted_at],
         'available_attributes': object_type.available_attributes,
         'available_params': object_type.available_params,
         'params': object_type.params,
@@ -43,8 +45,34 @@ def present_object(obj):
         'updated_at': obj.updated_at.isoformat(),
         'deleted_at': obj.deleted_at.isoformat() if obj.deleted_at else None,
         'owners': [present_user(owner) for owner in obj.owners],
-        'children': [present_connected_object(child) for child in obj.children],
-        'parents': [present_connected_object(child) for child in obj.parents]
+        'children': [present_connected_object(child) for child in obj.children if not child.deleted_at],
+        'parents': [present_connected_object(child) for child in obj.parents if not child.deleted_at],
+        'comments': [present_comment(comment) for comment in obj.comments if not comment.deleted_at]
+    }
+
+
+def present_comment(comment):
+    return {
+        'id': comment.id,
+        'text': comment.text,
+        'author': present_user(comment.user),
+        'created_at': comment.created_at.isoformat(),
+    }
+
+
+def present_form_category(form_category):
+    return {
+        'id': form_category.id,
+        'name': form_category.name,
+        'params': form_category.params,
+        'forms': [present_form(form) for form in form_category.forms if not form.deleted_at]
+    }
+
+
+def present_related_form_category(form_category):
+    return {
+        'id': form_category.id,
+        'name': form_category.name
     }
 
 
@@ -67,13 +95,20 @@ def present_submission(submission):
         'id': submission.id,
         'params': submission.params,
         'answers': submission.answers,
-        'form_id': submission.form_id,
-        'object_id': submission.object_id,
+        'form': submission.form_id,
         'creator': present_user(submission.created_by) if submission.created_by else None,
         'deleter': present_user(submission.deleted_by) if submission.deleted_by else None,
         'created_at': submission.created_at.isoformat(),
         'updated_at': submission.updated_at.isoformat(),
         'deleted_at': submission.deleted_at.isoformat() if submission.deleted_at else None
+    }
+
+
+def present_related_form(form):
+    return {
+        'id': form.id,
+        'name': form.name,
+        'category': present_related_form_category(form.category)
     }
 
 

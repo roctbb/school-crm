@@ -1,4 +1,4 @@
-// src/api/files.js
+// src/api/files_api.js
 import api_client from './client.js';  // предполагается, что client.js уже есть
 import {API_URL} from './common.js';  // для удобства, если нужно
 
