@@ -24,6 +24,15 @@
                         Формы
                     </router-link>
                 </li>
+                <li class="nav-item">
+                    <router-link
+                        to="/import"
+                        class="nav-link"
+                        active-class="active"
+                    >
+                        Импорт
+                    </router-link>
+                </li>
             </ul>
 
             <!-- Профиль пользователя в правой части -->

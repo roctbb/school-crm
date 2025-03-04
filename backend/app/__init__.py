@@ -17,6 +17,12 @@ def create_app(config_name=None):
     # Загрузка конфигурации из config.py
     app.config.from_object(get_config(config_name))
 
+    if app.config['DEBUG_QUERIES']:
+        import logging
+
+        logging.basicConfig()
+        logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
+
     setup_handlers(app)
     jwt.init_app(app)
     bcrypt.init_app(app)

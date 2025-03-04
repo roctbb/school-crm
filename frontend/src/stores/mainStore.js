@@ -60,10 +60,14 @@ const useMainStore = defineStore("mainStore", {
             api_client.setToken(null);
             this.token = null;
             this.profile = null;
+            this.reset()
+            localStorage.clear();
+        },
+
+        reset() {
             this.objects = {};
             this.objectTypes = [];
             this.formCategories = [];
-            localStorage.clear();
         },
 
         async loadStateFromLocalStorage() {

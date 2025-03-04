@@ -34,7 +34,7 @@ class ObjectType(db.Model):
     form_categories = db.relationship(
         'FormCategory',
         secondary=object_types_form_categories,
-        back_populates='object_types'
+        back_populates='object_types', lazy=False
     )
 
 
@@ -60,19 +60,19 @@ class Object(db.Model):
         secondary='objects_children',
         primaryjoin=id == objects_children.c.child_id,
         secondaryjoin=id == objects_children.c.parent_id,
-        backref=db.backref('children', lazy='dynamic'),
-        lazy='dynamic'
+        backref=db.backref('children', lazy='select'),
+        lazy='select'
     )
 
-    type = db.relationship('ObjectType')
-    owners = db.relationship('User', secondary=users_objects, back_populates='objects')
+    type = db.relationship('ObjectType', lazy='joined')
+    owners = db.relationship('User', secondary=users_objects, back_populates='objects', lazy='select')
 
     # Исправленное отношение с Submission
-    submissions = db.relationship('Submission', back_populates='object')
-    comments = db.relationship('Comment', backref='object')
+    submissions = db.relationship('Submission', back_populates='object', lazy='dynamic')
+    comments = db.relationship('Comment', backref='object', lazy='select')
 
-    created_by = db.relationship('User', foreign_keys=[creator_id])
-    deleted_by = db.relationship('User', foreign_keys=[deleter_id])
+    created_by = db.relationship('User', foreign_keys=[creator_id], lazy='joined')
+    deleted_by = db.relationship('User', foreign_keys=[deleter_id], lazy='joined')
 
 
 class FormCategory(db.Model):
@@ -93,8 +93,8 @@ class FormCategory(db.Model):
     category_id = db.Column(db.Integer, db.ForeignKey('form_categories.id', ondelete='CASCADE'), nullable=True)
 
     # relations
-    created_by = db.relationship('User', foreign_keys=[creator_id])
-    deleted_by = db.relationship('User', foreign_keys=[deleter_id])
+    created_by = db.relationship('User', foreign_keys=[creator_id], lazy=False)
+    deleted_by = db.relationship('User', foreign_keys=[deleter_id], lazy=False)
 
     object_types = db.relationship(
         'ObjectType',
@@ -120,9 +120,9 @@ class Form(db.Model):
     category_id = db.Column(db.Integer, db.ForeignKey('form_categories.id', ondelete='CASCADE'), nullable=False)
 
     # relations
-    created_by = db.relationship('User', foreign_keys=[creator_id])
-    deleted_by = db.relationship('User', foreign_keys=[deleter_id])
-    submissions = db.relationship('Submission', back_populates='form')
+    created_by = db.relationship('User', foreign_keys=[creator_id], lazy=False)
+    deleted_by = db.relationship('User', foreign_keys=[deleter_id], lazy=False)
+    submissions = db.relationship('Submission', back_populates='form', lazy='dynamic')
 
 
 class Submission(db.Model):
@@ -145,8 +145,8 @@ class Submission(db.Model):
     # relations
     form = db.relationship('Form', back_populates='submissions')
     object = db.relationship('Object', back_populates='submissions')  # Связывает с Object
-    created_by = db.relationship('User', foreign_keys=[creator_id])
-    deleted_by = db.relationship('User', foreign_keys=[deleter_id])
+    created_by = db.relationship('User', foreign_keys=[creator_id], lazy=False)
+    deleted_by = db.relationship('User', foreign_keys=[deleter_id], lazy=False)
 
 
 class Invitation(db.Model):
@@ -197,4 +197,4 @@ class Comment(db.Model):
     updated_at = db.Column(db.DateTime, nullable=True, server_default=db.func.now(), onupdate=db.func.now())
     deleted_at = db.Column(db.DateTime, nullable=True)
 
-    user = db.relationship("User", backref="comments")
+    user = db.relationship("User", backref="comments", lazy=False)

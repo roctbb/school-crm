@@ -13,6 +13,7 @@ class Config:
     PORT = os.getenv('PORT', 8081)
     HOST = os.getenv('HOST', "0.0.0.0")
     DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
+    DEBUG_QUERIES = os.getenv('DEBUG_QUERIES', 'False').lower() == 'true'
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=12)
 
 class DevelopmentConfig(Config):

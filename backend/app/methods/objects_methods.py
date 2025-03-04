@@ -1,3 +1,7 @@
+import logging
+
+from sqlalchemy.orm import subqueryload, selectinload
+
 from app import Comment
 from app.models import ObjectType, Object, db
 from app.helpers.exceptions import LogicException
@@ -11,6 +15,7 @@ def get_object_by_id(object_id):
         raise LogicException("Объект не найден", 404)
 
     return obj
+
 
 def get_comment_by_id(comment_id):
     comment = Comment.query.filter_by(id=comment_id, deleted_at=None).first()
@@ -34,13 +39,37 @@ def get_object_type_by_code(type_code):
     return object_type
 
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
 def get_available_objects_by_type_code(type_code):
     object_type = get_object_type_by_code(type_code)
-    return Object.query.filter_by(type_id=object_type.id, deleted_at=None).all()
+
+    logging.log(
+        logging.INFO, "Begin query!!!")
+    result = Object.query.filter_by(type_id=object_type.id, deleted_at=None).options(selectinload(Object.parents),
+                                                                                     selectinload(Object.children),
+                                                                                     selectinload(Object.owners),
+                                                                                     selectinload(
+                                                                                         Object.comments)).all()
+    logging.log(
+        logging.INFO, "End query!!!")
+    return result
 
 
 def get_available_objects():
-    return Object.query.filter_by(deleted_at=None).all()
+    logging.log(
+        logging.INFO, "Begin query!!!")
+    result = Object.query.filter_by(deleted_at=None).options(selectinload(Object.parents),
+                                                                                     selectinload(Object.children),
+                                                                                     selectinload(Object.owners),
+                                                                                     selectinload(
+                                                                                         Object.comments)).all()
+    logging.log(
+        logging.INFO, "End query!!!")
+
+    return result
 
 
 @transaction

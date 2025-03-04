@@ -153,9 +153,10 @@ export default {
     watch: {
         // Следим за изменением маршрута
         "$route"(newRoute) {
-            if (newRoute.fullPath !== '/' || !this.activeTab)  {
+            if (newRoute.fullPath !== '/' || !this.activeTab) {
                 this.activeTab = newRoute.path.replace("/", "");
             }
+            this.selectedAttribute = {}
         },
         selectedAttribute() {
             // Сброс строки поиска при изменении группировки

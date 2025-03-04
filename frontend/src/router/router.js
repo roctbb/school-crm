@@ -10,6 +10,7 @@ import FormCategoriesView from "@/views/Forms/FormCategoriesView.vue";
 import ManageFormView from "@/views/Forms/ManageFormView.vue";
 import ManageSubmissionView from "@/views/Submissions/ManageSubmissionView.vue";
 import SubmissionDetailsView from "@/views/Submissions/SubmissionDetailsView.vue";
+import ImportView from "@/views/Import/ImportView.vue";
 
 const routes = [
     {path: '/login', name: 'Login', component: LoginView, meta: {withoutAuth: true}},
@@ -97,17 +98,22 @@ const routes = [
         })
     },
     {
-    path: '/:object_type/:object_id/submissions/:submissionId',
-    name: 'SubmissionDetails',
-    component: SubmissionDetailsView,
-    meta: { requiresAuth: true },
-    props: route => ({
-      objectTypeCode: route.params.object_type,
-      objectId: route.params.object_id,
-      submissionId: route.params.submissionId
-    })
-  },
-
+        path: '/:object_type/:object_id/submissions/:submissionId',
+        name: 'SubmissionDetails',
+        component: SubmissionDetailsView,
+        meta: {requiresAuth: true},
+        props: route => ({
+            objectTypeCode: route.params.object_type,
+            objectId: route.params.object_id,
+            submissionId: route.params.submissionId
+        })
+    },
+    {
+        path: '/import',
+        name: 'Import',
+        component: () => ImportView,
+        meta: {requiresAuth: true},
+    },
 
 
 ];
