@@ -4,7 +4,9 @@
             <Loading v-if="isLoading"></Loading>
             <div v-else>
                 <h3 class="mb-4">
-                    {{ isEditMode ? `Редактирование ответа на форму ${form.name} для ${this.object.name}` : `Создание ответа на форму ${form.name} для ${this.object.name}` }}
+                    {{
+                        isEditMode ? `Редактирование ответа на форму ${form.name} для ${this.object.name}` : `Создание ответа на форму ${form.name} для ${this.object.name}`
+                    }}
                 </h3>
 
 
@@ -168,7 +170,7 @@ export default {
     },
     data() {
         return {
-            submission: new Submission(),
+            submission: null,
             form: null,
             object: null,
             store: useMainStore(),
@@ -181,23 +183,24 @@ export default {
         }
     },
     async created() {
-        try {
-            this.isLoading = true;
-            if (!this.store.objectTypes.length) {
-                await this.store.loadObjects();
-            }
-            this.object = this.store.getObject(this.objectTypeCode, this.objectId)
-            this.form = this.store.getForm(this.formId)
-            await this.object.loadSubmissions();
-        } finally {
-            this.isLoading = false;
+        this.isLoading = true;
+        if (!this.store.objectTypes.length) {
+            await this.store.loadObjects();
         }
+        this.object = this.store.getObject(this.objectTypeCode, this.objectId)
+
         if (this.isEditMode) {
+            await this.object.loadSubmissions();
             this.submission = this.object._submissions.find(submission => submission.id === parseInt(this.submissionId))
+            this.form = this.submission._form;
+            console.log(this.form, this.submission)
         } else {
-            this.submission = new Submission({}, this.store);
+            this.form = this.store.getForm(this.formId)
+            this.submission = new Submission({}, this.store, this.form);
             this.fillEmptyAnswers();
         }
+
+        this.isLoading = false;
     },
     methods: {
 

@@ -24,7 +24,6 @@
                     <div class="mb-3">
                         <h5>Поля формы</h5>
 
-
                         <div
                             v-for="(field, index) in this.form.fields"
                             :key="field.code"
@@ -84,6 +83,18 @@
                                 </label>
                             </div>
 
+                            <!-- Галочка для закрепления -->
+                            <div class="form-check form-switch mb-2">
+                                <input
+                                    class="form-check-input"
+                                    type="checkbox"
+                                    v-model="field.showoff"
+                                />
+                                <label class="form-check-label">
+                                    Закрепить на карточке
+                                </label>
+                            </div>
+
                             <!-- Если select или checkboxes, даём ввод options -->
                             <div v-if="field.type === 'select' || field.type === 'checkboxes'">
                                 <label class="form-label">Варианты</label>
@@ -115,7 +126,6 @@
                                     Добавить вариант
                                 </button>
                             </div>
-
                         </div>
 
                         <button
@@ -157,13 +167,11 @@ export default {
         BaseLayout,
     },
     props: {
-        // ID существующей формы (если редактирование). Если null — создаём новую.
         formId: {
             type: Number,
             default: null,
-            required: false
+            required: false,
         },
-        // При необходимости можем прокинуть categoryId
         categoryId: {
             type: Number,
             default: null,
@@ -172,9 +180,9 @@ export default {
     data() {
         return {
             loading: false,
-            form: null,        // Экземпляр модели Form
+            form: null,
             category: null,
-            store: useMainStore()
+            store: useMainStore(),
         };
     },
     computed: {
@@ -184,9 +192,7 @@ export default {
     },
     async created() {
         this.loading = true;
-
         try {
-            // Убедимся, что данные форм загружены
             if (!this.store.formCategories?.length) {
                 await this.store.loadObjects();
             }
@@ -195,21 +201,16 @@ export default {
                 (cat) => cat.id === parseInt(this.categoryId)
             );
 
-            // Режим редактирования
             if (this.isEditMode) {
-                // Ищем форму среди загруженных категорий и форм
-                // Предположим, что есть удобный метод или вручную ищем:
-
                 this.form = this.category.forms.find(
                     (form) => form.id === parseInt(this.formId)
-                )
+                );
                 if (!this.form) {
                     throw new Error("Форма с указанным ID не найдена.");
                 }
             } else {
                 this.form = new Form({}, this.store, this.categoryId);
             }
-
         } catch (err) {
             console.error(err);
             alert("Не удалось загрузить форму");
@@ -219,7 +220,6 @@ export default {
     },
     methods: {
         generateCode() {
-            // Простейший генератор для кода поля
             return (
                 Math.random().toString(36).substring(2, 15) +
                 Math.random().toString(36).substring(2, 15)
@@ -231,6 +231,7 @@ export default {
                 code: this.generateCode(),
                 type: "text",
                 required: false,
+                showOff: false, // Новый параметр
                 options: [],
             });
         },
@@ -245,30 +246,26 @@ export default {
         },
         async handleSave() {
             try {
-                // Сохраняем (create или update)
                 await this.form.save();
 
                 if (!this.isEditMode) {
                     this.category.forms.push(this.form);
                 }
 
-                this.$router.push({name: "Forms"});
+                this.$router.push({ name: "Forms" });
             } catch (error) {
                 console.error("Ошибка при сохранении формы:", error);
                 alert("Не удалось сохранить форму.");
             }
         },
         cancel() {
-            // Возврат без сохранения
             this.form.reset();
-            this.$router.push({name: "Forms"});
-
+            this.$router.push({ name: "Forms" });
         },
-
     },
 };
 </script>
 
 <style scoped>
-/* При необходимости можно добавить стили */
+/* При необходимости добавить стили */
 </style>

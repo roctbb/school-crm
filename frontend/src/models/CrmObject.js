@@ -2,6 +2,7 @@ import Model from "@/models/common.js";
 import {formatDate} from "@/utils/helpers";
 import {createObject, updateObject, updateObjectChildren} from "@/api/objects_api.js";
 import {fetchObjectSubmissions} from "@/api/submissions_api.js";
+import Submission from "@/models/Submission.js";
 
 class CrmObject extends Model {
     constructor(description, store) {
@@ -110,7 +111,7 @@ class CrmObject extends Model {
 
     async loadSubmissions() {
         if (this.id && this._submissions?.length === 0) {
-            this._submissions = await fetchObjectSubmissions(this.id)
+            this._submissions = (await fetchObjectSubmissions(this.id)).map(submission => new Submission(submission, this._store))
         }
     }
 }

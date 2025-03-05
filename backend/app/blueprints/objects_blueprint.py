@@ -107,7 +107,7 @@ def get_submissions_endpoint(user, object_id):
 @objects_blueprint.route('/<int:object_id>/submissions/<int:submission_id>', methods=['PUT'])
 @requires_user
 @validate_request_with(validate_submission)
-def update_submission_endpoint(validated_data, user, form_id, submission_id):
+def update_submission_endpoint(validated_data, user, object_id, submission_id):
     sub = get_submission_by_id(submission_id)
     updated = update_submission(sub, validated_data)
     return jsonify(present_submission(updated)), 200

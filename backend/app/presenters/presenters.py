@@ -100,6 +100,7 @@ def present_submission(submission):
         'id': submission.id,
         'params': submission.params,
         'answers': submission.answers,
+        'showoff_attributes': submission.showoff_attributes,
         'form': {
             'id': submission.form_id,
             'category_id': submission.form.category_id

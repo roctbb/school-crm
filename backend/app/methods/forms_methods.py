@@ -72,6 +72,7 @@ def create_submission(user, form, object, data):
         object_id=object.id,
         params=data.get("params", {}),
         answers=data.get("answers", {}),
+        showoff_attributes=data.get("showoff_attributes", {}),
         creator_id=user.id
     )
     db.session.add(new_submission)
@@ -82,6 +83,7 @@ def create_submission(user, form, object, data):
 def update_submission(submission, data):
     submission.params = data.get("params", submission.params)
     submission.answers = data.get("answers", submission.answers)
+    submission.showoff_attributes = data.get("showoff_attributes", submission.showoff_attributes)
     return submission
 
 

@@ -132,6 +132,7 @@ class Submission(db.Model):
 
     params = db.Column(db.JSON, server_default=db.text("'{}'::json"))
     answers = db.Column(db.JSON, server_default=db.text("'{}'::json"))
+    showoff_attributes = db.Column(db.JSON, server_default=db.text("'{}'::json"))
     created_at = db.Column(db.DateTime, nullable=True, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, nullable=True, server_default=db.func.now(), onupdate=db.func.now())
     deleted_at = db.Column(db.DateTime, nullable=True)

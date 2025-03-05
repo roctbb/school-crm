@@ -17,11 +17,11 @@
             </template>
         </div>
 
-
         <div class="card-body flex-grow-1 pb-0">
             <h5 class="card-title">{{ object.name }}</h5>
+            <!-- Добавлен текст даты создания -->
 
-            <AttributePresenter :object="object" :type="type" :display="false" :show_off="true" />
+            <AttributePresenter :object="object" :type="type" :display="false" :show_off="true"/>
         </div>
 
         <div class="mt-auto py-3 ps-3">
@@ -32,9 +32,9 @@
                 Подробнее
             </router-link>
         </div>
-
     </div>
 </template>
+
 
 <script>
 import useMainStore from "@/stores/mainStore.js";
@@ -115,6 +115,19 @@ ul {
 li {
     margin: 0; /* Убирает внешние отступы у элементов списка */
     padding: 0; /* Убирает внутренние отступы у элементов списка */
+}
+
+.created-at-text {
+    font-size: 0.75rem; /* Маленький размер текста */
+    color: #6c757d; /* Серый цвет */
+    margin-top: 5px; /* Отступ сверху от названия */
+    display: flex; /* Используем флекс для выравнивания иконки и текста */
+    align-items: center; /* Выравнивание по центру */
+}
+
+.created-at-text i {
+    font-size: 0.875rem; /* Размер иконки чуть больше текста */
+    margin-right: 5px; /* Отступ справа от иконки */
 }
 
 </style>
