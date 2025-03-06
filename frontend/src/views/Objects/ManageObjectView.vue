@@ -17,7 +17,6 @@
                     />
                 </div>
 
-                <!-- Редактор атрибутов -->
                 <div class="mb-3">
                     <AttributesEditor
                         v-model:attributes="object.attributes"

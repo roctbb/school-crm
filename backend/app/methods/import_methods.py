@@ -39,13 +39,17 @@ def import_data(user, file):
             value = value.strip() if value else None
             if key.startswith('attributes_'):
                 attr_key = key.replace('attributes_', '', 1)
-                if attr_key not in attributes:
-                    attributes[attr_key] = [] if value else []
                 if value:
+                    if attr_key not in attributes:
+                        attributes[attr_key] = [] if value else []
                     attributes[attr_key].append(value)
 
         # Фильтруем колонки, относящиеся к params
         params = {key.replace('params_', '', 1): value for key, value in row.items() if key.startswith('params_')}
+
+        for attribute in attributes:
+            if len(attributes[attribute]) == 1:
+                attributes[attribute] = attributes[attribute][0]
 
         # Создаем объект Object
         new_object = Object(

@@ -50,8 +50,9 @@ def update_form(form, data):
 
 
 @transaction
-def delete_form(form):
+def delete_form(user, form):
     form.deleted_at = db.func.now()
+    form.deleter_id = user.id
 
 
 def get_submission_by_id(sub_id):
@@ -88,5 +89,6 @@ def update_submission(submission, data):
 
 
 @transaction
-def delete_submission(submission):
+def delete_submission(user, submission):
     submission.deleted_at = db.func.now()
+    submission.deleter_id = user.id

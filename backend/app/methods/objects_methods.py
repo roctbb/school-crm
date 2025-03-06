@@ -86,8 +86,9 @@ def create_object(user, type, data):
 
 
 @transaction
-def delete_object(obj):
+def delete_object(user, obj):
     obj.deleted_at = db.func.now()
+    obj.deleter_id = user.id
 
 
 @transaction
@@ -122,5 +123,6 @@ def create_comment(user, object, validated_data):
 
 
 @transaction
-def delete_comment(obj):
+def delete_comment(user, obj):
     obj.deleted_at = db.func.now()
+    obj.deleter_id = user.id

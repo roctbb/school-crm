@@ -60,7 +60,7 @@ def present_comment(comment):
     return {
         'id': comment.id,
         'text': comment.text,
-        'author': present_user(comment.user),
+        'author': present_user(comment.created_by),
         'created_at': comment.created_at.isoformat(),
     }
 

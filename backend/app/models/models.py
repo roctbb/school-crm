@@ -192,10 +192,15 @@ class Comment(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     object_id = db.Column(db.Integer, db.ForeignKey("objects.id", ondelete="CASCADE"), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     text = db.Column(db.Text, nullable=True)
+
     created_at = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, nullable=True, server_default=db.func.now(), onupdate=db.func.now())
     deleted_at = db.Column(db.DateTime, nullable=True)
 
-    user = db.relationship("User", backref="comments", lazy=False)
+    creator_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=True)
+    deleter_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
+
+    created_by = db.relationship("User", backref="comments", lazy=False, foreign_keys=[creator_id])
+    deleted_by = db.relationship('User', foreign_keys=[deleter_id])
+
