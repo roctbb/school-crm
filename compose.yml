@@ -1,0 +1,38 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16
+    container_name: crm_postgres
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      # Проверяем доступность Postgres (вернёт 0, если уже принимает подключения)
+      test: ["CMD-SHELL", "pg_isready --dbname=postgres --username=postgres"]
+      interval: 10s   # Интервал между проверками
+      timeout: 5s     # Сколько ждать ответа до таймаута
+      retries: 5      # Количество неудачных проверок до статуса unhealthy
+
+  backend:
+    build: ./backend
+    container_name: crm_backend
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/postgres
+      FLASK_ENV: production
+    ports:
+      - "5000:5000"
+    depends_on:
+      # Говорим дождаться, пока Postgres не станет healthy
+      db:
+        condition: service_healthy
+
+  # Прочие сервисы...
+
+volumes:
+  postgres_data:
