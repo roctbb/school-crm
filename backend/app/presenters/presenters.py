@@ -85,6 +85,7 @@ def present_form(form):
     return {
         'id': form.id,
         'name': form.name,
+        'category_id': form.category_id,
         'available_params': form.available_params,
         'fields': form.fields,
         'creator': present_user(form.created_by) if form.created_by else None,
@@ -99,11 +100,13 @@ def present_submission(submission):
     return {
         'id': submission.id,
         'params': submission.params,
-        'answers': submission.answers,
+        'fields': submission.fields,
         'showoff_attributes': submission.showoff_attributes,
         'form': {
-            'id': submission.form_id,
-            'category_id': submission.form.category_id
+            'name': submission.form_name,
+            'category': submission.form_category_name,
+            'is_external': submission.is_external,
+            'id': submission.form_id
         },
         'creator': present_user(submission.created_by) if submission.created_by else None,
         'deleter': present_user(submission.deleted_by) if submission.deleted_by else None,

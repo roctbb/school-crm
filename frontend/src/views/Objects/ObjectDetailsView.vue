@@ -57,7 +57,7 @@
             <div class="row">
                 <div class="col-md-8">
                     <div v-for="type in connectedTypes" :key="type.code">
-                        <div v-if="findRelativesByType(type).length" class="mb-3">
+                        <div v-if="findRelativesByType(type).length" class="mb-2">
                             <h5 class="pb-2">{{ type.name }}</h5>
 
                             <div class="row">
@@ -76,11 +76,12 @@
                         <h5 class="pb-2">{{ form_category.name }}</h5>
 
                         <div class="row">
-                                <div class="col-md-6 col-lg-4 col-xl-3 col-xl-2 mb-4 d-flex align-items-stretch"
-                                     v-for="submission in object._submissions.filter(submission => submission.form.category_id === form_category.id)" :key="submission.id">
-                                    <SubmissionCard :submission="submission" :object="object"/>
-                                </div>
+                            <div class="col-md-6 col-lg-4 col-xl-3 col-xl-2 mb-4 d-flex align-items-stretch"
+                                 v-for="submission in object._submissions.filter(submission => submission._form.category_id === form_category.id)"
+                                 :key="submission.id">
+                                <SubmissionCard :submission="submission" :object="object"/>
                             </div>
+                        </div>
 
                         <!-- Выпадающий список форм -->
                         <div class="btn-group">
@@ -106,6 +107,17 @@
                                     </a>
                                 </li>
                             </ul>
+                        </div>
+                    </div>
+
+                    <div v-for="(category_name, i) in externalCategories" :key="i" class="mb-4">
+                        <h5 class="pb-2">{{ category_name }}</h5>
+                        <div class="row">
+                            <div class="col-md-6 col-lg-4 col-xl-3 col-xl-2 mb-4 d-flex align-items-stretch"
+                                 v-for="submission in object._submissions.filter(submission => submission.form.category === category_name)"
+                                 :key="submission.id">
+                                <SubmissionCard :submission="submission" :object="object"/>
+                            </div>
                         </div>
                     </div>
 
@@ -139,6 +151,7 @@ import ObjectCard from "@/components/objects/ObjectCard.vue";
 import AttributePresenter from "@/components/objects/AttributePresenter.vue";
 import CommentsPanel from "@/components/objects/CommentsPanel.vue";
 import SubmissionCard from "@/components/submissions/SubmissionCard.vue";
+import submission from "@/models/Submission.js";
 
 export default {
     methods: {
@@ -205,6 +218,11 @@ export default {
             store: useMainStore(),
             connectedTypes: [],
         };
+    },
+    computed: {
+        externalCategories() {
+            return [...new Set(this.object._submissions.filter(submission => submission.form.is_external).map(submission => submission.form.category))]
+        }
     },
     watch: {
         $route: {

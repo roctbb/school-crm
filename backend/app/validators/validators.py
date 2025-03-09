@@ -32,8 +32,8 @@ def validate_submission(data):
     # params, answers должны быть словарями
     if not isinstance(data.get('params', {}), dict):
         raise LogicException("Поле params должно быть объектом JSON.", 422)
-    if not isinstance(data.get('answers', {}), dict):
-        raise LogicException("Поле answers должно быть объектом JSON.", 422)
+    if not isinstance(data.get('fields', []), list):
+        raise LogicException("Поле fields должно быть объектом JSON.", 422)
 
     return data
 

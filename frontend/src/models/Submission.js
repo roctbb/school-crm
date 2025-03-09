@@ -7,8 +7,19 @@ class Submission extends Model {
         this._exclude = [];
         this._form = form;
 
-        if (this.id && !this._form) {
-            this._form = this._store.getForm(this.form.id)
+        if (this.id) {
+            if (this.form.is_external) {
+                this._form = {
+                    name: this.form.name,
+                    category: this.form.category,
+                    is_external: true
+                }
+            }
+            else {
+                this._form = this._store.getForm(this.form.id)
+            }
+        } else {
+            this.fields = this._form.fields
         }
     }
 
@@ -17,17 +28,17 @@ class Submission extends Model {
         if (!this.params) {
             this.params = {}; // JSON-объект параметров
         }
-        if (!this.answers) {
-            this.answers = {}; // JSON-объект ответов
+        if (!this.fields) {
+            this.fields = []; // JSON-объект ответов
         }
     }
 
     async save(objectId, formId) {
         this.showoff_attributes = {}
 
-        for (let field of this._form.fields) {
-            if (field.showoff && this.answers[field.code]) {
-                this.showoff_attributes[field.name] = this.answers[field.code]
+        for (let field of this.fields) {
+            if (field.showoff && field.answer) {
+                this.showoff_attributes[field.name] = field.answer
             }
         }
 

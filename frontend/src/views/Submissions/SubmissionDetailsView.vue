@@ -9,7 +9,7 @@
                 >
                     <i class="bi bi-arrow-left"></i> Назад
                 </router-link>
-                <h3 class="mb-0 flex-grow-1">Ответ на форму: {{ form.name }}</h3>
+                <h3 class="mb-0 flex-grow-1">Ответ на форму: {{ submission.form.name }}</h3>
 
                 <!-- Кнопки действий -->
                 <div>
@@ -64,9 +64,9 @@
             <div class="submission-answers mt-4">
                 <h5>Ответы</h5>
                 <ul>
-                    <li v-for="(value, key) in submission.answers" :key="key">
-                        <strong>{{ getFieldName(key) }}:</strong>
-                        <span>{{ formatAnswer(value) }}</span>
+                    <li v-for="(field, i) in submission.fields" :key="i">
+                        <strong>{{field.name }}:</strong>
+                        <span>{{ formatAnswer(field.answer) }}</span>
                     </li>
                 </ul>
             </div>
@@ -125,12 +125,6 @@ export default {
     },
     methods: {
         formatDateTime, // Форматируем дату через общий хелпер
-
-        // Получить название поля из формы по коду
-        getFieldName(code) {
-            const field = this.form.fields.find((f) => f.code === code);
-            return field ? field.name : code;
-        },
 
         // Форматировать ответ (массивы, текст, даты)
         formatAnswer(value) {

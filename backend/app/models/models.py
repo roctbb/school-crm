@@ -129,16 +129,19 @@ class Submission(db.Model):
     __tablename__ = 'submissions'
 
     id = db.Column(db.Integer, primary_key=True)
-
     params = db.Column(db.JSON, server_default=db.text("'{}'::json"))
-    answers = db.Column(db.JSON, server_default=db.text("'{}'::json"))
+    fields = db.Column(db.JSON, server_default=db.text("'[]'::json"))
     showoff_attributes = db.Column(db.JSON, server_default=db.text("'{}'::json"))
     created_at = db.Column(db.DateTime, nullable=True, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, nullable=True, server_default=db.func.now(), onupdate=db.func.now())
     deleted_at = db.Column(db.DateTime, nullable=True)
 
+    form_name = db.Column(db.String(100), nullable=True)
+    form_category_name = db.Column(db.String(100), nullable=True)
+    is_external = db.Column(db.Boolean, nullable=False, server_default=db.text("'false'::boolean"))
+
     # keys
-    form_id = db.Column(db.Integer, db.ForeignKey('forms.id', ondelete="CASCADE"), nullable=False)
+    form_id = db.Column(db.Integer, db.ForeignKey('forms.id', ondelete="CASCADE"), nullable=True)
     object_id = db.Column(db.Integer, db.ForeignKey('objects.id', ondelete="CASCADE"), nullable=False)
     creator_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
     deleter_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
@@ -203,4 +206,3 @@ class Comment(db.Model):
 
     created_by = db.relationship("User", backref="comments", lazy=False, foreign_keys=[creator_id])
     deleted_by = db.relationship('User', foreign_keys=[deleter_id])
-

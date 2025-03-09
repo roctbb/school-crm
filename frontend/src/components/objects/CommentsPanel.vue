@@ -1,5 +1,5 @@
 <template>
-    <div class="comments-panel">
+    <div class="comments-panel mb-3">
         <h5>Комментарии</h5>
         <!-- Список комментариев -->
         <div v-for="comment in sortedComments" :key="comment.id" class="mb-3">
@@ -37,7 +37,7 @@
                         placeholder="Напишите свой комментарий..."
                     />
                 </div>
-                <button class="btn btn-primary" type="submit">Отправить</button>
+                <button class="btn btn-primary btn-sm" type="submit">Отправить</button>
             </form>
         </div>
     </div>

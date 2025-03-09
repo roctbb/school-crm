@@ -56,7 +56,7 @@ def update_object_endpoint(validated_data, user, object_id):
 @requires_user
 def delete_object_endpoint(user, object_id):
     obj = get_object_by_id(object_id)
-    delete_object(obj)
+    delete_object(user, obj)
     return jsonify({'deteted': True}), 200
 
 
@@ -83,7 +83,7 @@ def add_comment(validated_data, user, object_id):
 def delete_comment_endpoint(user, object_id, comment_id):
     object = get_object_by_id(object_id)
     comment = get_comment_by_id(comment_id)
-    delete_comment(comment)
+    delete_comment(user, comment)
     return jsonify({'deteted': True}), 200
 
 
@@ -115,7 +115,7 @@ def update_submission_endpoint(validated_data, user, object_id, submission_id):
 
 @objects_blueprint.route('/<int:object_id>/submissions/<int:submission_id>', methods=['DELETE'])
 @requires_user
-def delete_submission_endpoint(user, submission_id):
+def delete_submission_endpoint(user, object_id, submission_id):
     sub = get_submission_by_id(submission_id)
-    delete_submission(sub)
+    delete_submission(user, sub)
     return jsonify({'deleted': True}), 200

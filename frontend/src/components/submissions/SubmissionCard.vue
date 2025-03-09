@@ -47,7 +47,7 @@ export default {
         };
     },
     created() {
-        this.form = this.store.getForm(this.submission.form.id);
+        this.form = this.submission.form;
     },
 };
 </script>

@@ -11,7 +11,7 @@
 
 
                 <form @submit.prevent="handleSave">
-                    <div v-for="(field, idx) in form.fields" :key="idx" class="mb-3">
+                    <div v-for="(field, idx) in submission.fields" :key="idx" class="mb-3">
                         <label :for="'field_'+idx" class="form-label">
                             {{ field.name }}
                             <span v-if="field.required" class="text-danger">*</span>
@@ -23,7 +23,7 @@
                             :id="'field_'+idx"
                             type="text"
                             class="form-control"
-                            v-model="submission.answers[field.code]"
+                            v-model="field.answer"
                             :required="field.required"
                             :placeholder="field.name"
                         />
@@ -33,7 +33,7 @@
                             v-else-if="field.type === 'text'"
                             :id="'field_'+idx"
                             class="form-control"
-                            v-model="submission.answers[field.code]"
+                            v-model="field.answer"
                             :required="field.required"
                             :placeholder="field.name"
                         />
@@ -44,7 +44,7 @@
                             :id="'field_'+idx"
                             type="number"
                             class="form-control"
-                            v-model.number="submission.answers[field.code]"
+                            v-model.number="field.answer"
                             :required="field.required"
                         />
 
@@ -52,7 +52,7 @@
                         <VueDatePicker
                             v-else-if="field.type === 'date'"
                             :id="'field_'+idx"
-                            v-model="submission.answers[field.code]"
+                            v-model="field.answer"
                             :enable-time-picker="false"
                             :text-input="true"
                             model-type="format"
@@ -66,7 +66,7 @@
                         <VueDatePicker
                             v-else-if="field.type === 'datetime'"
                             :id="'field_'+idx"
-                            v-model="submission.answers[field.code]"
+                            v-model="field.answer"
                             :enable-time-picker="true"
                             :text-input="true"
                             model-type="format"
@@ -81,7 +81,7 @@
                             v-else-if="field.type === 'select'"
                             :id="'field_'+idx"
                             class="form-select"
-                            v-model="submission.answers[field.code]"
+                            v-model="field.answer"
                             :required="field.required"
                         >
                             <option
@@ -99,7 +99,7 @@
                                 type="checkbox"
                                 class="form-check-input"
                                 :id="'field_'+idx"
-                                v-model="submission.answers[field.code]"
+                                v-model="field.answer"
                             />
                             <label :for="'field_'+idx" class="form-check-label">
                                 {{ field.name }}
@@ -118,7 +118,7 @@
                                     type="checkbox"
                                     :id="'field_'+idx+'_'+boxIndex"
                                     :value="option"
-                                    v-model="submission.answers[field.code]"
+                                    v-model="field.answer"
                                 />
                                 <label
                                     class="form-check-label"
@@ -193,7 +193,6 @@ export default {
             await this.object.loadSubmissions();
             this.submission = this.object._submissions.find(submission => submission.id === parseInt(this.submissionId))
             this.form = this.submission._form;
-            console.log(this.form, this.submission)
         } else {
             this.form = this.store.getForm(this.formId)
             this.submission = new Submission({}, this.store, this.form);
@@ -207,10 +206,10 @@ export default {
 
         // Заполнить submission.answers пустыми значениями, если форму только создали
         fillEmptyAnswers() {
-            if (this.form && Array.isArray(this.form.fields)) {
-                this.form.fields.forEach(field => {
+            if (this.submission) {
+                this.submission.fields.forEach(field => {
                     if (['select', 'checkboxes'].includes(field)) {
-                        this.submission.answers[field.code] = []
+                        field.answer = []
                     }
                 });
             }

@@ -51,5 +51,5 @@ def update_form_endpoint(validated_data, user, form_id):
 @requires_user
 def delete_form_endpoint(user, form_id):
     form = get_form_by_id(form_id)
-    delete_form(form)
+    delete_form(user, form)
     return jsonify({'deleted': True}), 200
