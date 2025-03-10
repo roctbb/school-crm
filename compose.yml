@@ -26,6 +26,8 @@ services:
       FLASK_ENV: production
     ports:
       - "5000:5000"
+    volumes:
+      - backend_storage:/app/storage
     depends_on:
       db:
         condition: service_healthy
@@ -55,3 +57,4 @@ services:
 volumes:
   frontend_build:
   postgres_data:
+  backend_storage:

@@ -9,4 +9,8 @@ RUN npm install
 
 # Скопируем весь проект и соберём
 COPY . .
+
+ENV VITE_API_BASE_URL=/api
+ENV NODE_ENV=production
+
 RUN npm run build
