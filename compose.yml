@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   db:
     image: postgres:16
@@ -13,11 +11,10 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      # Проверяем доступность Postgres (вернёт 0, если уже принимает подключения)
-      test: ["CMD-SHELL", "pg_isready --dbname=postgres --username=postgres"]
-      interval: 10s   # Интервал между проверками
-      timeout: 5s     # Сколько ждать ответа до таймаута
-      retries: 5      # Количество неудачных проверок до статуса unhealthy
+      test: [ "CMD-SHELL", "pg_isready --dbname=postgres --username=postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   backend:
     build: ./backend
@@ -28,11 +25,31 @@ services:
     ports:
       - "5000:5000"
     depends_on:
-      # Говорим дождаться, пока Postgres не станет healthy
       db:
         condition: service_healthy
 
-  # Прочие сервисы...
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: crm_frontend
+    volumes:
+      - frontend_build:/app/dist # Используем volume для передачи собранного фронтенда
+    depends_on:
+      - backend
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: crm_nginx
+    ports:
+      - "8383:80" # Публикуем порт 80 для доступа
+    depends_on:
+      - frontend
+    volumes:
+      - frontend_build:/usr/share/nginx/html # Связываем volume с nginx
 
 volumes:
+  frontend_build:
   postgres_data:
