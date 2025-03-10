@@ -12,7 +12,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready --dbname=postgres --username=postgres" ]
-      interval: 10s
+      interval: 5s
       timeout: 5s
       retries: 5
 
@@ -32,29 +32,16 @@ services:
       db:
         condition: service_healthy
 
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: crm_frontend
-    volumes:
-      - frontend_build:/app/dist # Используем volume для передачи собранного фронтенда
-    depends_on:
-      - backend
-
   nginx:
     build:
-      context: ./nginx
+      context: ./frontend
       dockerfile: Dockerfile
     container_name: crm_nginx
     ports:
       - "8383:80" # Публикуем порт 80 для доступа
     depends_on:
-      - frontend
-    volumes:
-      - frontend_build:/usr/share/nginx/html # Связываем volume с nginx
+      - backend
 
 volumes:
-  frontend_build:
   postgres_data:
   backend_storage:
