@@ -524,7 +524,7 @@ ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_
 --
 
 COPY public.alembic_version (version_num) FROM stdin;
-13fa6a660e11
+f848e0fce248
 \.
 
 
