@@ -21,9 +21,9 @@ const useMainStore = defineStore("mainStore", {
 
     actions: {
         async tryLoadProfile() {
+            if (this.profile) return true;
             try {
                 this.profile = await getProfile();
-                console.log("Loaded");
                 return true;
             } catch (e) {
                 return false;
