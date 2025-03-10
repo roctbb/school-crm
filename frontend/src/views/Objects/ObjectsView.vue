@@ -94,10 +94,13 @@ export default {
             return this.store.getObjectsByType(this.activeTab);
         },
         filteredObjects() {
-            return this.activeObjects.filter((object) =>
-                object.name.toLowerCase().includes(this.searchQuery.toLowerCase())
-            );
+            return this.activeObjects
+                .filter((object) =>
+                    object.name.toLowerCase().includes(this.searchQuery.toLowerCase())
+                )
+                .sort((a, b) => a.name.localeCompare(b.name));
         },
+
         groupingAttributes() {
             // Получаем атрибуты с `show_off: true` для активного типа объектов
             const activeType = this.store.getObjectTypeByCode(this.activeTab);
@@ -128,6 +131,12 @@ export default {
                     groups[groupKey].push(object);
                 }
             });
+
+            // Добавляем сортировку объектов внутри каждой группы
+            Object.keys(groups).forEach((groupKey) => {
+                groups[groupKey].sort((a, b) => a.name.localeCompare(b.name));
+            });
+
             return groups;
         },
 
