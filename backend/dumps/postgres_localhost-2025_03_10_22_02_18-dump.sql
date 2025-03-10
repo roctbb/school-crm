@@ -2,12 +2,13 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 14.13 (Homebrew)
--- Dumped by pg_dump version 14.15 (Homebrew)
+-- Dumped from database version 16.3 (Postgres.app)
+-- Dumped by pg_dump version 17.4
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
+SET transaction_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
@@ -20,17 +21,10 @@ SET row_security = off;
 -- Name: public; Type: SCHEMA; Schema: -; Owner: roctbb
 --
 
-CREATE SCHEMA public;
+-- *not* creating schema, since initdb creates it
 
 
 ALTER SCHEMA public OWNER TO roctbb;
-
---
--- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: roctbb
---
-
-COMMENT ON SCHEMA public IS 'standard public schema';
-
 
 SET default_tablespace = '';
 
@@ -54,11 +48,12 @@ ALTER TABLE public.alembic_version OWNER TO postgres;
 CREATE TABLE public.comments (
     id integer NOT NULL,
     object_id integer NOT NULL,
-    user_id integer NOT NULL,
     text text,
     created_at timestamp without time zone DEFAULT now() NOT NULL,
     updated_at timestamp without time zone DEFAULT now(),
-    deleted_at timestamp without time zone
+    deleted_at timestamp without time zone,
+    creator_id integer,
+    deleter_id integer
 );
 
 
@@ -77,7 +72,7 @@ CREATE SEQUENCE public.comments_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.comments_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.comments_id_seq OWNER TO postgres;
 
 --
 -- Name: comments_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -118,7 +113,7 @@ CREATE SEQUENCE public.form_categories_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.form_categories_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.form_categories_id_seq OWNER TO postgres;
 
 --
 -- Name: form_categories_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -160,7 +155,7 @@ CREATE SEQUENCE public.forms_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.forms_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.forms_id_seq OWNER TO postgres;
 
 --
 -- Name: forms_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -204,7 +199,7 @@ CREATE SEQUENCE public.invitations_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.invitations_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.invitations_id_seq OWNER TO postgres;
 
 --
 -- Name: invitations_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -256,7 +251,7 @@ CREATE SEQUENCE public.object_types_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.object_types_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.object_types_id_seq OWNER TO postgres;
 
 --
 -- Name: object_types_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -322,7 +317,7 @@ CREATE SEQUENCE public.objects_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.objects_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.objects_id_seq OWNER TO postgres;
 
 --
 -- Name: objects_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -345,7 +340,8 @@ CREATE TABLE public.submissions (
     form_id integer NOT NULL,
     object_id integer NOT NULL,
     creator_id integer,
-    deleter_id integer
+    deleter_id integer,
+    showoff_attributes json DEFAULT '{}'::json
 );
 
 
@@ -364,7 +360,7 @@ CREATE SEQUENCE public.submissions_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.submissions_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.submissions_id_seq OWNER TO postgres;
 
 --
 -- Name: submissions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -400,7 +396,7 @@ CREATE SEQUENCE public.uploaded_files_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.uploaded_files_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.uploaded_files_id_seq OWNER TO postgres;
 
 --
 -- Name: uploaded_files_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -439,7 +435,7 @@ CREATE SEQUENCE public.users_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.users_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.users_id_seq OWNER TO postgres;
 
 --
 -- Name: users_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -528,7 +524,7 @@ ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_
 --
 
 COPY public.alembic_version (version_num) FROM stdin;
-66cedc709741
+13fa6a660e11
 \.
 
 
@@ -536,12 +532,7 @@ COPY public.alembic_version (version_num) FROM stdin;
 -- Data for Name: comments; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.comments (id, object_id, user_id, text, created_at, updated_at, deleted_at) FROM stdin;
-1	1	1	test	2025-03-02 18:14:17.773146	2025-03-02 18:14:17.773146	\N
-5	1	1	Test	2025-03-02 18:17:56.470397	2025-03-02 18:35:44.399383	2025-03-02 18:35:44.399383
-4	1	1	test	2025-03-02 18:15:45.561385	2025-03-02 18:35:46.806941	2025-03-02 18:35:46.806941
-3	1	1	test	2025-03-02 18:15:14.665879	2025-03-02 18:35:48.596134	2025-03-02 18:35:48.596134
-2	1	1	test	2025-03-02 18:14:54.042825	2025-03-02 18:35:51.362067	2025-03-02 18:35:51.362067
+COPY public.comments (id, object_id, text, created_at, updated_at, deleted_at, creator_id, deleter_id) FROM stdin;
 \.
 
 
@@ -560,9 +551,6 @@ COPY public.form_categories (id, name, params, created_at, updated_at, deleted_a
 --
 
 COPY public.forms (id, name, available_params, fields, created_at, updated_at, deleted_at, creator_id, deleter_id, category_id) FROM stdin;
-1	test1	[]	[{"name": "test", "code": "4brr6ig51uq4d1chdyvvjf", "type": "text", "required": false, "options": []}]	2025-03-02 22:38:53.211269	2025-03-02 22:53:25.452475	\N	1	\N	1
-2	qwerqwe	[]	[{"name": "weqrqwer", "code": "j6lynziib6n91rp6pohnxf", "type": "text", "required": false, "options": []}, {"name": "qwerqwer", "code": "s5svax8ctfap2i39buvpu", "type": "text", "required": false, "options": []}, {"name": "qwerqwer", "code": "rnz9su0d5rfcmvocilt9pn", "type": "text", "required": false, "options": []}]	2025-03-02 22:56:13.580117	2025-03-02 22:56:56.670647	2025-03-02 22:56:56.670647	1	\N	2
-3	sdf	[]	[{"name": "sdfsdf", "code": "so22hw5jdeq5az1tkghqei", "type": "text", "required": false, "options": []}]	2025-03-02 22:57:14.915691	2025-03-02 22:57:14.915691	\N	1	\N	2
 \.
 
 
@@ -571,7 +559,7 @@ COPY public.forms (id, name, available_params, fields, created_at, updated_at, d
 --
 
 COPY public.invitations (id, email, key, role, created_at, updated_at, deleted_at, used_at, object_id, creator_id, deleter_id, user_id) FROM stdin;
-1	\N	12345	admin	2025-03-01 16:57:04.795216	2025-03-01 20:00:24.197365	\N	2025-03-01 20:00:24.197365	\N	\N	\N	1
+2	\N	123456	admin	2025-03-10 18:57:28.353487	2025-03-10 18:57:28.353487	\N	\N	\N	\N	\N	\N
 \.
 
 
@@ -581,9 +569,10 @@ COPY public.invitations (id, email, key, role, created_at, updated_at, deleted_a
 
 COPY public.object_types (id, name, code, available_attributes, available_params, created_at, updated_at, params) FROM stdin;
 2	Группы	groups	[]	[]	2025-03-01 16:55:07.970591	2025-03-01 16:55:07.970591	{"index": 4, "possible_children": ["students"]}
-3	События	events	[]	[]	2025-03-01 16:55:07.970591	2025-03-01 16:55:07.970591	{"index": 3, "possible_children": ["students"]}
 1	Ученики	students	[{"name": "Класс", "code": "grade", "type": "number", "display": true, "show_off": true}, {"name": "Фото", "code": "photo", "type": "file", "display": false, "show_off": false}, {"name": "Дата рождения", "code": "birthday", "type": "date", "display": true, "show_off": true}, {"name": "Телефон", "code": "phone", "type": "string", "display": true, "show_off": false}, {"name": "Telegram", "code": "tg", "type": "string", "display": true, "show_off": false}, {"name": "Контакты родителей", "code": "tg", "type": "text", "display": true, "show_off": false}]	[]	2025-03-01 16:55:07.970591	2025-03-01 16:55:07.970591	{"index": 1, "possible_children": []}
-4	Проекты	projects	[{"name": "Описание", "code": "description", "type": "text", "display": true, "show_off": false}, {"name": "Репозиторий", "code": "repo", "type": "string", "display": true, "show_off": false}, {"name": "Направления", "code": "groups", "type": "checkboxes", "options": ["Математика", "ИТ", "Физика", "Лингвистика"], "display": true, "show_off": true}, {"name": "Тип", "code": "type", "type": "select", "options": ["Проект", "Исследование"], "display": true, "show_off": true}]	[]	2025-03-01 16:55:07.970591	2025-03-01 16:55:07.970591	{"index": 2, "possible_children": ["students", "events"]}
+4	Проекты	projects	[{"name": "Описание", "code": "description", "type": "text", "display": true, "show_off": false}, {"name": "Репозиторий", "code": "repo", "type": "string", "display": true, "show_off": false}, {"name": "Направления", "code": "groups", "type": "checkboxes", "options": ["Математика", "ИТ", "Физика", "Лингвистика"], "display": true, "show_off": true}, {"name": "Тип", "code": "type", "type": "select", "options": ["Проект", "Исследование"], "display": true, "show_off": true}]	[]	2025-03-01 16:55:07.970591	2025-03-01 16:55:07.970591	{"index": 2, "possible_children": ["students", "events", "teachers"]}
+3	События	events	[]	[]	2025-03-01 16:55:07.970591	2025-03-01 16:55:07.970591	{"index": 3, "possible_children": ["students", "teachers"]}
+5	Учителя	teachers	[{"name": "Фото", "code": "photo", "type": "file", "display": false, "show_off": false}, {"name": "Телефон", "code": "phone", "type": "string", "display": true, "show_off": false}, {"name": "Telegram", "code": "tg", "type": "string", "display": true, "show_off": false}, {"name": "Предмет", "code": "lesson", "type": "string", "display": true, "show_off": true}]	[]	2025-03-01 16:55:07.970591	2025-03-01 16:55:07.970591	{"index": 5, "possible_children": []}
 \.
 
 
@@ -610,11 +599,6 @@ COPY public.object_user_association (object_id, user_id) FROM stdin;
 --
 
 COPY public.objects (id, name, params, attributes, created_at, updated_at, deleted_at, type_id, creator_id, deleter_id) FROM stdin;
-1	Иванов Иван	{}	{"birthday": "27.04.1994", "grade": 7, "photo": "https://sun9-46.userapi.com/impg/IiUiukOkBu93UXF9jG4tFJYnP7yv0IvEqTtlRQ/uVIb1ndnhLg.jpg?size=545x604&quality=96&sign=ea1415c4a0f92613e5c3ee5b7f2f7eff&type=album"}	2025-03-01 20:07:44.599041	2025-03-01 22:07:14.170614	\N	1	1	\N
-4	Иванов Иван	{}	{"birthday": "12.05.2014", "grade": 7, "photo": "http://localhost:8081/api/files/folder_3/rubcev.jpeg", "phone": "89150187307"}	2025-03-01 21:36:05.637954	2025-03-01 22:54:46.087587	\N	1	1	\N
-5	Лупатория	{}	{}	2025-03-01 23:41:10.323705	2025-03-01 23:41:10.323705	\N	3	1	\N
-2	Петр Петров1	{}	{"grade": 8, "photo": "http://localhost:8081/api/files/folder_4/rubcev.jpeg", "phone": "89150187307"}	2025-03-01 20:07:51.487502	2025-03-02 16:31:24.990722	\N	1	1	\N
-3	Кандибобер	{}	{"description": "\\u041e\\u0447\\u0435\\u043d\\u044c \\u0438\\u043d\\u0442\\u0435\\u0440\\u0435\\u0441\\u043d\\u044b\\u0439 \\u043f\\u0440\\u043e\\u0435\\u043a\\u0442", "groups": ["\\u0418\\u0422", "\\u041c\\u0430\\u0442\\u0435\\u043c\\u0430\\u0442\\u0438\\u043a\\u0430"], "type": "\\u041f\\u0440\\u043e\\u0435\\u043a\\u0442"}	2025-03-01 20:50:29.562204	2025-03-02 16:47:23.919284	\N	4	1	\N
 \.
 
 
@@ -623,9 +607,6 @@ COPY public.objects (id, name, params, attributes, created_at, updated_at, delet
 --
 
 COPY public.objects_children (parent_id, child_id) FROM stdin;
-3	1
-3	2
-3	5
 \.
 
 
@@ -633,7 +614,7 @@ COPY public.objects_children (parent_id, child_id) FROM stdin;
 -- Data for Name: submissions; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.submissions (id, params, answers, created_at, updated_at, deleted_at, form_id, object_id, creator_id, deleter_id) FROM stdin;
+COPY public.submissions (id, params, answers, created_at, updated_at, deleted_at, form_id, object_id, creator_id, deleter_id, showoff_attributes) FROM stdin;
 \.
 
 
@@ -642,10 +623,6 @@ COPY public.submissions (id, params, answers, created_at, updated_at, deleted_at
 --
 
 COPY public.uploaded_files (id, user_id, original_filename, stored_filename) FROM stdin;
-1	1	rubcev.jpeg	rubcev.jpeg
-2	1	rubcev.jpeg	rubcev.jpeg
-3	1	rubcev.jpeg	rubcev.jpeg
-4	1	rubcev.jpeg	rubcev.jpeg
 \.
 
 
@@ -654,7 +631,6 @@ COPY public.uploaded_files (id, user_id, original_filename, stored_filename) FRO
 --
 
 COPY public.users (id, name, email, password, role, created_at, updated_at) FROM stdin;
-1	Ростислав	roctbb@gmail.com	$2b$12$e0owr5VVX1x/JjCAZyydAOCbTI7BVXmpL3o3Iesg8t4BGswtywZfm	admin	2025-03-01 20:00:24.197365	2025-03-01 20:00:24.197365
 \.
 
 
@@ -691,14 +667,14 @@ SELECT pg_catalog.setval('public.forms_id_seq', 3, true);
 -- Name: invitations_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.invitations_id_seq', 1, true);
+SELECT pg_catalog.setval('public.invitations_id_seq', 2, true);
 
 
 --
 -- Name: object_types_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.object_types_id_seq', 4, true);
+SELECT pg_catalog.setval('public.object_types_id_seq', 5, true);
 
 
 --
@@ -712,14 +688,14 @@ SELECT pg_catalog.setval('public.objects_id_seq', 5, true);
 -- Name: submissions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.submissions_id_seq', 1, false);
+SELECT pg_catalog.setval('public.submissions_id_seq', 1, true);
 
 
 --
 -- Name: uploaded_files_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.uploaded_files_id_seq', 4, true);
+SELECT pg_catalog.setval('public.uploaded_files_id_seq', 5, true);
 
 
 --
@@ -850,19 +826,27 @@ ALTER TABLE ONLY public.users
 
 
 --
+-- Name: comments comments_creator_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.comments
+    ADD CONSTRAINT comments_creator_id_fkey FOREIGN KEY (creator_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: comments comments_deleter_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.comments
+    ADD CONSTRAINT comments_deleter_id_fkey FOREIGN KEY (deleter_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
 -- Name: comments comments_object_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.comments
     ADD CONSTRAINT comments_object_id_fkey FOREIGN KEY (object_id) REFERENCES public.objects(id) ON DELETE CASCADE;
-
-
---
--- Name: comments comments_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.comments
-    ADD CONSTRAINT comments_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 
 --
@@ -1071,6 +1055,13 @@ ALTER TABLE ONLY public.users_objects
 
 ALTER TABLE ONLY public.users_objects
     ADD CONSTRAINT users_objects_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: SCHEMA public; Type: ACL; Schema: -; Owner: roctbb
+--
+
+REVOKE USAGE ON SCHEMA public FROM PUBLIC;
 
 
 --

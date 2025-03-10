@@ -19,6 +19,8 @@ services:
   backend:
     build: ./backend
     container_name: crm_backend
+    env_file:
+      - .env  # Загружаем переменные из .env
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/postgres
       FLASK_ENV: production
