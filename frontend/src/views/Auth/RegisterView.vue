@@ -14,7 +14,7 @@
                         id="name"
                         class="form-control"
                         v-model="name"
-                        :class="{ 'is-invalid': errors.name === true }"
+                        :class="{ 'is-invalid': errors.name }"
                         required
                         autofocus
                     />
@@ -84,7 +84,8 @@
 <script>
 import useMainStore from "@/stores/mainStore.js"; // Pinia Store
 import {mapActions} from "pinia";
-import {register, login} from "@/api/auth_api.js"; // Импорты из auth_api.js
+import {register, login} from "@/api/auth_api.js";
+import {reactive} from "vue"; // Импорты из auth_api.js
 
 export default {
     name: "RegisterView",
@@ -96,13 +97,13 @@ export default {
             confirmPassword: "",
             invite: "", // Поле для кода приглашения
             error: "",
-            errors: {
+            errors: reactive({
                 name: false,
                 email: false,
                 password: false,
                 confirmPassword: false,
                 invite: false,
-            },
+            }),
         };
     },
     methods: {
@@ -173,7 +174,6 @@ export default {
 }
 
 .invalid-feedback {
-    display: block;
     color: #dc3545;
 }
 </style>
