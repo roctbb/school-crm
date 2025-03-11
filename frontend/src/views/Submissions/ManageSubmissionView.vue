@@ -133,6 +133,9 @@
                     <button type="submit" class="btn btn-primary">
                         Сохранить
                     </button>
+                    <button type="submit" class="btn btn-secondary" @click="cancel">
+                        Назад
+                    </button>
                 </form>
             </div>
         </div>
@@ -229,7 +232,13 @@ export default {
             } finally {
                 this.isLoading = false;
             }
-        }
+        },
+        cancel() {
+            this.submission.reset();
+            this.$router.back();
+        },
+
+
     }
 };
 </script>

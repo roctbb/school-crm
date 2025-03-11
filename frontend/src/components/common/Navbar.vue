@@ -93,6 +93,7 @@ export default {
         ...mapActions(useMainStore, ["logout"]),
         handleLogout() {
             this.logout()
+            this.$router.push("/login");
         },
     },
 }

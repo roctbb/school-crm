@@ -61,7 +61,6 @@ const useMainStore = defineStore("mainStore", {
             this.profile = null;
             this.reset()
             localStorage.clear();
-            this.$router.push("/login");
         },
 
         reset() {
