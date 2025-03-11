@@ -191,17 +191,10 @@ export default {
             this.object = this.store.getObject(object_type, object_id);
             await this.object.loadSubmissions();
 
-            console.log("object:", this.object)
-
             const unique_children_codes = [...new Set(this.object.children.map(child => child.type))];
             const unique_parents_codes = [...new Set(this.object.parents.map(child => child.type))];
 
-            console.log("unique_children_codes:", unique_children_codes)
-            console.log("unique_parents_codes:", unique_parents_codes)
-
             const unique_type_codes = [...new Set([...unique_children_codes, ...unique_parents_codes])];
-
-            console.log("unique_type_codes:", unique_type_codes)
 
             for (let type_code of unique_type_codes) {
                 this.connectedTypes.push(this.store.getObjectTypeByCode(type_code))

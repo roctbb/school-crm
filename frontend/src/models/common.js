@@ -46,6 +46,13 @@ class Model {
 
         return descrition
     }
+
+    copy() {
+        const description = this._present()
+        description.id = undefined
+        console.log(description)
+        return new this.constructor(description, this._store)
+    }
 }
 
 export default Model

@@ -130,12 +130,47 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn-primary">
+                    <div class="accordion my-3" id="brothersAccordion">
+                        <div class="accordion-item">
+                            <h5 class="accordion-header" id="headingFilter">
+                                <button
+                                    class="accordion-button collapsed p-2 bg-light"
+                                    type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#collapseFilter"
+                                    aria-expanded="false"
+                                    aria-controls="collapseFilter"
+                                >
+                                    Дублировать для...
+                                </button>
+                            </h5>
+                            <div
+                                id="collapseFilter"
+                                class="accordion-collapse collapse"
+                                aria-labelledby="headingFilter"
+                                data-bs-parent="#brothersAccordion"
+                            >
+                                <div class="accordion-body p-2">
+                                    <div v-if="!isEditMode">
+                                        <ChildrenFilterEditor
+                                            v-model:children="attached_brothers"
+                                            :group="object_type"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <button type="submit" class="btn btn-primary me-1">
                         Сохранить
                     </button>
                     <button type="submit" class="btn btn-secondary" @click="cancel">
                         Назад
                     </button>
+
+
                 </form>
             </div>
         </div>
@@ -149,10 +184,11 @@ import Loading from "@/components/common/Loading.vue";
 import Submission from "@/models/Submission.js";
 import useMainStore from "@/stores/mainStore.js";
 import BaseLayout from "@/components/layouts/BaseLayout.vue";
+import ChildrenFilterEditor from "@/components/objects/ChildrenFilterEditor.vue";
 
 export default {
     name: "ManageSubmissionView",
-    components: {BaseLayout, Loading, VueDatePicker},
+    components: {ChildrenFilterEditor, BaseLayout, Loading, VueDatePicker},
     props: {
         objectId: {
             type: Number,
@@ -177,7 +213,9 @@ export default {
             form: null,
             object: null,
             store: useMainStore(),
-            isLoading: false
+            isLoading: false,
+            object_type: {},
+            attached_brothers: [],
         };
     },
     computed: {
@@ -199,6 +237,8 @@ export default {
         } else {
             this.form = this.store.getForm(this.formId)
             this.submission = new Submission({}, this.store, this.form);
+            this.object_type = this.store.getObjectTypeByCode(this.object.type)
+            this.attached_brothers.push(this.object.asChild())
             this.fillEmptyAnswers();
         }
 
@@ -222,11 +262,24 @@ export default {
             try {
                 this.isLoading = true;
                 // Метод save() в модели сам определяет, создавать новую запись или обновлять
+                let submission_template = this.submission.copy()
                 await this.submission.save(this.objectId, this.formId);
 
                 if (!this.isEditMode) {
                     this.object._submissions.push(this.submission);
+
+                    for (let brother of this.attached_brothers) {
+                        if (brother.id !== this.objectId) {
+                            let brother_submission = submission_template.copy()
+                            console.log("copy is", brother_submission.copy())
+                            await brother_submission.save(brother.id, this.formId);
+                            let brother_object = this.store.getObject(brother.type, brother.id)
+                            await brother_object.loadSubmissions()
+                            brother_object._submissions.push(brother_submission);
+                        }
+                    }
                 }
+
                 // Дополнительные действия, например, переход на другую страницу
                 this.$router.push(`/${this.objectTypeCode}/${this.objectId}`);
             } finally {

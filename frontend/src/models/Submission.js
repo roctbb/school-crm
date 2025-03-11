@@ -58,6 +58,12 @@ class Submission extends Model {
             await deleteSubmission(objectId, this.id);
         }
     }
+
+    copy() {
+        const description = this._present()
+        description.id = undefined
+        return new this.constructor(description, this._store, this._form)
+    }
 }
 
 export default Submission;
