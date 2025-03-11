@@ -57,10 +57,9 @@ export default {
         };
     },
     methods: {
-        ...mapActions(useMainStore, ["setToken"]),
         async handleLogin() {
             try {
-                this.setToken(await login(this.email, this.password));
+                await useMainStore().setToken(await login(this.email, this.password));
                 this.$router.push("/");
                 this.error = "";
             } catch (error) {

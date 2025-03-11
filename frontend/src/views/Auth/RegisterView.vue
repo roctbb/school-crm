@@ -159,10 +159,6 @@ export default {
         if (inviteCode) {
             this.invite = inviteCode;
         }
-        else {
-            this.errors.invite = true;
-        }
-
     }
 };
 </script>

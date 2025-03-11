@@ -21,7 +21,7 @@ const useMainStore = defineStore("mainStore", {
 
     actions: {
         async tryLoadProfile() {
-            if (!this.token) return false;
+            if (!api_client.token) return false;
             if (this.profile) return true;
             try {
                 this.profile = await getProfile();
