@@ -27,6 +27,7 @@
                         <draggable
                             v-model="form.fields"
                             tag="div"
+                            item-key="code"
                             ghost-class="drag-ghost"
                             handle=".drag-handle"
                             @end="onDragEnd"

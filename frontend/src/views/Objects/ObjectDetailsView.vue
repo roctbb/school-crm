@@ -168,8 +168,8 @@ export default {
         findRelativesByType(type) {
             console.log("findRelativesByType:", type)
             const relatives = [...this.object.children.filter(child => child.type === type.code), ...this.object.parents.filter(parent => parent.type === type.code)]
-            console.log("relatives:", relatives)
-            return relatives
+            return relatives.sort((a, b) => a.name.localeCompare(b.name))
+
         },
         goToCreateSubmission(formId) {
             // Переход на страницу создания ответа
