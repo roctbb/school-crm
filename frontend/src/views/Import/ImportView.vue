@@ -25,6 +25,7 @@ import BaseLayout from "@/components/layouts/BaseLayout.vue"; // Импорт ф
 
 export default {
     components: {BaseLayout, Loading},
+    name: "ImportView",
     data() {
         return {
             selectedFile: null, // Для хранения выбранного файла
