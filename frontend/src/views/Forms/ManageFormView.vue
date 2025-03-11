@@ -99,14 +99,14 @@
                             <div v-if="field.type === 'select' || field.type === 'checkboxes'">
                                 <label class="form-label">Варианты</label>
                                 <div
-                                    v-for="(option, optIndex) in field.localOptions"
+                                    v-for="(option, optIndex) in field.options"
                                     :key="optIndex"
                                     class="input-group mb-2"
                                 >
                                     <input
                                         type="text"
                                         class="form-control"
-                                        v-model="field.localOptions[optIndex]"
+                                        v-model="field.options[optIndex]"
                                     />
                                     <button
                                         type="button"
