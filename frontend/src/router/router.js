@@ -130,8 +130,10 @@ router.beforeEach(async (to, from, next) => {
     const has_auth = await useMainStore().checkAuth();
     console.log("Router auth check: ", has_auth ? "OK" : "FAIL");
     if (to.meta.requiresAuth && !has_auth) {
+        console.log("Redirecting to login")
         next({ name: 'Login' });
     } else if (to.meta.withoutAuth && has_auth) {
+        console.log("Redirecting to main")
         next({ name: 'Objects' });
     } else {
         next();

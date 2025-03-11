@@ -21,6 +21,7 @@ const useMainStore = defineStore("mainStore", {
 
     actions: {
         async tryLoadProfile() {
+            if (!this.token) return false;
             if (this.profile) return true;
             try {
                 this.profile = await getProfile();
@@ -70,7 +71,6 @@ const useMainStore = defineStore("mainStore", {
 
         async loadStateFromLocalStorage() {
             const token = localStorage.getItem("token");
-            console.log("Token from localStorage:", token);
 
             if (token) {
                 await this.setToken(token);

@@ -120,6 +120,7 @@ export default {
         },
 
         async handleRegister() {
+            console.log("Handling register form")
             // Проверяем форму, если есть ошибки - выходим
             if (!this.validateForm()) {
                 return;
