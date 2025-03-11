@@ -14,7 +14,7 @@
                         id="name"
                         class="form-control"
                         v-model="name"
-                        :class="{ 'is-invalid': errors.name }"
+                        :class="{ 'is-invalid': errors.name === true }"
                         required
                         autofocus
                     />
@@ -27,7 +27,7 @@
                         id="email"
                         class="form-control"
                         v-model="email"
-                        :class="{ 'is-invalid': errors.email }"
+                        :class="{ 'is-invalid': errors.email === true }"
                         required
                     />
                     <div class="invalid-feedback">Введите корректный email</div>
@@ -39,7 +39,7 @@
                         id="password"
                         class="form-control"
                         v-model="password"
-                        :class="{ 'is-invalid': errors.password }"
+                        :class="{ 'is-invalid': errors.password === true }"
                         required
                     />
                     <div class="invalid-feedback">Введите пароль</div>
@@ -51,7 +51,7 @@
                         id="confirmPassword"
                         class="form-control"
                         v-model="confirmPassword"
-                        :class="{ 'is-invalid': errors.confirmPassword }"
+                        :class="{ 'is-invalid': errors.confirmPassword === true }"
                         required
                     />
                     <div class="invalid-feedback">Пароли не совпадают</div>
@@ -63,7 +63,7 @@
                         id="invite"
                         class="form-control"
                         v-model="invite"
-                        :class="{ 'is-invalid': errors.invite }" :disabled="!errors.invite"
+                        :class="{ 'is-invalid': errors.invite === true }" :disabled="!errors.invite"
                     />
                     <div class="invalid-feedback">Приглашение отсутствует или недействительно</div>
                 </div>
