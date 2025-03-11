@@ -37,7 +37,7 @@ const routes = [
         meta: { requiresAuth: true },
         props: route => ({
             objectTypeCode: route.params.object_type,
-            objectId: route.params.object_id
+            objectId: Number(route.params.object_id)
         })
     },
     {
@@ -56,7 +56,7 @@ const routes = [
         meta: { requiresAuth: true },
         props: route => ({
             objectTypeCode: route.params.object_type,
-            objectId: route.params.object_id
+            objectId: Number(route.params.object_id)
         })
     },
     {
@@ -70,14 +70,19 @@ const routes = [
         name: 'CreateForm',
         component: () => import('@/views/Forms/ManageFormView.vue'),
         meta: { requiresAuth: true },
-        props: true
+        props: route => ({
+            categoryId: Number(route.params.categoryId)
+        })
     },
     {
         path: '/forms/:categoryId/:formId/edit',
         name: 'EditForm',
         component: () => import('@/views/Forms/ManageFormView.vue'),
         meta: { requiresAuth: true },
-        props: true
+        props: route => ({
+            categoryId: Number(route.params.categoryId),
+            formId: Number(route.params.formId)
+        })
     },
     {
         path: '/:object_type/:object_id/forms/:formId/submissions/create',
@@ -86,8 +91,8 @@ const routes = [
         meta: { requiresAuth: true },
         props: route => ({
             objectTypeCode: route.params.object_type,
-            objectId: route.params.object_id,
-            formId: route.params.formId
+            objectId: Number(route.params.object_id),
+            formId: Number(route.params.formId)
         })
     },
     {
@@ -97,8 +102,8 @@ const routes = [
         meta: { requiresAuth: true },
         props: route => ({
             objectTypeCode: route.params.object_type,
-            objectId: route.params.object_id,
-            submissionId: route.params.submissionId
+            objectId: Number(route.params.object_id),
+            submissionId: Number(route.params.submissionId)
         })
     },
     {
@@ -108,8 +113,8 @@ const routes = [
         meta: { requiresAuth: true },
         props: route => ({
             objectTypeCode: route.params.object_type,
-            objectId: route.params.object_id,
-            submissionId: route.params.submissionId
+            objectId: Number(route.params.object_id),
+            submissionId: Number(route.params.submissionId)
         })
     },
     {
