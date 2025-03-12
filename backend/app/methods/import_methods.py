@@ -51,16 +51,25 @@ def import_data(user, file):
             if len(attributes[attribute]) == 1:
                 attributes[attribute] = attributes[attribute][0]
 
-        # Создаем объект Object
-        new_object = Object(
-            name=name,
-            type_id=object_type.id,
-            attributes=attributes,
-            params=params,
-            creator_id=user.id
-        )
-        db.session.add(new_object)
-        imported_objects.append(new_object)
+        existing_object = Object.query.filter_by(name=name, type_id=object_type.id).first()
+
+        if existing_object:
+            for key in attributes:
+                existing_object.attributes[key] = attributes[key]
+
+            for key in params:
+                existing_object.params[key] = params[key]
+
+        else:
+            new_object = Object(
+                name=name,
+                type_id=object_type.id,
+                attributes=attributes,
+                params=params,
+                creator_id=user.id
+            )
+            db.session.add(new_object)
+            imported_objects.append(new_object)
 
     current_app.logger.info(f"Импортировано объектов: {len(imported_objects)}")
     return "OK"
