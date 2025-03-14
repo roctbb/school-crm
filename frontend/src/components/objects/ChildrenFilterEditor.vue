@@ -2,15 +2,17 @@
     <div>
         <h5>Связанные объекты: {{ group.name }}</h5>
 
-        <!-- Поле поиска -->
+        <!-- Поле поиска + обработчик события 'paste' -->
         <input
             v-model="searchQuery"
             type="text"
             class="form-control mb-3"
             placeholder="Поиск по имени..."
+            @paste="handlePaste"
         />
+
         <!-- Список объектов с прокруткой -->
-        <div class="scroll-container" v-if="filteredChildrenOptions.length > 0">
+        <div class="scroll-container" v-if="sortedFilteredChildren.length > 0">
             <div
                 v-for="child in sortedFilteredChildren"
                 :key="child.id"
@@ -54,36 +56,61 @@ export default {
         return {
             searchQuery: "",
             localChildren: [...this.children],
-            store: useMainStore()
+            store: useMainStore(),
         };
     },
     computed: {
-        // Фильтр для поиска по имени
         filteredChildrenOptions() {
-            return this.store.objects[this.group.code].map(obj => obj.asChild())
-                .filter(child => child.type === this.group.code)
+            return this.store.objects[this.group.code]
+                .map((obj) => obj.asChild())
+                .filter((child) => child.type === this.group.code)
                 .filter((child) =>
                     child.name.toLowerCase().includes(this.searchQuery.toLowerCase())
                 );
         },
-
-        // Сортировка уже отфильтрованных результатов
         sortedFilteredChildren() {
-            return this.filteredChildrenOptions.sort((a, b) =>
+            return [...this.filteredChildrenOptions].sort((a, b) =>
                 a.name.localeCompare(b.name)
             );
         },
     },
-
     watch: {
-        // Обновление локального состояния и передачи данных наружу
         localChildren: {
             handler(newChildren) {
                 this.$emit("update:children", newChildren);
             },
             deep: true,
         },
-    }
+    },
+    methods: {
+        handlePaste(event) {
+            // Останавливаем стандартную вставку, чтобы сами обработать текст
+            event.preventDefault();
+
+            // Получаем вставленный текст
+            const pasteContent = (event.clipboardData || window.clipboardData)
+                .getData("text")
+                .trim();
+
+            // Разбиваем по строкам и убираем пустые
+            const pasteLines = pasteContent
+                .split(/\r?\n/)
+                .map((line) => line.trim())
+                .filter((line) => line.length > 0);
+
+            // Для каждой строки из буфера ищем объекты, чьи имена содержат эту строку
+            pasteLines.forEach((line) => {
+                this.filteredChildrenOptions.forEach((child) => {
+                    if (child.name.toLowerCase().includes(line.toLowerCase())) {
+                        // Добавляем child, если его там еще нет
+                        if (!this.localChildren.includes(child)) {
+                            this.localChildren.push(child);
+                        }
+                    }
+                });
+            });
+        },
+    },
 };
 </script>
 
@@ -91,24 +118,11 @@ export default {
 .mb-3 {
     margin-bottom: 1rem;
 }
-
-/* Контейнер с прокруткой для длинных списков */
 .scroll-container {
-    max-height: 300px; /* Максимальная высота контейнера */
-    overflow-y: auto; /* Горизонтальная полоса прокрутки */
-    border: 1px solid #ced4da; /* Граница для визуализации области */
-    padding: 0.5rem; /* Внутреннее отступление */
-    border-radius: 0.25rem; /* Радиус для плавных углов */
-}
-
-/* Убираем полосы прокрутки для macOS */
-.scroll-container::-webkit-scrollbar {
-    width: 8px;
-    background-color: #f1f1f1;
-}
-
-.scroll-container::-webkit-scrollbar-thumb {
-    border-radius: 4px;
-    background-color: #ccc;
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #ced4da;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
 }
 </style>
