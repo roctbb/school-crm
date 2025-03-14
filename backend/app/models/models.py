@@ -42,7 +42,7 @@ class Object(db.Model):
     __tablename__ = 'objects'
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
+    name = db.Column(db.String(1024), nullable=False)
     params = db.Column(db.JSON, server_default=db.text("'{}'::json"))
     attributes = db.Column(db.JSON, server_default=db.text("'{}'::json"))
     created_at = db.Column(db.DateTime, nullable=True, server_default=db.func.now())

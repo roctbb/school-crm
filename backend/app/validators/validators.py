@@ -5,7 +5,7 @@ from app.models import ObjectType, Form, Object
 
 
 def validate_object(data):
-    should_have(data, 'name', min_length=1, max_length=100)
+    should_have(data, 'name', min_length=1, max_length=1024)
 
     # Check "params" and "attributes" are JSON and optional
     if not isinstance(data.get('params', {}), dict):
