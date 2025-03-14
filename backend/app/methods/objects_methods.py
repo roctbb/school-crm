@@ -116,7 +116,7 @@ def update_object_children(obj, children_ids):
 
 @transaction
 def create_comment(user, object, validated_data):
-    comment = Comment(user_id=user.id, text=validated_data["text"], object_id=object.id)
+    comment = Comment(creator_id=user.id, text=validated_data["text"], object_id=object.id)
     db.session.add(comment)
 
     return comment

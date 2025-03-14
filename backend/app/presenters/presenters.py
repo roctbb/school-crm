@@ -35,9 +35,6 @@ def present_connected_object(obj):
 
 
 def present_object(obj):
-    logging.log(
-        logging.INFO,
-        f"Presenting object {obj.id} of type {obj.type.code}")
     return {
         'id': obj.id,
         'name': obj.name,
