@@ -251,7 +251,7 @@ export default {
         fillEmptyAnswers() {
             if (this.submission) {
                 this.submission.fields.forEach(field => {
-                    if (['select', 'checkboxes'].includes(field)) {
+                    if (['select', 'checkboxes'].includes(field.type)) {
                         field.answer = []
                     }
                 });
