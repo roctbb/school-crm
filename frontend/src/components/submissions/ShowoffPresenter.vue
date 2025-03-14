@@ -14,7 +14,7 @@ export default {
     <ul>
         <li v-for="(value, name) in attributes"
             :key="name">
-            <b>{{ name }}:</b>
+            <b>{{ name }}: </b>
 
             <span v-if="Array.isArray(value)">
                 {{ value.join(', ') }}

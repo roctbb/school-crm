@@ -1,50 +1,96 @@
 <template>
     <BaseLayout>
-        <div class="import-container">
-            <h2>Импорт файла CSV</h2>
-            <form @submit.prevent="uploadFile" class="import-form">
-                <div>
-                    <label for="file">Выберите файл:</label>
-                    <input type="file" id="file" ref="fileInput" @change="handleFileChange"/>
+        <div class="container py-4">
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="m-0">Импорт файла CSV</h3>
+                        </div>
+
+                        <div class="card-body">
+                            <form @submit.prevent="uploadFile">
+                                <!-- Выбор файла -->
+                                <div class="mb-3">
+                                    <label for="file" class="form-label">Выберите файл</label>
+                                    <input
+                                        type="file"
+                                        id="file"
+                                        ref="fileInput"
+                                        @change="handleFileChange"
+                                        class="form-control"
+                                    />
+                                </div>
+
+                                <!-- Выбор типа импорта -->
+                                <div class="mb-3">
+                                    <label for="importType" class="form-label">Что импортировать</label>
+                                    <select id="importType" v-model="importType" class="form-select">
+                                        <option value="objects">Объекты</option>
+                                        <option value="submissions">Записи</option>
+                                    </select>
+                                </div>
+
+                                <!-- Кнопка отправки -->
+                                <button
+                                    type="submit"
+                                    class="btn btn-primary"
+                                    :disabled="isUploading"
+                                >
+                                    Импортировать
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Отображение результата -->
+                    <div
+                        v-if="uploadMessage"
+                        class="mt-3"
+                    >
+                        <div
+                            class="alert"
+                            :class="isSuccess ? 'alert-success' : 'alert-danger'"
+                            role="alert"
+                        >
+                            {{ uploadMessage }}
+                        </div>
+                    </div>
+
+                    <!-- Индикатор загрузки -->
+                    <Loading v-if="isUploading" class="mt-3"/>
                 </div>
-                <button type="submit" class="btn btn-primary" :disabled="isUploading">Импортировать</button>
-            </form>
-            <div v-if="uploadMessage" class="upload-message" :class="{ success: isSuccess, error: !isSuccess }">
-                {{ uploadMessage }}
             </div>
-            <Loading v-if="isUploading"/>
         </div>
     </BaseLayout>
 </template>
 
 <script>
-import {importFile} from "@/api/import_api.js";
+import { importObjects, importSubmissions } from "@/api/import_api.js";
 import useMainStore from "@/stores/mainStore.js";
 import Loading from "@/components/common/Loading.vue";
-import BaseLayout from "@/components/layouts/BaseLayout.vue"; // Импорт функции API
+import BaseLayout from "@/components/layouts/BaseLayout.vue";
 
 export default {
-    components: {BaseLayout, Loading},
+    components: { BaseLayout, Loading },
     name: "ImportView",
     data() {
         return {
-            selectedFile: null, // Для хранения выбранного файла
-            isUploading: false, // Флаг состояния загрузки
-            uploadMessage: "", // Сообщение о результате загрузки
-            isSuccess: false // Успешно ли выполнение
+            selectedFile: null,
+            isUploading: false,
+            uploadMessage: "",
+            isSuccess: false,
+            importType: "objects",
         };
     },
     methods: {
-        // Обработка изменения файла
         handleFileChange(event) {
             const files = event.target.files;
             if (files && files.length) {
                 this.selectedFile = files[0];
             }
         },
-        // Загрузка файла на сервер
         async uploadFile() {
-            // Проверяем, выбран ли файл
             if (!this.selectedFile) {
                 this.uploadMessage = "Пожалуйста, выберите файл для импорта.";
                 this.isSuccess = false;
@@ -55,21 +101,25 @@ export default {
             this.uploadMessage = "";
 
             try {
-                // Вызываем API для импорта файла
-                const result = await importFile(this.selectedFile);
+                let result;
+                if (this.importType === "objects") {
+                    result = await importObjects(this.selectedFile);
+                } else {
+                    result = await importSubmissions(this.selectedFile);
+                }
 
-                // Обрабатываем успешный ответ
                 this.uploadMessage = "Файл успешно импортирован!";
                 this.isSuccess = true;
-                useMainStore().reset()
-                await useMainStore().loadObjects()
+
+                const mainStore = useMainStore();
+                mainStore.reset();
+                await mainStore.loadObjects();
+
             } catch (error) {
-                // Обрабатываем ошибку
                 this.uploadMessage = "Ошибка при импорте файла: " + error.message;
                 this.isSuccess = false;
             } finally {
                 this.isUploading = false;
-                // Сбрасываем состояние формы
                 if (this.$refs.fileInput) {
                     this.$refs.fileInput.value = null;
                 }
@@ -81,30 +131,10 @@ export default {
 </script>
 
 <style scoped>
-.import-container {
-    padding: 20px;
+.container {
+    max-width: 720px;
 }
-
-.import-form {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.import-form label {
-    font-weight: bold;
-}
-
-.upload-message {
-    margin-top: 20px;
-    font-weight: bold;
-}
-
-.upload-message.success {
-    color: green;
-}
-
-.upload-message.error {
-    color: red;
+.card {
+    border-radius: 6px;
 }
 </style>

@@ -1,13 +1,14 @@
 import csv
 from flask import current_app
 
-from app import LogicException
+from app import LogicException, Form
 from app.helpers.decorators import transaction
+from app.methods import create_submission
 from app.models import Object, ObjectType, db
 
 
 @transaction
-def import_data(user, file):
+def import_objects(user, file):
     # Открываем файл через TextIOWrapper для корректного чтения
     data = csv.DictReader(file.stream.read().decode('utf-8').splitlines())
 
@@ -73,3 +74,92 @@ def import_data(user, file):
 
     current_app.logger.info(f"Импортировано объектов: {len(imported_objects)}")
     return "OK"
+
+
+@transaction
+def import_submissions(user, file):
+    import csv
+    from flask import current_app
+    from app import LogicException
+    from app.models import Object, Form
+    # функция для создания Submission (аналог createSubmission)
+
+    data = csv.DictReader(file.stream.read().decode('utf-8').splitlines())
+
+    # Обязательные колонки
+    required_columns = {'name', 'form'}
+    if not set(required_columns).issubset(data.fieldnames):
+        raise LogicException(
+            f"Отсутствуют обязательные колонки: {', '.join(required_columns)}",
+            400
+        )
+
+    imported_submissions = []
+
+    for row in data:
+        object_name = row.get('name')
+        form_name = row.get('form')
+
+        if not object_name or not form_name:
+            current_app.logger.warning(
+                f"Пропущена строка: нет нужных значений в name или form. {row}"
+            )
+            continue
+
+        obj = (
+            Object.query
+            .filter(Object.deleted_at.is_(None))
+            .filter(Object.name.ilike(f"%{object_name}%"))
+            .first()
+        )
+        if not obj:
+            current_app.logger.warning(
+                f"Не найден объект для '{object_name}', пропуск строки."
+            )
+            continue
+
+        form = Form.query.filter_by(name=form_name, deleted_at=None).first()
+        if not form:
+            current_app.logger.warning(
+                f"Не найдена форма '{form_name}', пропуск строки."
+            )
+            continue
+
+        original_fields = form.fields or []
+
+        # Собираем поля Submission: заполняем answers из CSV
+        filled_fields = []
+        for field_info in original_fields:
+            field_name = field_info.get("name")
+            if not field_name:
+                continue
+
+            csv_value = row.get(field_name, "").strip()
+
+            filled_fields.append({
+                "name": field_info.get("name"),
+                "type": field_info.get("type"),
+                "required": field_info.get("required", False),
+                "options": field_info.get("options", []),
+                "showoff": field_info.get("showoff", False),  # Если в форме есть такое поле
+                "answer": csv_value
+            })
+
+        # Заполняем showoff_attributes
+        showoff_attributes = {}
+        for f in filled_fields:
+            if f.get("showoff") and f.get("answer"):
+                showoff_attributes[f["name"]] = f["answer"]
+
+        submission_data = {
+            "fields": filled_fields,
+            "showoff_attributes": showoff_attributes,
+        }
+
+        new_submission = create_submission(user, form, obj, submission_data)
+        imported_submissions.append(new_submission)
+
+    current_app.logger.info(f"Импортировано ответов: {len(imported_submissions)}")
+    return "OK"
+
+
