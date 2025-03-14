@@ -31,13 +31,20 @@
             </div>
         </div>
 
-        <!-- Сообщение при отсутствии результатов -->
         <div v-else class="text-muted">Нет доступных объектов для выбора.</div>
     </div>
 </template>
 
 <script>
 import useMainStore from "@/stores/mainStore.js";
+
+// Функция нормализации строки (убираем пробелы, приводим к нижнему регистру, заменяем ё на е)
+function normalizeString(str) {
+    return str
+        .toLowerCase()
+        .replaceAll(/\s+/g, "") // удаляем все пробелы
+        .replaceAll("ё", "е");  // заменяем ё на е
+}
 
 export default {
     name: "ChildrenFilterEditor",
@@ -64,11 +71,15 @@ export default {
             return this.store.objects[this.group.code]
                 .map((obj) => obj.asChild())
                 .filter((child) => child.type === this.group.code)
-                .filter((child) =>
-                    child.name.toLowerCase().includes(this.searchQuery.toLowerCase())
-                );
+                .filter((child) => {
+                    // сравниваем нормализованные строки
+                    const childName = normalizeString(child.name);
+                    const queryString = normalizeString(this.searchQuery);
+                    return childName.includes(queryString);
+                });
         },
         sortedFilteredChildren() {
+            // просто сортируем по названию
             return [...this.filteredChildrenOptions].sort((a, b) =>
                 a.name.localeCompare(b.name)
             );
@@ -84,25 +95,24 @@ export default {
     },
     methods: {
         handlePaste(event) {
-            // Останавливаем стандартную вставку, чтобы сами обработать текст
             event.preventDefault();
-
-            // Получаем вставленный текст
             const pasteContent = (event.clipboardData || window.clipboardData)
                 .getData("text")
                 .trim();
 
-            // Разбиваем по строкам и убираем пустые
+            // Разбиваем по строкам, удаляем пустые
             const pasteLines = pasteContent
                 .split(/\r?\n/)
                 .map((line) => line.trim())
                 .filter((line) => line.length > 0);
 
-            // Для каждой строки из буфера ищем объекты, чьи имена содержат эту строку
+            // Для каждой строки ищем объекты, чьи имена содержат её (с учетом нашей нормализации)
             pasteLines.forEach((line) => {
+                const normLine = normalizeString(line);
                 this.filteredChildrenOptions.forEach((child) => {
-                    if (child.name.toLowerCase().includes(line.toLowerCase())) {
-                        // Добавляем child, если его там еще нет
+                    const normName = normalizeString(child.name);
+                    if (normName.includes(normLine)) {
+                        // Добавляем child, если его нет в localChildren
                         if (!this.localChildren.includes(child)) {
                             this.localChildren.push(child);
                         }
