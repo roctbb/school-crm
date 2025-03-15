@@ -88,7 +88,7 @@
                             <TableView
                                 v-if="viewModes[type.code] === 'table'"
                                 :data="findRelativesByType(type)"
-                                :attributes="type.attributes"
+                                :attributes="type.available_attributes.filter(a => a.show_off)"
                                 :sortKey.sync="sortKey"
                                 :sortDirection.sync="sortDirection"
                             />

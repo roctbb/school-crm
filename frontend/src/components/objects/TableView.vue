@@ -15,10 +15,8 @@
                     <tr>
                         <!-- Колонка "Имя" -->
                         <th @click="onSort('name')">
-                            Имя
-                            <span v-if="sortKey === 'name'">
-                  {{ sortDirection === 'asc' ? '▲' : '▼' }}
-                </span>
+                            <span class="underline">Имя</span>
+                            <span v-if="sortKey === 'name'">{{ sortDirection === 'asc' ? '▲' : '▼' }}</span>
                         </th>
                         <!-- Перебираем остальные атрибуты -->
                         <th
@@ -26,7 +24,7 @@
                             :key="attr.code"
                             @click="onSort(attr.code)"
                         >
-                            {{ attr.name }}
+                            <span class="underline">{{ attr.name }}</span>
                             <span v-if="sortKey === attr.code">
                   {{ sortDirection === 'asc' ? '▲' : '▼' }}
                 </span>
@@ -75,18 +73,16 @@
                 <thead class="table-light">
                 <tr>
                     <th @click="onSort('name')">
-                        Имя
-                        <span v-if="sortKey === 'name'">
-                {{ sortDirection === 'asc' ? '▲' : '▼' }}
-              </span>
+                        <span class="underline">Имя</span>
+                        <span class="ms-1" v-if="sortKey === 'name'">{{ sortDirection === 'asc' ? '▲' : '▼' }}</span>
                     </th>
                     <th
                         v-for="attr in attributes"
                         :key="attr.code"
                         @click="onSort(attr.code)"
                     >
-                        {{ attr.name }}
-                        <span v-if="sortKey === attr.code">
+                        <span class="underline">{{ attr.name }}</span>
+                        <span class="ms-1" v-if="sortKey === attr.code">
                 {{ sortDirection === 'asc' ? '▲' : '▼' }}
               </span>
                     </th>
@@ -203,5 +199,7 @@ export default {
 </script>
 
 <style scoped>
-/* При желании можно добавить здесь стили для иконок, кнопки и т.д. */
+.underline {
+    text-decoration: underline;
+}
 </style>
