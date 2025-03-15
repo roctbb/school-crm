@@ -17,7 +17,7 @@
                         {{ capitalize(object_type.name) }}: {{ object.name }}
                     </h2>
                     <div>
-                        <AttributePresenter :object="object" :type="object_type"/>
+                        <AttributePresenter :object="object" :type="object_type" />
                     </div>
                 </div>
                 <!-- Блок выпадающего списка -->
@@ -56,30 +56,72 @@
 
             <div class="row">
                 <div class="col-md-8">
-                    <div v-for="type in connectedTypes" :key="type.code">
-                        <div v-if="findRelativesByType(type).length" class="mb-2">
-                            <h5 class="pb-2">{{ type.name }}</h5>
+                    <!-- Отображение связанных объектов по типам -->
+                    <div
+                        v-for="type in connectedTypes"
+                        :key="type.code"
+                        class="mb-4"
+                    >
+                        <div v-if="findRelativesByType(type).length">
+                            <!-- Заголовок c переключателем и бейджем -->
+                            <h5 class="pb-2">
+                                {{ type.name }}
+                                <span class="badge bg-secondary ms-2">
+                  {{ findRelativesByType(type).length }}
+                </span>
+                                <button
+                                    class="btn btn-outline-secondary btn-sm ms-2"
+                                    @click="toggleTypeView(type)"
+                                >
+                                    <i
+                                        v-if="viewModes[type.code] === 'table'"
+                                        class="bi bi-grid"
+                                    ></i>
+                                    <i
+                                        v-else
+                                        class="bi bi-list"
+                                    ></i>
+                                </button>
+                            </h5>
 
-                            <div class="row">
-                                <div class="col-md-6 col-lg-4 col-xl-3 col-xl-2 mb-4 d-flex align-items-stretch"
-                                     v-for="child in findRelativesByType(type)" :key="child.id">
-                                    <ObjectCard :type="type" :object="store.getObject(type.code, child.id)"/>
-                                </div>
-                            </div>
-
+                            <!-- Если включен табличный вид, рендерим TableView -->
+                            <TableView
+                                v-if="viewModes[type.code] === 'table'"
+                                :data="findRelativesByType(type)"
+                                :attributes="type.attributes"
+                                :sortKey.sync="sortKey"
+                                :sortDirection.sync="sortDirection"
+                            />
+                            <!-- Иначе – карточный вид -->
+                            <CardView
+                                v-else
+                                :objects="findRelativesByType(type)"
+                                :objectType="type"
+                            />
                         </div>
-
-
                     </div>
 
-                    <div v-for="form_category in object_type.form_categories" :key="form_category.id" class="mb-4">
+                    <!-- Отображение форм по категориям -->
+                    <div
+                        v-for="form_category in object_type.form_categories"
+                        :key="form_category.id"
+                        class="mb-4"
+                    >
                         <h5 class="pb-2">{{ form_category.name }}</h5>
 
                         <div class="row">
-                            <div class="col-md-6 col-lg-4 col-xl-3 col-xl-2 mb-4 d-flex align-items-stretch"
-                                 v-for="submission in object._submissions.filter(submission => submission._form.category_id === form_category.id)"
-                                 :key="submission.id">
-                                <SubmissionCard :submission="submission" :object="object"/>
+                            <div
+                                class="col-md-6 col-lg-4 col-xl-3 col-xl-2 mb-4 d-flex align-items-stretch"
+                                v-for="submission in object._submissions.filter(
+                  (submission) =>
+                    submission._form.category_id === form_category.id
+                )"
+                                :key="submission.id"
+                            >
+                                <SubmissionCard
+                                    :submission="submission"
+                                    :object="object"
+                                />
                             </div>
                         </div>
 
@@ -110,25 +152,36 @@
                         </div>
                     </div>
 
-                    <div v-for="(category_name, i) in externalCategories" :key="i" class="mb-4">
+                    <!-- Отображение внешних категорий (is_external) -->
+                    <div
+                        v-for="(category_name, i) in externalCategories"
+                        :key="i"
+                        class="mb-4"
+                    >
                         <h5 class="pb-2">{{ category_name }}</h5>
                         <div class="row">
-                            <div class="col-md-6 col-lg-4 col-xl-3 col-xl-2 mb-4 d-flex align-items-stretch"
-                                 v-for="submission in object._submissions.filter(submission => submission.form.category === category_name)"
-                                 :key="submission.id">
-                                <SubmissionCard :submission="submission" :object="object"/>
+                            <div
+                                class="col-md-6 col-lg-4 col-xl-3 col-xl-2 mb-4 d-flex align-items-stretch"
+                                v-for="submission in object._submissions.filter(
+                  (submission) =>
+                    submission.form.category === category_name
+                )"
+                                :key="submission.id"
+                            >
+                                <SubmissionCard
+                                    :submission="submission"
+                                    :object="object"
+                                />
                             </div>
                         </div>
                     </div>
-
                 </div>
+
+                <!-- Панель комментариев -->
                 <div class="col-md-4">
-                    <CommentsPanel
-                        :object="object"
-                    />
+                    <CommentsPanel :object="object" />
                 </div>
             </div>
-
 
             <button
                 class="btn btn-secondary btn-sm"
@@ -137,44 +190,85 @@
                 Назад
             </button>
         </div>
-        <Loading v-else/>
+        <Loading v-else />
     </BaseLayout>
 </template>
 
 <script>
 import useMainStore from "@/stores/mainStore.js";
-import {deleteObject} from "@/api/objects_api.js";
+import { deleteObject } from "@/api/objects_api.js";
 import BaseLayout from "@/components/layouts/BaseLayout.vue";
 import Loading from "@/components/common/Loading.vue";
-import {capitalize} from "../../utils/helpers.js";
+import { capitalize } from "@/utils/helpers.js";
 import ObjectCard from "@/components/objects/ObjectCard.vue";
 import AttributePresenter from "@/components/objects/AttributePresenter.vue";
 import CommentsPanel from "@/components/objects/CommentsPanel.vue";
 import SubmissionCard from "@/components/submissions/SubmissionCard.vue";
-import submission from "@/models/Submission.js";
+import TableView from "@/components/objects/TableView.vue";
+import CardView from "@/components/objects/CardView.vue";
 
 export default {
+    name: "ObjectDetailsView",
+    components: {
+        BaseLayout,
+        Loading,
+        ObjectCard,
+        AttributePresenter,
+        CommentsPanel,
+        SubmissionCard,
+        TableView,
+        CardView
+    },
+    data() {
+        return {
+            object: null,
+            object_type: null,
+            store: useMainStore(),
+            connectedTypes: [],
+            sortKey: "name",
+            sortDirection: "asc",
+
+            // Каждому типу будем задавать свой режим: 'table' или 'card'
+            viewModes: {}
+        };
+    },
     methods: {
         capitalize,
         async handleDelete() {
-            const confirmed = window.confirm('Вы действительно хотите удалить этот объект?');
+            const confirmed = window.confirm("Вы действительно хотите удалить этот объект?");
             if (confirmed) {
                 await deleteObject(this.object.id);
-                this.store.objects[this.object.type] = this.store.objects[this.object.type]
-                    .filter(obj => obj.id !== this.object.id);
+                this.store.objects[this.object.type] = this.store.objects[
+                    this.object.type
+                    ].filter((obj) => obj.id !== this.object.id);
                 this.$router.push(`/${this.object.type}`);
             }
         },
+        /**
+         * Находит связанные объекты определённого типа:
+         * children + parents того же типа, отсортированные по имени.
+         */
         findRelativesByType(type) {
-            console.log("findRelativesByType:", type)
-            const relatives = [...this.object.children.filter(child => child.type === type.code), ...this.object.parents.filter(parent => parent.type === type.code)]
-            return relatives.sort((a, b) => a.name.localeCompare(b.name))
+            const relatives = [
+                ...this.object.children.filter((child) => child.type === type.code),
+                ...this.object.parents.filter((parent) => parent.type === type.code)
+            ].map(relative => this.store.getObject(relative.type, relative.id));
 
+            return relatives.sort((a, b) => a.name.localeCompare(b.name));
         },
+        /**
+         * Переключает вид (табличный/карточный) для конкретного типа
+         */
+        toggleTypeView(type) {
+            this.viewModes[type.code] =
+                this.viewModes[type.code] === "table" ? "card" : "table";
+        },
+        /**
+         * Переход на страницу создания ответа для формы
+         */
         goToCreateSubmission(formId) {
-            // Переход на страницу создания ответа
             this.$router.push({
-                name: 'CreateSubmission',
+                name: "CreateSubmission",
                 params: {
                     object_type: this.object_type.code,
                     object_id: this.object.id,
@@ -182,53 +276,66 @@ export default {
                 }
             });
         },
+        /**
+         * Загрузка данных компонентов при открытии
+         */
         async load() {
             this.connectedTypes = [];
-            let {object_type, object_id} = this.$route.params;
+            let { object_type, object_id } = this.$route.params;
             object_id = parseInt(object_id);
             await this.store.loadObjects();
             this.object_type = this.store.getObjectTypeByCode(object_type);
             this.object = this.store.getObject(object_type, object_id);
             await this.object.loadSubmissions();
 
-            const unique_children_codes = [...new Set(this.object.children.map(child => child.type))];
-            const unique_parents_codes = [...new Set(this.object.parents.map(child => child.type))];
+            const unique_children_codes = [
+                ...new Set(this.object.children.map((child) => child.type))
+            ];
+            const unique_parents_codes = [
+                ...new Set(this.object.parents.map((parent) => parent.type))
+            ];
 
-            const unique_type_codes = [...new Set([...unique_children_codes, ...unique_parents_codes])];
+            const unique_type_codes = [
+                ...new Set([...unique_children_codes, ...unique_parents_codes])
+            ];
 
             for (let type_code of unique_type_codes) {
-                this.connectedTypes.push(this.store.getObjectTypeByCode(type_code))
+                this.connectedTypes.push(this.store.getObjectTypeByCode(type_code));
             }
 
-            console.log("connected types:", this.connectedTypes)
+            // Инициализация viewModes для каждого найденного типа
+            this.connectedTypes.forEach((t) => {
+                // По умолчанию - 'table'
+                this.viewModes[t.code] = "table";
+            });
         }
     },
-    components: {SubmissionCard, AttributePresenter, ObjectCard, Loading, BaseLayout, CommentsPanel},
-    data() {
-        return {
-            object: null,
-            object_type: null,
-            store: useMainStore(),
-            connectedTypes: [],
-        };
-    },
     computed: {
+        /**
+         * Собираем все внешние категории у сабмишенов, где is_external = true
+         */
         externalCategories() {
-            return [...new Set(this.object._submissions.filter(submission => submission.form.is_external).map(submission => submission.form.category))]
+            return [
+                ...new Set(
+                    this.object._submissions
+                        .filter((submission) => submission.form.is_external)
+                        .map((submission) => submission.form.category)
+                )
+            ];
         }
     },
     watch: {
         $route: {
             immediate: true,
-            async handler(to) {
+            async handler() {
                 await this.load();
-            },
-        },
-    },
+            }
+        }
+    }
 };
 </script>
 
-<style>
+<style scoped>
 .object-details-page {
     padding: 20px;
 }

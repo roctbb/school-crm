@@ -46,15 +46,11 @@ logger = logging.getLogger(__name__)
 def get_available_objects_by_type_code(type_code):
     object_type = get_object_type_by_code(type_code)
 
-    logging.log(
-        logging.INFO, "Begin query!!!")
     result = Object.query.filter_by(type_id=object_type.id, deleted_at=None).options(selectinload(Object.parents),
                                                                                      selectinload(Object.children),
                                                                                      selectinload(Object.owners),
                                                                                      selectinload(
                                                                                          Object.comments)).all()
-    logging.log(
-        logging.INFO, "End query!!!")
     return result
 
 

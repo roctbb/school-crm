@@ -49,9 +49,10 @@ const useMainStore = defineStore("mainStore", {
             const isValid = await this.tryLoadProfile();
             if (!isValid) {
                 this.logout();
-                throw new Error("Failed to set token: " + e.message);
             }
-            localStorage.setItem("token", new_token);
+            else {
+                localStorage.setItem("token", new_token);
+            }
         },
 
         logout() {
