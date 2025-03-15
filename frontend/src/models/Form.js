@@ -6,6 +6,7 @@ class Form extends Model {
         super(description, store);
         this._exclude = [];
         this._categoryId = categoryId;
+        this._category = store.getFormCategory(categoryId);
     }
 
     init(description) {

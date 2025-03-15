@@ -117,7 +117,7 @@ const useMainStore = defineStore("mainStore", {
                 this.formCategories = await fetchFormCategories();
 
                 for (const category of this.formCategories) {
-                    category.forms = category.forms.map(form => new Form(form, this));
+                    category.forms = category.forms.map(form => new Form(form, this, category.id));
                 }
             } catch (error) {
                 console.error(`Ошибка при загрузке форм:`, error);

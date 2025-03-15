@@ -67,7 +67,8 @@ def present_form_category(form_category):
         'id': form_category.id,
         'name': form_category.name,
         'params': form_category.params,
-        'forms': [present_form(form) for form in form_category.forms if not form.deleted_at]
+        'forms': [present_form(form) for form in form_category.forms if not form.deleted_at],
+        'common_fields': form_category.common_fields
     }
 
 

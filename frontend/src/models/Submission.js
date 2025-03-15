@@ -19,7 +19,7 @@ class Submission extends Model {
                 this._form = this._store.getForm(this.form.id)
             }
         } else {
-            this.fields = this._form.fields
+            this.fields = [...this._form._category.common_fields, ...this._form.fields]
         }
     }
 

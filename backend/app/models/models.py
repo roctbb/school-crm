@@ -81,6 +81,7 @@ class FormCategory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(256), nullable=True)
     params = db.Column(db.JSON, server_default=db.text("'{}'::json"))
+    common_fields = db.Column(db.JSON, server_default=db.text("'[]'::json"))
     forms = db.relationship('Form', backref='category')
 
     created_at = db.Column(db.DateTime, nullable=True, server_default=db.func.now())
