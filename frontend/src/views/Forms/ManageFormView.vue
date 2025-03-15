@@ -35,7 +35,7 @@
                             <template #item="{ element: field, index }">
 
                                 <div
-                                    :key="field.code"
+                                    :key="index"
                                     class="border rounded p-3 mb-3"
                                 >
                                     <div class="d-flex justify-content-between align-items-center mb-2">
@@ -308,17 +308,9 @@ export default {
         onOptionsDragEnd(field) {
             console.log("Варианты перетащены:", field.options);
         },
-
-        generateCode() {
-            return (
-                Math.random().toString(36).substring(2, 15) +
-                Math.random().toString(36).substring(2, 15)
-            );
-        },
         addField() {
             this.form.fields.push({
                 name: "",
-                code: this.generateCode(),
                 type: "text",
                 required: false,
                 showoff: false,
