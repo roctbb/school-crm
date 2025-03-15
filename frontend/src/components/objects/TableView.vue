@@ -167,24 +167,32 @@ export default {
         },
         sortData(objects) {
             const sorted = [...objects];
+
             sorted.sort((a, b) => {
+                // Извлекаем исходные значения
                 let aVal = this.sortKey === "name" ? a.name : a.attributes[this.sortKey];
                 let bVal = this.sortKey === "name" ? b.name : b.attributes[this.sortKey];
 
-                // Случай числовых значений
-                if (typeof aVal === "number" && typeof bVal === "number") {
-                    return this.sortDirection === "asc" ? aVal - bVal : bVal - aVal;
+                // Пробуем преобразовать к числу
+                const aNum = Number(aVal);
+                const bNum = Number(bVal);
+
+                // Если оба значения корректно преобразовались в числа (не NaN)
+                if (!Number.isNaN(aNum) && !Number.isNaN(bNum)) {
+                    return this.sortDirection === "asc" ? aNum - bNum : bNum - aNum;
                 }
 
-                // Для строковых значений используем localeCompare
+                // Иначе сравниваем как строки
                 const aStr = String(aVal ?? "");
                 const bStr = String(bVal ?? "");
                 return this.sortDirection === "asc"
                     ? aStr.localeCompare(bStr)
                     : bStr.localeCompare(aStr);
             });
+
             return sorted;
         },
+
         formatValue(value) {
             // Если value — это массив, соединяем элементы через запятую
             if (Array.isArray(value)) {
