@@ -80,7 +80,7 @@
                                         :key="i"
                                     >
                                         <td>{{ field.name }}</td>
-                                        <td>{{ formatAnswer(field.answer) }}</td>
+                                        <td>{{ formatValue(field.answer) }}</td>
                                     </tr>
                                     </tbody>
                                 </table>
@@ -100,7 +100,7 @@
 
 <script>
 import BaseLayout from "@/components/layouts/BaseLayout.vue";
-import { formatDateTime } from "@/utils/helpers.js";
+import {formatDateTime, formatValue} from "@/utils/helpers.js";
 import useMainStore from "@/stores/mainStore.js";
 import { deleteSubmission } from "@/api/submissions_api.js";
 import Loading from "@/components/common/Loading.vue";
@@ -151,13 +151,8 @@ export default {
         }
     },
     methods: {
+        formatValue,
         formatDateTime,
-        formatAnswer(value) {
-            if (Array.isArray(value)) {
-                return value.join(", ");
-            }
-            return value || "Нет данных";
-        },
         async handleDelete() {
             const confirmed = confirm("Вы действительно хотите удалить этот ответ?");
             if (confirmed) {

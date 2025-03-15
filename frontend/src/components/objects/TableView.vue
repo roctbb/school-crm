@@ -127,6 +127,8 @@
 </template>
 
 <script>
+import {formatValue} from "../../utils/helpers.js";
+
 export default {
     name: "TableView",
 
@@ -151,6 +153,7 @@ export default {
     // emits: ["update:sortKey", "update:sortDirection"],
 
     methods: {
+        formatValue,
         toggleCollapse() {
             this.isCollapsed = !this.isCollapsed;
         },
@@ -191,15 +194,6 @@ export default {
             });
 
             return sorted;
-        },
-
-        formatValue(value) {
-            // Если value — это массив, соединяем элементы через запятую
-            if (Array.isArray(value)) {
-                return value.join(", ");
-            }
-            // Иначе возвращаем как есть
-            return value;
         }
 
     }

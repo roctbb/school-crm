@@ -185,6 +185,7 @@ import Submission from "@/models/Submission.js";
 import useMainStore from "@/stores/mainStore.js";
 import BaseLayout from "@/components/layouts/BaseLayout.vue";
 import ChildrenFilterEditor from "@/components/objects/ChildrenFilterEditor.vue";
+import {getAcademicYear} from "@/utils/helpers.js";
 
 export default {
     name: "ManageSubmissionView",
@@ -253,6 +254,12 @@ export default {
                 this.submission.fields.forEach(field => {
                     if (['select', 'checkboxes'].includes(field.type)) {
                         field.answer = []
+                    }
+                    if (field.default === 'current_learn_year') {
+                        field.answer = getAcademicYear()
+                    }
+                    if (field.default === 'class' && this.object.attributes.class) {
+                        field.answer = this.object.attributes.class
                     }
                 });
             }

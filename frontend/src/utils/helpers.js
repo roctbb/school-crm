@@ -17,8 +17,7 @@ const formatDate = (d) => {
 const formatDateTime = (d) => {
     if (hasTimePart(d)) {
         return d.getDate() + "." + ('0' + (d.getMonth() + 1)).slice(-2) + "." + d.getFullYear() + " " + d.getHours() + ":" + ('0' + d.getMinutes()).slice(-2)
-    }
-    else {
+    } else {
         return d.getDate() + "." + ('0' + (d.getMonth() + 1)).slice(-2) + "." + d.getFullYear()
     }
 }
@@ -65,6 +64,36 @@ function capitalize(str) {
     return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
+function getAcademicYear() {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1; // Месяцы в JS считаются с 0, поэтому прибавляем 1
+
+    let startYear, endYear;
+
+    if (currentMonth >= 9) {
+        // С сентября по декабрь включительно используем текущий год и следующий
+        startYear = currentYear % 100;
+        endYear = (currentYear + 1) % 100;
+    } else {
+        // С января по август используем предыдущий год и текущий
+        startYear = (currentYear - 1) % 100;
+        endYear = currentYear % 100;
+    }
+
+    // Преобразуем в формат "24/25" с ведущим нулём при необходимости
+    return `${String(startYear).padStart(2, '0')}/${String(endYear).padStart(2, '0')}`;
+}
+
+const formatValue = function (value) {
+    // Если value — это массив, соединяем элементы через запятую
+    if (Array.isArray(value)) {
+        return value.join(", ");
+    }
+    // Иначе возвращаем как есть
+    return value;
+}
+
 
 export {
     searchForArray,
@@ -74,5 +103,5 @@ export {
     formatDate,
     formatDateTime,
     copy,
-    toBase64, isString, fillPatientData
+    toBase64, isString, fillPatientData, getAcademicYear, formatValue
 }
