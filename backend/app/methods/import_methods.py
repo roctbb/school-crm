@@ -125,11 +125,14 @@ def import_submissions(user, file):
             )
             continue
 
+        common_fields = form.category.common_fields or []
         original_fields = form.fields or []
+
+        fields = common_fields + original_fields
 
         # Собираем поля Submission: заполняем answers из CSV
         filled_fields = []
-        for field_info in original_fields:
+        for field_info in fields:
             field_name = field_info.get("name")
             if not field_name:
                 continue
