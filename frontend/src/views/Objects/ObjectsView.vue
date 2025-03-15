@@ -17,7 +17,7 @@
 
                         <span
                             v-if="objectCounts[type.code] > 0"
-                            class="badge bg-info ms-2"
+                            class="badge bg-secondary rounded-5 ms-1"
                         >
               {{ objectCounts[type.code] }}
             </span>
