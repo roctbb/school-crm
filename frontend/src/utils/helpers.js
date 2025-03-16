@@ -1,3 +1,5 @@
+import useMainStore from "@/stores/mainStore.js";
+
 let empty = function (obj) {
     return !obj || Object.keys(obj).length === 0
 }
@@ -145,6 +147,37 @@ const isEventActive = function (event, object) {
     return false;
 }
 
+const hasAccessToObject = function(object) {
+    let profile = useMainStore().profile;
+    if (!profile) return false;
+
+    if (profile.role === 'admin' || profile.role === 'teacher') {
+        return true;
+    }
+
+    for (let owner of object.owners) {
+        if (owner.id === profile.id) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+const hasAdminAccess = function() {
+    let profile = useMainStore().profile;
+    if (!profile) return false;
+
+    return profile.role === 'admin';
+}
+
+const hasTeacherAccess = function() {
+    let profile = useMainStore().profile;
+    if (!profile) return false;
+
+    return profile.role === 'admin' || profile.role === 'teacher';
+}
+
 
 export {
     searchForArray,
@@ -154,5 +187,5 @@ export {
     formatDate,
     formatDateTime,
     copy,
-    toBase64, isString, fillPatientData, getAcademicYear, formatValue, isEventActive, parseDate
+    toBase64, isString, fillPatientData, getAcademicYear, formatValue, isEventActive, parseDate, hasAccessToObject, hasAdminAccess, hasTeacherAccess
 }

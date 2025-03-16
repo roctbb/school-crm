@@ -27,7 +27,7 @@
         </div>
 
         <!-- Форма добавления нового комментария -->
-        <div class="mt-3">
+        <div class="mt-3" v-if="hasTeacherAccess()">
             <form @submit.prevent="postComment">
                 <div class="mb-3">
                     <textarea
@@ -45,6 +45,7 @@
 
 <script>
 import { postComment, deleteComment } from "@/api/objects_api.js";
+import {hasTeacherAccess} from "@/utils/helpers.js";
 
 export default {
     name: "CommentsPanel",
@@ -68,6 +69,7 @@ export default {
         }
     },
     methods: {
+        hasTeacherAccess,
         async postComment() {
             const text = this.newComment.trim();
             if (!text) return;

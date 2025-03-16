@@ -75,6 +75,7 @@ def present_form_category(form_category):
 def present_related_form_category(form_category):
     return {
         'id': form_category.id,
+        'params': form_category.params,
         'name': form_category.name
     }
 
@@ -100,6 +101,7 @@ def present_submission(submission):
         'params': submission.params,
         'fields': submission.fields,
         'showoff_attributes': submission.showoff_attributes,
+        'is_approved': submission.is_approved,
         'form': {
             'name': submission.form_name,
             'category': submission.form_category_name,

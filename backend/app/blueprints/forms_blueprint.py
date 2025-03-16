@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify
-from app.helpers.decorators import requires_user, validate_request_with
+from app.helpers.decorators import requires_user, validate_request_with, requires_roles
 from app.validators import validate_form
 from app.presenters.presenters import present_form, present_form_category
 from app.methods import (
@@ -24,6 +24,7 @@ def get_form_categories_endpoint(user):
 
 @forms_blueprint.route('/categories/<int:category_id>', methods=['POST'])
 @requires_user
+@requires_roles(['admin'])
 @validate_request_with(validate_form)
 def create_form_endpoint(validated_data, user, category_id):
     category = get_category_by_id(category_id)
@@ -40,6 +41,7 @@ def get_form_endpoint(user, form_id):
 
 @forms_blueprint.route('/<int:form_id>', methods=['PUT'])
 @requires_user
+@requires_roles(['admin'])
 @validate_request_with(validate_form)
 def update_form_endpoint(validated_data, user, form_id):
     form = get_form_by_id(form_id)
@@ -49,6 +51,7 @@ def update_form_endpoint(validated_data, user, form_id):
 
 @forms_blueprint.route('/<int:form_id>', methods=['DELETE'])
 @requires_user
+@requires_roles(['admin'])
 def delete_form_endpoint(user, form_id):
     form = get_form_by_id(form_id)
     delete_form(user, form)

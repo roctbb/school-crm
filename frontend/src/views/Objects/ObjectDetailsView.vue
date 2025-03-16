@@ -22,7 +22,7 @@
                     </div>
                 </div>
                 <!-- Блок выпадающего списка -->
-                <div>
+                <div  v-if="hasAccessToObject(object)">
                     <div class="dropdown">
                         <button
                             class="btn btn-light dropdown-toggle"
@@ -42,7 +42,7 @@
                                     <i class="bi bi-pencil"></i> Редактировать
                                 </router-link>
                             </li>
-                            <li>
+                            <li v-if="hasTeacherAccess()">
                                 <button
                                     class="dropdown-item text-danger"
                                     @click="handleDelete"
@@ -127,7 +127,7 @@
                         </div>
 
                         <!-- Выпадающий список форм -->
-                        <div class="btn-group">
+                        <div class="btn-group" v-if="canFillCategory(form_category)">
                             <button
                                 class="btn btn-sm btn-light dropdown-toggle"
                                 type="button"
@@ -200,7 +200,7 @@ import useMainStore from "@/stores/mainStore.js";
 import {deleteObject} from "@/api/objects_api.js";
 import BaseLayout from "@/components/layouts/BaseLayout.vue";
 import Loading from "@/components/common/Loading.vue";
-import {capitalize} from "@/utils/helpers.js";
+import {capitalize, hasAccessToObject, hasAdminAccess, hasTeacherAccess} from "@/utils/helpers.js";
 import ObjectCard from "@/components/objects/ObjectCard.vue";
 import AttributePresenter from "@/components/objects/AttributePresenter.vue";
 import CommentsPanel from "@/components/objects/CommentsPanel.vue";
@@ -236,6 +236,8 @@ export default {
         };
     },
     methods: {
+        hasTeacherAccess,
+        hasAccessToObject,
         capitalize,
         async handleDelete() {
             const confirmed = window.confirm("Вы действительно хотите удалить этот объект?");
@@ -311,6 +313,13 @@ export default {
                 // По умолчанию - 'table'
                 this.viewModes[t.code] = "table";
             });
+        },
+        canFillCategory(category) {
+            if (hasAdminAccess()) return true;
+            if (category.params && category.params.can_fill && category.params.can_fill.includes(this.store.profile.role)) {
+                return true;
+            }
+            return false;
         }
     },
     computed: {

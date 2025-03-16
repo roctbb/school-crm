@@ -35,6 +35,22 @@ def requires_user(func):
 
     return wrapper
 
+def requires_roles(roles):
+    """
+    Декоратор для проверки роли пользователя. Принимает список ролей.
+    """
+
+    def decorator(func):
+        @wraps(func)
+        @requires_user
+        def wrapper(user, *args, **kwargs):
+            if user.role not in roles:
+                return jsonify({'error': 'Недостаточно прав'}), 403
+            return func(user, *args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 def transaction(func):
     @wraps(func)

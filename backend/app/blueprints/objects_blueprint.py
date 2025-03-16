@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify
 
 from app import LogicException
-from app.helpers.decorators import requires_user, validate_request_with
+from app.helpers.decorators import requires_user, validate_request_with, requires_roles
 from app.methods import get_objects_types, get_object_type_by_code, get_available_objects_by_type_code, create_object, \
     get_available_objects, get_object_by_id, update_object, delete_object, update_object_children, create_comment, \
     delete_comment, get_comment_by_id, create_submission, get_form_by_id, get_submission_by_id, update_submission, \
@@ -35,6 +35,7 @@ def objects_endpoint(user):
 
 @objects_blueprint.route('/<string:type_code>/create', methods=['POST'])
 @requires_user
+@requires_roles(['admin', 'teacher'])
 @validate_request_with(validate_object)
 def create_object_endpoint(validated_data, user, type_code):
     object_type = get_object_type_by_code(type_code)
@@ -46,6 +47,7 @@ from flask import request
 
 @objects_blueprint.route('/<int:object_id>', methods=['PUT'])
 @requires_user
+@requires_roles(['admin', 'teacher'])
 @validate_request_with(validate_object)
 def update_object_endpoint(validated_data, user, object_id):
     obj = get_object_by_id(object_id)
@@ -54,6 +56,7 @@ def update_object_endpoint(validated_data, user, object_id):
 
 @objects_blueprint.route('/<int:object_id>', methods=['DELETE'])
 @requires_user
+@requires_roles(['admin', 'teacher'])
 def delete_object_endpoint(user, object_id):
     obj = get_object_by_id(object_id)
     delete_object(user, obj)
@@ -62,6 +65,7 @@ def delete_object_endpoint(user, object_id):
 
 @objects_blueprint.route('/<int:object_id>/children', methods=['PUT'])
 @requires_user
+@requires_roles(['admin', 'teacher'])
 @validate_request_with(validate_object_children)
 def update_object_children_endpoint(validated_data, user, object_id):
     obj = get_object_by_id(object_id)
@@ -72,6 +76,7 @@ def update_object_children_endpoint(validated_data, user, object_id):
 
 @objects_blueprint.route('/<int:object_id>/comments', methods=['POST'])
 @requires_user
+@requires_roles(['admin', 'teacher'])
 @validate_request_with(validate_comment)
 def add_comment(validated_data, user, object_id):
     object = get_object_by_id(object_id)
@@ -80,6 +85,7 @@ def add_comment(validated_data, user, object_id):
 
 @objects_blueprint.route('/<int:object_id>/comments/<int:comment_id>', methods=['DELETE'])
 @requires_user
+@requires_roles(['admin', 'teacher'])
 def delete_comment_endpoint(user, object_id, comment_id):
     object = get_object_by_id(object_id)
     comment = get_comment_by_id(comment_id)
@@ -115,6 +121,7 @@ def update_submission_endpoint(validated_data, user, object_id, submission_id):
 
 @objects_blueprint.route('/<int:object_id>/submissions/<int:submission_id>', methods=['DELETE'])
 @requires_user
+@requires_roles(['admin', 'teacher'])
 def delete_submission_endpoint(user, object_id, submission_id):
     sub = get_submission_by_id(submission_id)
     delete_submission(user, sub)

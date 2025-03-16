@@ -25,7 +25,7 @@
                 </li>
             </ul>
             <button
-                v-if="activeTab"
+                v-if="activeTab && hasTeacherAccess()"
                 class="btn btn-success btn-sm ms-1 d-flex align-items-center"
                 @click="createObject(activeTab)"
             >
@@ -129,6 +129,7 @@ import Loading from "@/components/common/Loading.vue";
 import TableView from "@/components/objects/TableView.vue";
 import CardView from "@/components/objects/CardView.vue";
 import ListWidgetBar from "@/components/objects/ListWidgetBar.vue";
+import {hasTeacherAccess} from "@/utils/helpers.js";
 
 export default {
     name: "ObjectsView",
@@ -148,7 +149,7 @@ export default {
             isTableView: false,
             sortKey: "name",
             sortDirection: "asc",
-            isMenuOpen: false // флаг для выпадающего меню
+            isMenuOpen: false
         };
     },
     computed: {
@@ -257,6 +258,7 @@ export default {
         }
     },
     methods: {
+        hasTeacherAccess,
         handleRouteChange(newRoute = this.$route) {
             const pathTab = newRoute.path.replace("/", "");
             if (pathTab && this.activeTab !== pathTab) {

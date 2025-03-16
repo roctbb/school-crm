@@ -19,7 +19,7 @@
 
             <!-- Контейнер с навигационными ссылками, который будет сворачиваться -->
             <div class="collapse navbar-collapse" id="navbarContent">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0" v-if="hasAdminAccess()">
                     <li class="nav-item">
                         <router-link
                             to="/"
@@ -83,6 +83,7 @@
 <script>
 import { mapState, mapActions } from 'pinia'
 import useMainStore from "@/stores/mainStore.js"
+import {hasAdminAccess} from "@/utils/helpers.js";
 
 export default {
     name: "Navbar",
@@ -90,6 +91,7 @@ export default {
         ...mapState(useMainStore, ["profile"]),
     },
     methods: {
+        hasAdminAccess,
         ...mapActions(useMainStore, ["logout"]),
         handleLogout() {
             this.logout()

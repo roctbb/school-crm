@@ -9,8 +9,10 @@
                 :key="group"
                 class="mb-4"
             >
-                <h5 class="fw-bold pb-2">
-                    {{ groupingAttribute.name }}: {{ group }}
+                <h5 class="fw-bold d-flex align-items-center pb-2 mb-0">
+                    <span class="me-2">{{ groupingAttribute?.name }}: {{ group }}</span>
+                    <span class="badge bg-secondary rounded-pill py-1 px-2"
+                          style="font-size: 0.75rem;">{{ objects.length }}</span>
                 </h5>
                 <div class="row">
                     <div

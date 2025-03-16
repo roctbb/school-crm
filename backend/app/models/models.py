@@ -141,6 +141,8 @@ class Submission(db.Model):
     form_category_name = db.Column(db.String(100), nullable=True)
     is_external = db.Column(db.Boolean, nullable=False, server_default=db.text("'false'::boolean"))
 
+    is_approved = db.Column(db.Boolean, nullable=False, server_default=db.text("'true'::boolean"))
+
     # keys
     form_id = db.Column(db.Integer, db.ForeignKey('forms.id', ondelete="CASCADE"), nullable=True)
     object_id = db.Column(db.Integer, db.ForeignKey('objects.id', ondelete="CASCADE"), nullable=False)
