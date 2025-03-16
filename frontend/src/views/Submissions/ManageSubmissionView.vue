@@ -14,7 +14,6 @@
                     <div v-for="(field, idx) in submission.fields" :key="idx" class="mb-3">
                         <label :for="'field_'+idx" class="form-label">
                             {{ field.name }}
-                            <span v-if="field.required" class="text-danger">*</span>
                         </label>
 
                         <!-- Поле-строка -->
