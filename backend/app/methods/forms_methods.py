@@ -1,3 +1,5 @@
+from sqlalchemy.orm import joinedload
+
 from app import FormCategory
 from app.models import Form, Submission, db
 from app.helpers.exceptions import LogicException
@@ -63,7 +65,18 @@ def get_submission_by_id(sub_id):
 
 
 def get_object_submissions(object):
-    return [submission for submission in object.submissions if submission.deleted_at is None]
+    return (
+        db.session.query(Submission)
+        # Подгружаем связанные данные:
+        .options(
+            joinedload(Submission.form).joinedload(Form.category)
+        )
+        .filter(
+            Submission.object_id == object.id,
+            Submission.deleted_at.is_(None)
+        )
+        .all()
+    )
 
 
 @transaction
@@ -76,7 +89,8 @@ def create_submission(user, form, object, data):
         showoff_attributes=data.get("showoff_attributes", {}),
         creator_id=user.id,
         form_name=form.name,
-        form_category_name=form.category.name
+        form_category_name=form.category.name,
+        is_approved=user.role != 'student'
     )
     db.session.add(new_submission)
     return new_submission
@@ -94,3 +108,9 @@ def update_submission(submission, data):
 def delete_submission(user, submission):
     submission.deleted_at = db.func.now()
     submission.deleter_id = user.id
+
+@transaction
+def approve_submission(user, submission):
+    submission.is_approved = True
+    submission.approved_by = user
+    return submission

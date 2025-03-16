@@ -130,7 +130,7 @@
                         </div>
                     </div>
 
-                    <div class="accordion my-3" id="brothersAccordion">
+                    <div class="accordion my-3" id="brothersAccordion" v-if="hasTeacherAccess()">
                         <div class="accordion-item">
                             <h5 class="accordion-header" id="headingFilter">
                                 <button
@@ -186,6 +186,7 @@ import useMainStore from "@/stores/mainStore.js";
 import BaseLayout from "@/components/layouts/BaseLayout.vue";
 import ChildrenFilterEditor from "@/components/objects/ChildrenFilterEditor.vue";
 import {getAcademicYear} from "@/utils/helpers.js";
+import {hasTeacherAccess} from "@/utils/access.js";
 
 export default {
     name: "ManageSubmissionView",
@@ -246,6 +247,7 @@ export default {
         this.isLoading = false;
     },
     methods: {
+        hasTeacherAccess,
 
 
         // Заполнить submission.answers пустыми значениями, если форму только создали

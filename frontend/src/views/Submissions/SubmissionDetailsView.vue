@@ -19,7 +19,7 @@
                                 </h4>
                             </div>
                             <!-- Меню действий -->
-                            <div class="dropdown">
+                            <div class="dropdown" v-if="canModifySubmission(submission)">
                                 <button
                                     class="btn btn-light dropdown-toggle"
                                     type="button"
@@ -45,6 +45,11 @@
                                             <i class="bi bi-pencil me-1"></i> Редактировать
                                         </router-link>
                                     </li>
+                                    <li v-if="!submission.is_approved && hasTeacherAccess()">
+                                        <button class="dropdown-item" @click="handleApprove">
+                                            <i class="bi bi-check-circle text-success me-1"></i> Утвердить
+                                        </button>
+                                    </li>
                                     <li>
                                         <button
                                             class="dropdown-item text-danger"
@@ -57,12 +62,15 @@
                             </div>
                         </div>
                         <div class="card-body">
-
                             <!-- Дата создания -->
                             <p v-if="submission.created_at" class="text-muted mb-4">
                                 <i class="bi bi-calendar3 me-1"></i>
                                 Отправлено: {{ formatDateTime(submission.created_at) }}
+
+                                <span class="badge bg-warning ms-1"
+                                      v-if="!submission.is_approved">Не подтверждено</span>
                             </p>
+
 
                             <!-- Таблица с ответами -->
                             <div class="submission-answers">
@@ -93,7 +101,7 @@
 
         <!-- Индикатор загрузки -->
         <div v-else class="mt-5 text-center">
-            <Loading />
+            <Loading/>
         </div>
     </BaseLayout>
 </template>
@@ -102,12 +110,13 @@
 import BaseLayout from "@/components/layouts/BaseLayout.vue";
 import {formatDateTime, formatValue} from "@/utils/helpers.js";
 import useMainStore from "@/stores/mainStore.js";
-import { deleteSubmission } from "@/api/submissions_api.js";
+import {deleteSubmission} from "@/api/submissions_api.js";
 import Loading from "@/components/common/Loading.vue";
+import {canModifySubmission, hasTeacherAccess} from "@/utils/access.js";
 
 export default {
     name: "SubmissionDetailsView",
-    components: { BaseLayout, Loading },
+    components: {BaseLayout, Loading},
     props: {
         submissionId: {
             type: Number,
@@ -151,6 +160,8 @@ export default {
         }
     },
     methods: {
+        hasTeacherAccess,
+        canModifySubmission,
         formatValue,
         formatDateTime,
         async handleDelete() {
@@ -168,6 +179,12 @@ export default {
                 }
             }
         },
+        async handleApprove() {
+            const confirmed = confirm("Вы действительно хотите утвердить этот ответ?");
+            if (confirmed) {
+                await this.submission.approve(this.object.id)
+            }
+        }
     },
 };
 </script>

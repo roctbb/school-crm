@@ -63,3 +63,9 @@ export async function deleteComment(objectId, commentId) {
         method: "DELETE",
     });
 }
+
+export async function approveObject(objectId) {
+    return await api_client.fetch(`/objects/${objectId}/approve`, {
+        method: "POST"
+    });
+}

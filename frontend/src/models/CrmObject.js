@@ -1,6 +1,6 @@
 import Model from "@/models/common.js";
 import {formatDate} from "@/utils/helpers";
-import {createObject, updateObject, updateObjectChildren} from "@/api/objects_api.js";
+import {approveObject, createObject, updateObject, updateObjectChildren} from "@/api/objects_api.js";
 import {fetchObjectSubmissions} from "@/api/submissions_api.js";
 import Submission from "@/models/Submission.js";
 
@@ -45,6 +45,15 @@ class CrmObject extends Model {
         }
 
         return this;
+    }
+
+    async approve() {
+        this.init(await approveObject(this.id))
+        return this;
+    }
+
+    hasStudentOwner() {
+        return this.owners.filter(owner => owner.role === 'student').length > 0;
     }
 
     async saveChildren(newChildren) {

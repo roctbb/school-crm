@@ -28,7 +28,7 @@ def test_object_types_success(client, db_session, test_user, auth_headers):
     assert response.status_code == 200
 
     # Проверяем, что данные корректно представлены
-    expected_data = [present_object_type(object_type1), present_object_type(object_type2)]
+    expected_data = [present_object_type(object_type1, test_user), present_object_type(object_type2, test_user)]
     assert response.json == expected_data
 
 

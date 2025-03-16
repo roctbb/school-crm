@@ -19,8 +19,8 @@
 
             <!-- Контейнер с навигационными ссылками, который будет сворачиваться -->
             <div class="collapse navbar-collapse" id="navbarContent">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0" v-if="hasAdminAccess()">
-                    <li class="nav-item">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item" v-if="hasAdminAccess()">
                         <router-link
                             to="/"
                             class="nav-link"
@@ -29,7 +29,7 @@
                             Записи
                         </router-link>
                     </li>
-                    <li class="nav-item">
+                    <li class="nav-item" v-if="hasAdminAccess()">
                         <router-link
                             to="/forms"
                             class="nav-link"
@@ -38,7 +38,7 @@
                             Формы
                         </router-link>
                     </li>
-                    <li class="nav-item">
+                    <li class="nav-item" v-if="hasAdminAccess()">
                         <router-link
                             to="/import"
                             class="nav-link"
@@ -47,6 +47,16 @@
                             Импорт
                         </router-link>
                     </li>
+                    <li class="nav-item" v-if="hasAdminAccess()">
+                        <router-link
+                            to="/invitations"
+                            class="nav-link"
+                            active-class="active"
+                        >
+                            Инвайты
+                        </router-link>
+                    </li>
+
                 </ul>
 
                 <!-- Профиль пользователя в правой части -->
@@ -81,9 +91,9 @@
 </template>
 
 <script>
-import { mapState, mapActions } from 'pinia'
+import {mapState, mapActions} from 'pinia'
 import useMainStore from "@/stores/mainStore.js"
-import {hasAdminAccess} from "@/utils/helpers.js";
+import {hasAdminAccess} from "@/utils/access.js";
 
 export default {
     name: "Navbar",

@@ -1,5 +1,6 @@
 import Model from "@/models/common.js";
-import {createSubmission, deleteSubmission, updateSubmission} from "@/api/submissions_api.js";
+import {approveSubmission, createSubmission, deleteSubmission, updateSubmission} from "@/api/submissions_api.js";
+import {approveObject} from "@/api/objects_api.js";
 
 class Submission extends Model {
     constructor(description, store, form) {
@@ -21,6 +22,11 @@ class Submission extends Model {
         } else {
             this.fields = [...this._form._category.common_fields, ...this._form.fields]
         }
+    }
+
+    async approve(objectId) {
+        this.init(await approveSubmission(objectId, this.id))
+        return this;
     }
 
     init(description) {

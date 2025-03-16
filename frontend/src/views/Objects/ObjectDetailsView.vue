@@ -7,22 +7,23 @@
                 <div v-if="object.attributes?.photo" class="me-3">
                     <img
                         :src="object.attributes.photo"
-                        alt="Object Photo"
+                        alt="Object Photo" class="rounded-1"
                         style="max-width: 150px;"
                     />
                 </div>
                 <!-- Заголовок -->
                 <div class="flex-grow-1">
                     <h2 class="me-2">
-                        <small class="text-muted">{{ capitalize(object_type.name) }}:</small> {{ object.name }}
+                        <small class="text-muted">{{ capitalize(object_type.name) }}:</small> {{ object.name }} <i class="bi bi-check-lg" v-if="object.hasStudentOwner()"></i>
                     </h2>
                     <div>
+                        <div class="badge bg-warning mb-2" v-if="!object.is_approved">Не подтвержден</div>
                         <AttributePresenter :object="object" :type="object_type"/>
                         <DetailsWidgetBar :object="object" :type="object_type"/>
                     </div>
                 </div>
                 <!-- Блок выпадающего списка -->
-                <div  v-if="hasAccessToObject(object)">
+                <div v-if="canModifyObject(object)">
                     <div class="dropdown">
                         <button
                             class="btn btn-light dropdown-toggle"
@@ -39,15 +40,21 @@
                                     :to="`/${object_type.code}/${object.id}/edit`"
                                     class="dropdown-item"
                                 >
-                                    <i class="bi bi-pencil"></i> Редактировать
+                                    <i class="bi bi-pencil me-1"></i> Редактировать
                                 </router-link>
                             </li>
-                            <li v-if="hasTeacherAccess()">
+                            <li v-if="!object.is_approved && hasTeacherAccess()">
+                                <button class="dropdown-item" @click="handleApprove">
+                                    <i class="bi bi-check-circle text-success me-1"></i> Утвердить
+                                </button>
+                            </li>
+
+                            <li v-if="canDeleteObject(object)">
                                 <button
                                     class="dropdown-item text-danger"
                                     @click="handleDelete"
                                 >
-                                    <i class="bi bi-trash"></i> Удалить
+                                    <i class="bi bi-trash me-1"></i> Удалить
                                 </button>
                             </li>
                         </ul>
@@ -65,23 +72,20 @@
                     >
                         <div v-if="findRelativesByType(type).length">
                             <!-- Заголовок c переключателем и бейджем -->
-                            <h5 class="pb-2">
-                                {{ type.name }}
-                                <span class="badge bg-secondary ms-2">
-                  {{ findRelativesByType(type).length }}
-                </span>
+                            <h5 class="pb-2 d-flex justify-content-between align-items-center">
+                                <span>
+                                    {{ type.name }}
+                                    <span
+                                        class="badge bg-secondary rounded-pill py-1 px-2"
+                                        style="font-size: 0.75rem;"
+                                    >{{ findRelativesByType(type).length }}</span>
+                                </span>
                                 <button
                                     class="btn btn-outline-secondary btn-sm ms-2"
                                     @click="toggleTypeView(type)"
                                 >
-                                    <i
-                                        v-if="viewModes[type.code] === 'table'"
-                                        class="bi bi-grid"
-                                    ></i>
-                                    <i
-                                        v-else
-                                        class="bi bi-list"
-                                    ></i>
+                                    <i v-if="viewModes[type.code] === 'table'" class="bi bi-grid"></i>
+                                    <i v-else class="bi bi-list"></i>
                                 </button>
                             </h5>
 
@@ -127,7 +131,7 @@
                         </div>
 
                         <!-- Выпадающий список форм -->
-                        <div class="btn-group" v-if="canFillCategory(form_category)">
+                        <div class="btn-group" v-if="canFillInCategory(form_category)">
                             <button
                                 class="btn btn-sm btn-light dropdown-toggle"
                                 type="button"
@@ -179,7 +183,7 @@
                 </div>
 
                 <!-- Панель комментариев -->
-                <div class="col-md-4">
+                <div class="col-md-4" v-if="object.comment || canCommentObject(object)">
                     <CommentsPanel :object="object"/>
                 </div>
             </div>
@@ -197,10 +201,10 @@
 
 <script>
 import useMainStore from "@/stores/mainStore.js";
-import {deleteObject} from "@/api/objects_api.js";
+import {approveObject, deleteObject} from "@/api/objects_api.js";
 import BaseLayout from "@/components/layouts/BaseLayout.vue";
 import Loading from "@/components/common/Loading.vue";
-import {capitalize, hasAccessToObject, hasAdminAccess, hasTeacherAccess} from "@/utils/helpers.js";
+import {capitalize} from "@/utils/helpers.js";
 import ObjectCard from "@/components/objects/ObjectCard.vue";
 import AttributePresenter from "@/components/objects/AttributePresenter.vue";
 import CommentsPanel from "@/components/objects/CommentsPanel.vue";
@@ -208,6 +212,13 @@ import SubmissionCard from "@/components/submissions/SubmissionCard.vue";
 import TableView from "@/components/objects/TableView.vue";
 import CardView from "@/components/objects/CardView.vue";
 import DetailsWidgetBar from "@/components/objects/DetailsWidgetBar.vue";
+import {
+    canCommentObject,
+    canDeleteObject,
+    canFillInCategory,
+    canModifyObject,
+    hasTeacherAccess
+} from "@/utils/access.js";
 
 export default {
     name: "ObjectDetailsView",
@@ -237,7 +248,11 @@ export default {
     },
     methods: {
         hasTeacherAccess,
-        hasAccessToObject,
+        approveObject,
+        canCommentObject,
+        canFillInCategory,
+        canModifyObject,
+        canDeleteObject,
         capitalize,
         async handleDelete() {
             const confirmed = window.confirm("Вы действительно хотите удалить этот объект?");
@@ -247,6 +262,12 @@ export default {
                     this.object.type
                     ].filter((obj) => obj.id !== this.object.id);
                 this.$router.push(`/${this.object.type}`);
+            }
+        },
+        async handleApprove() {
+            const confirmed = window.confirm("Вы действительно хотите утвердить этот объект?");
+            if (confirmed) {
+                await this.object.approve();
             }
         },
         /**

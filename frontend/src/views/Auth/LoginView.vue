@@ -63,8 +63,7 @@ export default {
                 this.$router.push("/");
                 this.error = "";
             } catch (error) {
-                console.error("Login failed:", error);
-                this.error = "Неверный email или пароль. Попробуйте снова!"
+                this.error = error.message || "Не удалось соединиться с сервером.";
             }
         },
     },

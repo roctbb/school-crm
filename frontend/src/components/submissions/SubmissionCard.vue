@@ -3,6 +3,7 @@
         <!-- Основное содержимое карточки -->
         <div class="card-body flex-grow-1 pb-0">
             <h5 class="card-title">{{ form.name }}</h5>
+            <div class="badge bg-warning mt-0" v-if="!submission.is_approved">Не подтверждено</div>
             <p v-if="submission.created_at" class="created-at-text">
                 {{ formatDateTime(submission.created_at) }}
             </p>
@@ -23,13 +24,13 @@
 
 <script>
 import useMainStore from "@/stores/mainStore.js";
-import { formatDateTime } from "@/utils/helpers.js";
+import {formatDateTime} from "@/utils/helpers.js";
 import ShowoffPresenter from "@/components/submissions/ShowoffPresenter.vue";
 
 export default {
     name: "SubmissionCard",
     components: {ShowoffPresenter},
-    methods: { formatDateTime },
+    methods: {formatDateTime},
     props: {
         submission: {
             type: Object,

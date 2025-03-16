@@ -101,8 +101,7 @@ function parseDate(dateString) {
     try {
         const [day, month, year] = dateString.split('.');
         return new Date(+year, +month - 1, +day);
-    }
-    catch (e) {
+    } catch (e) {
         return undefined
     }
 }
@@ -147,38 +146,6 @@ const isEventActive = function (event, object) {
     return false;
 }
 
-const hasAccessToObject = function(object) {
-    let profile = useMainStore().profile;
-    if (!profile) return false;
-
-    if (profile.role === 'admin' || profile.role === 'teacher') {
-        return true;
-    }
-
-    for (let owner of object.owners) {
-        if (owner.id === profile.id) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-const hasAdminAccess = function() {
-    let profile = useMainStore().profile;
-    if (!profile) return false;
-
-    return profile.role === 'admin';
-}
-
-const hasTeacherAccess = function() {
-    let profile = useMainStore().profile;
-    if (!profile) return false;
-
-    return profile.role === 'admin' || profile.role === 'teacher';
-}
-
-
 export {
     searchForArray,
     empty,
@@ -187,5 +154,11 @@ export {
     formatDate,
     formatDateTime,
     copy,
-    toBase64, isString, fillPatientData, getAcademicYear, formatValue, isEventActive, parseDate, hasAccessToObject, hasAdminAccess, hasTeacherAccess
+    toBase64,
+    isString,
+    fillPatientData,
+    getAcademicYear,
+    formatValue,
+    isEventActive,
+    parseDate,
 }

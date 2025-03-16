@@ -27,3 +27,9 @@ export async function fetchObjectSubmissions(objectId) {
         method: "GET"
     });
 }
+
+export async function approveSubmission(objectId, submissionId) {
+    return await api_client.fetch(`/objects/${objectId}/submissions/${submissionId}/approve`, {
+        method: "POST"
+    });
+}

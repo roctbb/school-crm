@@ -38,15 +38,19 @@ def get_object_type_by_code(type_code):
 
     return object_type
 
+@transaction
+def approve_object(user, object):
+    object.is_approved = True
+    object.approved_by = user
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+    return object
+
 
 
 def get_available_objects_by_type_code(type_code):
     object_type = get_object_type_by_code(type_code)
 
-    result = Object.query.filter_by(type_id=object_type.id, deleted_at=None).options(selectinload(Object.parents),
+    result = Object.query.filter_by(type_id=object_type.id, deleted_at=None).options(selectinload(Object.type), selectinload(Object.parents),
                                                                                      selectinload(Object.children),
                                                                                      selectinload(Object.owners),
                                                                                      selectinload(
@@ -57,11 +61,11 @@ def get_available_objects_by_type_code(type_code):
 def get_available_objects():
     logging.log(
         logging.INFO, "Begin query!!!")
-    result = Object.query.filter_by(deleted_at=None).options(selectinload(Object.parents),
-                                                                                     selectinload(Object.children),
-                                                                                     selectinload(Object.owners),
-                                                                                     selectinload(
-                                                                                         Object.comments)).all()
+    result = Object.query.filter_by(deleted_at=None).options(selectinload(Object.type), selectinload(Object.parents),
+                                                             selectinload(Object.children),
+                                                             selectinload(Object.owners),
+                                                             selectinload(
+                                                                 Object.comments)).all()
     logging.log(
         logging.INFO, "End query!!!")
 
@@ -76,7 +80,11 @@ def create_object(user, type, data):
         attributes=data.get("attributes", {}),
         params=data.get("params", {}),
         creator_id=user.id,
+        is_approved=user.role != 'student'
     )
+
+    new_object.owners.append(user)
+
     db.session.add(new_object)
     return new_object
 

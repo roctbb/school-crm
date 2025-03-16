@@ -25,7 +25,7 @@
                 </li>
             </ul>
             <button
-                v-if="activeTab && hasTeacherAccess()"
+                v-if="activeTab && canCreateByType(store.getObjectTypeByCode(activeTab))"
                 class="btn btn-success btn-sm ms-1 d-flex align-items-center"
                 @click="createObject(activeTab)"
             >
@@ -129,7 +129,7 @@ import Loading from "@/components/common/Loading.vue";
 import TableView from "@/components/objects/TableView.vue";
 import CardView from "@/components/objects/CardView.vue";
 import ListWidgetBar from "@/components/objects/ListWidgetBar.vue";
-import {hasTeacherAccess} from "@/utils/helpers.js";
+import {canCreateByType} from "@/utils/access.js";
 
 export default {
     name: "ObjectsView",
@@ -258,7 +258,7 @@ export default {
         }
     },
     methods: {
-        hasTeacherAccess,
+        canCreateByType,
         handleRouteChange(newRoute = this.$route) {
             const pathTab = newRoute.path.replace("/", "");
             if (pathTab && this.activeTab !== pathTab) {
@@ -283,7 +283,7 @@ export default {
         selectGrouping(attribute) {
             this.selectedAttribute = attribute;
             this.isMenuOpen = false;
-        }
+        },
     }
 };
 </script>

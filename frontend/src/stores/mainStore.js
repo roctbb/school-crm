@@ -27,7 +27,12 @@ const useMainStore = defineStore("mainStore", {
                 this.profile = await getProfile();
                 return true;
             } catch (e) {
-                return false;
+                if (e.code === 401) {
+                    return false;
+                }
+                else {
+                    throw e;
+                }
             }
         },
 
@@ -136,7 +141,7 @@ const useMainStore = defineStore("mainStore", {
 
         getObject(typeCode, id) {
             if (!id) {
-                return Object.values(this.objects).flat().find(obj => obj.type === typeCode);
+                return Object.values(this.objects).flat().find(obj => obj.id === typeCode);
             }
             return this.objects[typeCode].find(obj => obj.id === parseInt(id));
         },

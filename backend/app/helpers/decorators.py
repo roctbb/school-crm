@@ -42,7 +42,6 @@ def requires_roles(roles):
 
     def decorator(func):
         @wraps(func)
-        @requires_user
         def wrapper(user, *args, **kwargs):
             if user.role not in roles:
                 return jsonify({'error': 'Недостаточно прав'}), 403

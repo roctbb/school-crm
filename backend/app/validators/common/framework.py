@@ -1,7 +1,7 @@
 from app import LogicException
 
 
-def should_have(data, param, min_length=None, max_length=None, required=True):
+def should_have(data, param, min_length=None, max_length=None, required=True, options=None):
     value = data.get(param)
 
     if not value and required:
@@ -12,7 +12,10 @@ def should_have(data, param, min_length=None, max_length=None, required=True):
             raise LogicException(f"Поле {param} короче {min_length}", 400, field=param)
 
         if max_length is not None and len(value) > max_length:
-            raise LogicException(f"Поле {param} длинее {min_length}", 400, field=param)
+            raise LogicException(f"Поле {param} длиннее {min_length}", 400, field=param)
+
+    if options is not None and value not in options:
+        raise LogicException(f"Поле {param} должны быть одним из {options}")
 
 
 def should_exist(data, param, model, target_param=None):

@@ -1,5 +1,8 @@
 import logging
 
+from app.methods import can_get_form_category
+
+
 def present_user(user):
     return {
         'id': user.id,
@@ -11,13 +14,13 @@ def present_user(user):
     }
 
 
-def present_object_type(object_type):
+def present_object_type(object_type, user):
     return {
         'id': object_type.id,
         'name': object_type.name,
         'code': object_type.code,
         'form_categories': [present_related_form_category(category) for category in object_type.form_categories if
-                            not category.deleted_at],
+                            not category.deleted_at and can_get_form_category(user, category)],
         'available_attributes': object_type.available_attributes,
         'available_params': object_type.available_params,
         'params': object_type.params,
@@ -41,6 +44,7 @@ def present_object(obj):
         'params': obj.params,
         'attributes': obj.attributes,
         'type': obj.type.code,
+        'is_approved': obj.is_approved,
         'creator': present_user(obj.created_by) if obj.created_by else None,
         'deleter': present_user(obj.deleted_by) if obj.deleted_by else None,
         'created_at': obj.created_at.isoformat(),
@@ -128,6 +132,7 @@ def present_invitation(invitation):
     return {
         'id': invitation.id,
         'email': invitation.email,
+        'key': invitation.key,
         'role': invitation.role,
         'used_at': invitation.used_at.isoformat() if invitation.used_at else None,
         'created_at': invitation.created_at.isoformat(),

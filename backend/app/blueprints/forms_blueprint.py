@@ -4,7 +4,7 @@ from app.validators import validate_form
 from app.presenters.presenters import present_form, present_form_category
 from app.methods import (
     get_form_by_id, get_forms, get_form_categories, create_form, update_form, delete_form,
-    get_category_by_id
+    get_category_by_id, can_get_form_category
 )
 
 forms_blueprint = Blueprint('forms', __name__, url_prefix='/forms')
@@ -19,7 +19,7 @@ def get_forms_endpoint(user):
 @forms_blueprint.route('/categories', methods=['GET'])
 @requires_user
 def get_form_categories_endpoint(user):
-    return jsonify([present_form_category(fc) for fc in get_form_categories()]), 200
+    return jsonify([present_form_category(fc) for fc in get_form_categories() if can_get_form_category(user, fc)]), 200
 
 
 @forms_blueprint.route('/categories/<int:category_id>', methods=['POST'])

@@ -64,3 +64,9 @@ def validate_object_children(data):
     if not all(isinstance(child_id, int) for child_id in children):
         raise LogicException("Каждый элемент в поле children должен быть числом.", 422)
     return data
+
+
+def validate_invitations_request(data):
+    should_have(data, 'role', options=['student', 'teacher', 'admin'])
+
+    return data

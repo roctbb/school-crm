@@ -9,6 +9,7 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 import '@/assets/styles.css';
 import useMainStore from "@/stores/mainStore.js";
 
+
 const app = createApp(App);
 const pinia = createPinia();
 

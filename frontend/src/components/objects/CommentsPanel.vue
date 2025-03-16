@@ -13,6 +13,7 @@
                 </div>
                 <!-- Иконка удаления справа -->
                 <div
+                    v-if="canDeleteComment(comment)"
                     class="text-danger ms-auto"
                     style="cursor: pointer; font-size: 0.85rem;"
                     title="Удалить комментарий"
@@ -27,7 +28,7 @@
         </div>
 
         <!-- Форма добавления нового комментария -->
-        <div class="mt-3" v-if="hasTeacherAccess()">
+        <div class="mt-3" v-if="canCommentObject(object)">
             <form @submit.prevent="postComment">
                 <div class="mb-3">
                     <textarea
@@ -44,8 +45,8 @@
 </template>
 
 <script>
-import { postComment, deleteComment } from "@/api/objects_api.js";
-import {hasTeacherAccess} from "@/utils/helpers.js";
+import {postComment, deleteComment} from "@/api/objects_api.js";
+import {canCommentObject, canDeleteComment} from "@/utils/access.js";
 
 export default {
     name: "CommentsPanel",
@@ -69,7 +70,8 @@ export default {
         }
     },
     methods: {
-        hasTeacherAccess,
+        canDeleteComment,
+        canCommentObject,
         async postComment() {
             const text = this.newComment.trim();
             if (!text) return;

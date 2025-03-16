@@ -49,10 +49,13 @@ class Object(db.Model):
     updated_at = db.Column(db.DateTime, nullable=True, server_default=db.func.now(), onupdate=db.func.now())
     deleted_at = db.Column(db.DateTime, nullable=True)
 
+    is_approved = db.Column(db.Boolean, nullable=False, server_default=db.text("'true'::boolean"))
+
     # foreign keys
     type_id = db.Column(db.Integer, db.ForeignKey('object_types.id', ondelete='CASCADE'), nullable=False)
     creator_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
     deleter_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
+    approver_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
 
     # relations
     parents = db.relationship(
@@ -73,6 +76,7 @@ class Object(db.Model):
 
     created_by = db.relationship('User', foreign_keys=[creator_id], lazy='joined')
     deleted_by = db.relationship('User', foreign_keys=[deleter_id], lazy='joined')
+    approver_by = db.relationship('User', foreign_keys=[approver_id], lazy='joined')
 
 
 class FormCategory(db.Model):
@@ -148,12 +152,14 @@ class Submission(db.Model):
     object_id = db.Column(db.Integer, db.ForeignKey('objects.id', ondelete="CASCADE"), nullable=False)
     creator_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
     deleter_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
+    approver_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
 
     # relations
     form = db.relationship('Form', back_populates='submissions')
     object = db.relationship('Object', back_populates='submissions')  # Связывает с Object
     created_by = db.relationship('User', foreign_keys=[creator_id], lazy=False)
     deleted_by = db.relationship('User', foreign_keys=[deleter_id], lazy=False)
+    approver_by = db.relationship('User', foreign_keys=[approver_id], lazy=False)
 
 
 class Invitation(db.Model):

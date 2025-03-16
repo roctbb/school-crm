@@ -18,10 +18,11 @@
         </div>
 
         <div class="card-body flex-grow-1 pb-0">
-            <h5 class="card-title">{{ object.name }}</h5>
-            <!-- Добавлен текст даты создания -->
+            <h5 class="card-title mb-2">{{ object.name }}</h5>
 
-            <AttributePresenter :object="object" :type="type" :display="false" :show_off="true"/>
+            <div class="badge bg-warning mt-0" v-if="!object.is_approved">Не подтвержден</div>
+
+            <AttributePresenter class="mt-2" :object="object" :type="type" :display="false" :show_off="true"/>
         </div>
 
         <div class="mt-auto py-3 ps-3">
