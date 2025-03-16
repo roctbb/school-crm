@@ -111,7 +111,7 @@ def delete_comment_endpoint(user, object_id, comment_id):
 def create_submission_endpoint(validated_data, user, object_id, form_id):
     object = get_object_by_id(object_id)
     form = get_form_by_id(form_id)
-    if can_fill_in_category(user, form.category):
+    if can_fill_in_category(user, form.category) and can_modify_object(user, object):
         new_sub = create_submission(user, form, object, validated_data)
         return jsonify(present_submission(new_sub)), 201
 

@@ -14,7 +14,8 @@
                 <!-- Заголовок -->
                 <div class="flex-grow-1">
                     <h2 class="me-2">
-                        <small class="text-muted">{{ capitalize(object_type.name) }}:</small> {{ object.name }} <i class="bi bi-check-lg" v-if="object.hasStudentOwner()"></i>
+                        <small class="text-muted">{{ capitalize(object_type.name) }}:</small> {{ object.name }} <i
+                        class="bi bi-check-lg" v-if="object.hasStudentOwner()"></i>
                     </h2>
                     <div>
                         <div class="badge bg-warning mb-2" v-if="!object.is_approved">Не подтвержден</div>
@@ -131,7 +132,7 @@
                         </div>
 
                         <!-- Выпадающий список форм -->
-                        <div class="btn-group" v-if="canFillInCategory(form_category)">
+                        <div class="btn-group" v-if="canFillInCategory(form_category) && canModifyObject(object)">
                             <button
                                 class="btn btn-sm btn-light dropdown-toggle"
                                 type="button"
@@ -188,7 +189,12 @@
                 </div>
             </div>
 
-            <BackButton />
+            <button
+                class="btn btn-secondary btn-sm"
+                @click="$router.push(`/`)"
+            >
+                Назад
+            </button>
         </div>
         <Loading v-else/>
     </BaseLayout>
@@ -214,12 +220,10 @@ import {
     canModifyObject,
     hasTeacherAccess
 } from "@/utils/access.js";
-import BackButton from "@/components/common/BackButton.vue";
 
 export default {
     name: "ObjectDetailsView",
     components: {
-        BackButton,
         DetailsWidgetBar,
         BaseLayout,
         Loading,
