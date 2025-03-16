@@ -1,3 +1,18 @@
 h5 {
     font-size: 1.15rem;
 }
+
+/* Пример: label, за которым следует input/textarea/select c атрибутом required */
+label:has(+ input[required]),
+label:has(+ select[required]),
+label:has(+ textarea[required]) {
+  position: relative;
+}
+
+label:has(+ input[required])::after,
+label:has(+ select[required])::after,
+label:has(+ textarea[required])::after {
+  content: "*";
+  color: red;
+  margin-left: 2px; /* небольшой отступ от текста метки */
+}

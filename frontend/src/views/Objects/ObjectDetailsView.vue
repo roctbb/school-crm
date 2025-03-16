@@ -202,7 +202,7 @@
 
 <script>
 import useMainStore from "@/stores/mainStore.js";
-import {approveObject, deleteObject} from "@/api/objects_api.js";
+import {deleteObject} from "@/api/objects_api.js";
 import BaseLayout from "@/components/layouts/BaseLayout.vue";
 import Loading from "@/components/common/Loading.vue";
 import {capitalize} from "@/utils/helpers.js";

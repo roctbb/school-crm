@@ -4,6 +4,10 @@
             <h3 class="my-3">{{ capitalize(object_type.name) }}:
                 {{ isEditMode ? object.name : "добавление записи" }}</h3>
 
+            <div v-if="object_type.params.edit_description" v-html="object_type.params.edit_description"
+                 class="alert alert-warning">
+            </div>
+
             <form @submit.prevent="handleSave">
                 <!-- Поле для имени -->
                 <div class="mb-3">

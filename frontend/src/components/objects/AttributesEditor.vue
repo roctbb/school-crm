@@ -17,6 +17,7 @@
                 type="text"
                 class="form-control"
                 :placeholder="`Введите ${attribute.name}`"
+                :required="attribute.required"
             />
 
             <!-- text -->
@@ -26,6 +27,7 @@
                 v-model="localAttributes[attribute.code]"
                 class="form-control"
                 :placeholder="`Введите ${attribute.name}`"
+                :required="attribute.required"
                 rows="3"
             ></textarea>
 
@@ -37,6 +39,7 @@
                 type="number"
                 class="form-control"
                 :placeholder="`Введите ${attribute.name}`"
+                :required="attribute.required"
             />
 
             <!-- date -->
@@ -50,6 +53,7 @@
                 :input-class="'form-control'"
                 locale="ru"
                 :format="'dd.MM.yyyy'"
+                :required="attribute.required"
             />
 
             <!-- file -->
@@ -59,6 +63,7 @@
                     :id="attribute.code"
                     @change="handleFileUpload($event, attribute.code)"
                     class="form-control"
+                    :required="attribute.required"
                 />
                 <div v-if="localAttributes[attribute.code] && !isUploading" class="mt-2">
                     <a
@@ -81,6 +86,7 @@
                 :id="attribute.code"
                 class="form-select"
                 v-model="localAttributes[attribute.code]"
+                :required="attribute.required"
             >
                 <option
                     v-for="option in attribute.options || []"
@@ -107,6 +113,7 @@
                         :id="attribute.code + '_' + option"
                         :value="option"
                         v-model="localAttributes[attribute.code]"
+                        :required="attribute.required && !(localAttributes[attribute.code] || []).length"
                     />
                     <label
                         class="form-check-label"
@@ -117,17 +124,19 @@
                 </div>
             </div>
 
-            <!-- неизвестный тип -->
-            <div v-else class="form-text text-muted">
-                Неизвестный тип: <strong>{{ attribute.type }}</strong>
+            <!-- блок с описанием поля -->
+            <div v-if="attribute.description" class="form-text">
+                {{ attribute.description }}
             </div>
+
         </div>
     </div>
 </template>
 
+
 <script>
-import { uploadFile } from "@/api/files_api.js";
-import { API_URL } from "@/api/common.js";
+import {uploadFile} from "@/api/files_api.js";
+import {API_URL} from "@/api/common.js";
 import VueDatePicker from "@vuepic/vue-datepicker";
 import "@vuepic/vue-datepicker/dist/main.css"; // Стили для Vue3
 
@@ -149,7 +158,7 @@ export default {
     emits: ["update:attributes"],
     data() {
         return {
-            localAttributes: { ...this.attributes },
+            localAttributes: {...this.attributes},
             isUploading: false,
         };
     },
@@ -191,6 +200,7 @@ export default {
 .file-upload input[type="file"] {
     cursor: pointer;
 }
+
 .file-upload a {
     text-decoration: underline;
 }
