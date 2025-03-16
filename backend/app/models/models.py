@@ -50,6 +50,7 @@ class Object(db.Model):
     deleted_at = db.Column(db.DateTime, nullable=True)
 
     is_approved = db.Column(db.Boolean, nullable=False, server_default=db.text("'true'::boolean"))
+    has_unapproved_submissions = db.Column(db.Boolean, nullable=False, server_default=db.text("'false'::boolean"))
 
     # foreign keys
     type_id = db.Column(db.Integer, db.ForeignKey('object_types.id', ondelete='CASCADE'), nullable=False)

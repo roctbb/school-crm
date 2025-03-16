@@ -29,8 +29,7 @@ const useMainStore = defineStore("mainStore", {
             } catch (e) {
                 if (e.code === 401) {
                     return false;
-                }
-                else {
+                } else {
                     throw e;
                 }
             }
@@ -54,8 +53,7 @@ const useMainStore = defineStore("mainStore", {
             const isValid = await this.tryLoadProfile();
             if (!isValid) {
                 this.logout();
-            }
-            else {
+            } else {
                 localStorage.setItem("token", new_token);
             }
         },
@@ -139,9 +137,13 @@ const useMainStore = defineStore("mainStore", {
             return this.formCategories.find(category => category.id === parseInt(id));
         },
 
+        allObjects() {
+            return Object.values(this.objects).flat()
+        },
+
         getObject(typeCode, id) {
             if (!id) {
-                return Object.values(this.objects).flat().find(obj => obj.id === typeCode);
+                return this.allObjects().find(obj => obj.id === typeCode);
             }
             return this.objects[typeCode].find(obj => obj.id === parseInt(id));
         },

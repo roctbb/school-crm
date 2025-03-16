@@ -23,7 +23,6 @@
                     >
                         <ObjectCard
                             :object="object"
-                            :type="objectType"
                         />
                     </div>
                 </div>
@@ -38,7 +37,6 @@
             >
                 <ObjectCard
                     :object="object"
-                    :type="objectType"
                 />
             </div>
         </div>
@@ -58,7 +56,6 @@ export default {
         objects: {type: Array, required: true},
         groupedData: {type: Object, default: null},
         groupingAttribute: {type: Object, default: null},
-        objectType: {type: Object, required: true},
         size: {type: String, default: "medium"}
     }
 };

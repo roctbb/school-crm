@@ -45,6 +45,7 @@ def present_object(obj):
         'attributes': obj.attributes,
         'type': obj.type.code,
         'is_approved': obj.is_approved,
+        'has_unapproved_submissions': obj.has_unapproved_submissions,
         'creator': present_user(obj.created_by) if obj.created_by else None,
         'deleter': present_user(obj.deleted_by) if obj.deleted_by else None,
         'created_at': obj.created_at.isoformat(),

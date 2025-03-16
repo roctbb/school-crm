@@ -143,7 +143,6 @@ def approve_submission_endpoint(user, object_id, submission_id):
 
 @objects_blueprint.route('/<int:object_id>/submissions/<int:submission_id>', methods=['DELETE'])
 @requires_user
-@requires_roles(['admin', 'teacher'])
 def delete_submission_endpoint(user, object_id, submission_id):
     sub = get_submission_by_id(submission_id)
 

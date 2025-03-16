@@ -188,12 +188,7 @@
                 </div>
             </div>
 
-            <button
-                class="btn btn-secondary btn-sm"
-                @click="$router.push(`/${object_type.code}`)"
-            >
-                Назад
-            </button>
+            <BackButton />
         </div>
         <Loading v-else/>
     </BaseLayout>
@@ -219,10 +214,12 @@ import {
     canModifyObject,
     hasTeacherAccess
 } from "@/utils/access.js";
+import BackButton from "@/components/common/BackButton.vue";
 
 export default {
     name: "ObjectDetailsView",
     components: {
+        BackButton,
         DetailsWidgetBar,
         BaseLayout,
         Loading,
@@ -248,7 +245,6 @@ export default {
     },
     methods: {
         hasTeacherAccess,
-        approveObject,
         canCommentObject,
         canFillInCategory,
         canModifyObject,
@@ -328,6 +324,8 @@ export default {
             for (let type_code of unique_type_codes) {
                 this.connectedTypes.push(this.store.getObjectTypeByCode(type_code));
             }
+
+            this.connectedTypes = this.connectedTypes.filter(Boolean)
 
             // Инициализация viewModes для каждого найденного типа
             this.connectedTypes.forEach((t) => {

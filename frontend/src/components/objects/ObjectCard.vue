@@ -20,7 +20,7 @@
         <div class="card-body flex-grow-1 pb-0">
             <h5 class="card-title mb-2">{{ object.name }}</h5>
 
-            <div class="badge bg-warning mt-0" v-if="!object.is_approved">Не подтвержден</div>
+            <div class="badge bg-warning mt-0" v-if="object.isNotApproved()">Не подтвержден</div>
 
             <AttributePresenter class="mt-2" :object="object" :type="type" :display="false" :show_off="true"/>
         </div>
@@ -48,11 +48,12 @@ export default {
         object: {
             type: Object,
             required: true,
-        },
-        type: {
-            type: Object,
-            required: true,
-        },
+        }
+    },
+    data() {
+        return {
+            store: useMainStore(),
+        }
     },
     computed: {
         // Получаем URL фото, если есть
@@ -61,15 +62,11 @@ export default {
         },
         canHavePhoto() {
             return this.type.available_attributes?.filter(attr => attr.code === 'photo').length > 0;
-        }
-    },
-    methods: {
-        getShowOffFields(object) {
-            return this.type.available_attributes?.filter(
-                (attr) => attr.show_off === true && object.attributes[attr.code]
-            );
         },
-    },
+        type() {
+            return this.store.getObjectTypeByCode(this.object.type);
+        }
+    }
 };
 </script>
 

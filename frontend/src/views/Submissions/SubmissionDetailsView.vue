@@ -7,12 +7,8 @@
                     <div class="card">
                         <div class="card-header d-flex align-items-center justify-content-between">
                             <div class="d-flex align-items-center">
-                                <router-link
-                                    :to="`/${objectTypeCode}/${objectId}`"
-                                    class="btn btn-sm btn-outline-secondary me-3"
-                                >
-                                    <i class="bi bi-arrow-left"></i> Назад
-                                </router-link>
+                                <BackButton />
+
                                 <h4 class="m-0">
                                     Ответ на форму:
                                     <span class="text-primary">{{ submission.form.name }}</span>
@@ -113,10 +109,11 @@ import useMainStore from "@/stores/mainStore.js";
 import {deleteSubmission} from "@/api/submissions_api.js";
 import Loading from "@/components/common/Loading.vue";
 import {canModifySubmission, hasTeacherAccess} from "@/utils/access.js";
+import BackButton from "@/components/common/BackButton.vue";
 
 export default {
     name: "SubmissionDetailsView",
-    components: {BaseLayout, Loading},
+    components: {BackButton, BaseLayout, Loading},
     props: {
         submissionId: {
             type: Number,

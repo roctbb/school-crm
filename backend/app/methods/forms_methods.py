@@ -93,6 +93,11 @@ def create_submission(user, form, object, data):
         is_approved=user.role != 'student'
     )
     db.session.add(new_submission)
+
+    if not new_submission.is_approved:
+        object.has_unapproved_submissions = True
+        print("set unapproved")
+
     return new_submission
 
 
@@ -109,8 +114,13 @@ def delete_submission(user, submission):
     submission.deleted_at = db.func.now()
     submission.deleter_id = user.id
 
+
 @transaction
 def approve_submission(user, submission):
     submission.is_approved = True
     submission.approved_by = user
+
+    if all(submission.is_approved for submission in submission.object.submissions):
+        submission.object.has_unapproved_submissions = False
+
     return submission
