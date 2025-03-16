@@ -63,7 +63,7 @@ def can_delete_comment(user, comment):
     if has_teacher_access(user):
         return True
 
-    if user.id == comment.created_by.id:
+    if user.id == comment.creator_id:
         return True
 
     raise LogicException("Доступ запрещен", 403)
@@ -73,7 +73,7 @@ def can_modify_submission(user, submission):
     if has_teacher_access(user):
         return True
 
-    if user.id == submission.created_by and not submission.is_approved:
+    if user.id == submission.creator_id and not submission.is_approved:
         return True
 
     raise LogicException("Доступ запрещен", 403)

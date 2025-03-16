@@ -2,12 +2,12 @@ import useMainStore from "@/stores/mainStore.js";
 
 function hasAdminAccess() {
     const user = useMainStore().profile;
-    return user.role === 'admin';
+    return user?.role === 'admin';
 }
 
 function hasTeacherAccess() {
     const user = useMainStore().profile;
-    return user.role === 'teacher' || hasAdminAccess(user);
+    return user?.role === 'teacher' || hasAdminAccess(user);
 }
 
 function canCreateByType(category) {
@@ -15,7 +15,7 @@ function canCreateByType(category) {
     if (hasTeacherAccess(user)) {
         return true;
     }
-    if (category.params?.can_create?.includes(user.role)) {
+    if (category?.params?.can_create?.includes(user.role)) {
         return true;
     }
     return false
@@ -26,7 +26,7 @@ function canFillInCategory(objectType) {
     if (hasTeacherAccess(user)) {
         return true;
     }
-    if (objectType.params?.can_fill?.includes(user.role)) {
+    if (objectType?.params?.can_fill?.includes(user.role)) {
         return true;
     }
     return false
@@ -37,7 +37,7 @@ function canModifyObject(object) {
     if (hasTeacherAccess(user)) {
         return true;
     }
-    if (object.owners?.some(owner => owner.id === user.id)) {
+    if (object?.owners?.some(owner => owner.id === user.id)) {
         return true;
     }
     return false
@@ -48,7 +48,7 @@ function canDeleteObject(object) {
     if (hasTeacherAccess(user)) {
         return true;
     }
-    if (object.owners?.some(owner => owner.id === user.id) && !object.is_approved) {
+    if (object?.owners?.some(owner => owner.id === user.id) && !object.is_approved) {
         return true;
     }
     return false
@@ -72,7 +72,7 @@ function canDeleteComment(comment) {
     if (hasTeacherAccess(user)) {
         return true;
     }
-    if (user.id === comment.creator.id) {
+    if (user?.id === comment.creator.id) {
         return true;
     }
     return false
@@ -83,7 +83,7 @@ function canModifySubmission(submission) {
     if (hasTeacherAccess(user)) {
         return true;
     }
-    if (user.id === submission.creator.id && !submission.is_approved) {
+    if (user?.id === submission.creator.id && !submission.is_approved) {
         return true;
     }
     return false
@@ -94,7 +94,7 @@ function canGetObjectType(objectType) {
     if (hasAdminAccess(user)) {
         return true;
     }
-    if (!objectType.params?.hidden_from?.includes(user.role)) {
+    if (!objectType?.params?.hidden_from?.includes(user.role)) {
         return true;
     }
     return false; // По умолчанию доступ запрещён

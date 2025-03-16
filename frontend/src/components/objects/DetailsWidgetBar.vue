@@ -10,8 +10,8 @@ export default {
     },
     computed: {
         widgets() {
-            if (!this.type.params.details_widgets) return []
-            return this.type.params.details_widgets
+            if (!this.type?.params.details_widgets) return []
+            return this.type?.params.details_widgets
                 .map(key => availableWidgets[key])
                 .filter(Boolean);
 

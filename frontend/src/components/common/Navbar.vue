@@ -78,7 +78,7 @@
                             <button
                                 class="dropdown-item"
                                 type="button"
-                                @click="logout"
+                                @click="handleLogout"
                             >
                                 Выйти
                             </button>
