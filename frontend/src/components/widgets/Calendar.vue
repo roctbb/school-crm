@@ -23,20 +23,30 @@
                 <table class="table table-bordered text-center align-middle mb-0">
                     <thead class="table-light">
                     <tr>
-                        <th v-for="(day, i) in weekDays" :key="i" scope="col">
+                        <th
+                            v-for="(day, i) in weekDays"
+                            :key="i"
+                            scope="col"
+                        >
                             {{ day }}
                         </th>
                     </tr>
                     </thead>
 
                     <tbody>
-                    <tr v-for="(week, wIndex) in calendarDays" :key="`week-${wIndex}`">
+                    <tr
+                        v-for="(week, wIndex) in calendarDays"
+                        :key="`week-${wIndex}`"
+                    >
                         <td
                             v-for="(dayObj, dayIndex) in week"
                             :key="dayObj.date ? dayObj.date.getTime() : `empty-cell-${wIndex}-${dayIndex}`"
                             style="height: 80px; width: 14%;"
                         >
-                            <div v-if="dayObj.date" class="fw-bold">
+                            <div
+                                v-if="dayObj.date"
+                                class="fw-bold"
+                            >
                                 {{ dayObj.date.getDate() }}
                             </div>
                             <div
@@ -87,8 +97,8 @@ export default {
         calendarDays() {
             const firstDayOfMonth = new Date(this.currentYear, this.currentMonth, 1);
             let dayOfWeek = firstDayOfMonth.getDay();
+            // Преобразуем воскресенье в 7-й день
             if (dayOfWeek === 0) {
-                // Переводим воскресенье в седьмой день
                 dayOfWeek = 7;
             }
 
@@ -120,7 +130,7 @@ export default {
                 }
             }
 
-            // Оставшиеся ячейки в "хвосте"
+            // Хвостовые пустые ячейки
             if (currentWeek.length > 0) {
                 while (currentWeek.length < 7) {
                     currentWeek.push({ date: null, events: [] });
@@ -185,19 +195,22 @@ export default {
 </script>
 
 <style scoped>
-/* Устанавливаем обрезание длинного текста в событиях */
+.calendar-widget {
+    margin-top: 1rem;
+}
+
+/* Чтобы название события не растягивало ячейку,
+   задаём максимальную ширину и обрезаем текст многоточием. */
 .event-item {
+    display: inline-block;      /* или block/inline-block по вкусу */
+    max-width: 100px;           /* подберите нужную ширину */
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     cursor: pointer;
 }
 
-.calendar-widget {
-    margin-top: 1rem;
-}
-
 .fw-bold {
-    font-weight: 600; /* Вспомогательный класс Bootstrap, корректируем для наглядности */
+    font-weight: 600; /* Служебный класс Bootstrap, оставлен для наглядности */
 }
 </style>
