@@ -1,6 +1,9 @@
 <script>
+import {external_url} from "@/utils/helpers.js";
+
 export default {
     name: "AttributePresenter",
+    methods: {external_url},
     props: {
         object: Object,
         type: Object,
@@ -30,7 +33,13 @@ export default {
     <ul v-if="object">
         <li v-for="attribute in filteredAttributes" :key="attribute.code">
             <b>{{ attribute.name }}: </b>
-            <span v-if="Array.isArray(object.attributes[attribute.code])">
+            <span v-if="attribute.type === 'file'">
+                <a :href="object.attributes[attribute.code]" target="_blank">Скачать</a>
+            </span>
+            <span v-else-if="attribute.type === 'link'">
+                <a :href="object.attributes[attribute.code]" target="_blank">{{ object.attributes[attribute.code] }}</a>
+            </span>
+            <span v-else-if="Array.isArray(object.attributes[attribute.code])">
                 {{ object.attributes[attribute.code].join(', ') }}
             </span>
             <span v-else>
@@ -46,6 +55,7 @@ ul {
     padding: 0 !important;
     margin: 0;
 }
+
 li {
     margin: 0;
     padding: 0;

@@ -94,51 +94,52 @@ const formatValue = function (value) {
     return value;
 }
 
-const isEventActive = function(event, object) {
-  const start = event.attributes.start;
-  const end = event.attributes.end;
-  const children = event.children;
-
-  // Проверяем, что в children есть объект с нужным id
-  const hasObject = Array.isArray(children) && children.some(child => child.id === object.id);
-  if (!hasObject) {
-    return false;
-  }
-
-
-
-  // Функция для разбора строки "dd.mm.yyyy" в объект Date
-  function parseDate(dateString) {
+function parseDate(dateString) {
     // dateString вроде "01.10.2023"
-    const [day, month, year] = dateString.split('.');
-    return new Date(+year, +month - 1, +day);
-  }
-
-  // Преобразуем строки в Date
-  const startDate = start ? parseDate(start) : null;
-  const endDate = end ? parseDate(end) : null;
-  const now = new Date();
-
-  // Функция для сравнения только года, месяца и дня
-  const isSameDay = (d1, d2) =>
-    d1.getFullYear() === d2.getFullYear() &&
-    d1.getMonth() === d2.getMonth() &&
-    d1.getDate() === d2.getDate();
-
-  // 1) Если start и end заданы — проверяем, что now попадает в период [startDate, endDate]
-  if (startDate && endDate) {
-    return now >= startDate && now <= endDate;
-  }
-
-  // 2) Если только start, то событие активно, если сегодняшняя дата совпадает со start
-  if (startDate && !endDate) {
-    return isSameDay(now, startDate);
-  }
-
-  // Если нет startDate, возвращаем false
-  return false;
+    try {
+        const [day, month, year] = dateString.split('.');
+        return new Date(+year, +month - 1, +day);
+    }
+    catch (e) {
+        return undefined
+    }
 }
 
+const isEventActive = function (event, object) {
+    const start = event.attributes.start;
+    const end = event.attributes.end;
+    const children = event.children;
+
+    // Проверяем, что в children есть объект с нужным id
+    const hasObject = Array.isArray(children) && children.some(child => child.id === object.id);
+    if (!hasObject) {
+        return false;
+    }
+
+    // Преобразуем строки в Date
+    const startDate = start ? parseDate(start) : null;
+    const endDate = end ? parseDate(end) : null;
+    const now = new Date();
+
+    // Функция для сравнения только года, месяца и дня
+    const isSameDay = (d1, d2) =>
+        d1.getFullYear() === d2.getFullYear() &&
+        d1.getMonth() === d2.getMonth() &&
+        d1.getDate() === d2.getDate();
+
+    // 1) Если start и end заданы — проверяем, что now попадает в период [startDate, endDate]
+    if (startDate && endDate) {
+        return now >= startDate && now <= endDate;
+    }
+
+    // 2) Если только start, то событие активно, если сегодняшняя дата совпадает со start
+    if (startDate && !endDate) {
+        return isSameDay(now, startDate);
+    }
+
+    // Если нет startDate, возвращаем false
+    return false;
+}
 
 
 export {
@@ -149,5 +150,5 @@ export {
     formatDate,
     formatDateTime,
     copy,
-    toBase64, isString, fillPatientData, getAcademicYear, formatValue, isEventActive
+    toBase64, isString, fillPatientData, getAcademicYear, formatValue, isEventActive, parseDate
 }

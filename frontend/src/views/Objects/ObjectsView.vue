@@ -33,6 +33,8 @@
             </button>
         </div>
 
+        <ListWidgetBar v-if="activeTab" :type="store.getObjectTypeByCode(activeTab)"/>
+
         <!-- Поле поиска и выпадающее меню -->
         <div class="d-flex mt-3 align-items-center">
             <input
@@ -95,26 +97,27 @@
 
         <!-- Контент вкладок -->
         <div class="tab-content mt-3">
-            <loading v-if="isLoading" />
+            <loading v-if="isLoading"/>
+            <div v-if="!isLoading">
+                <TableView
+                    v-if="isTableView"
+                    :data="sortedObjects"
+                    :grouped-data="groupedObjects"
+                    :attributes="tableAttributes"
+                    :grouping-attribute="selectedAttribute"
+                    :sortKey.sync="sortKey"
+                    :sortDirection.sync="sortDirection"
+                />
 
-            <TableView
-                v-else-if="isTableView"
-                :data="sortedObjects"
-                :grouped-data="groupedObjects"
-                :attributes="tableAttributes"
-                :grouping-attribute="selectedAttribute"
-                :sortKey.sync="sortKey"
-                :sortDirection.sync="sortDirection"
-            />
-
-            <CardView
-                v-else
-                :objects="filteredObjects"
-                :grouped-data="groupedObjects"
-                :object-type="store.getObjectTypeByCode(activeTab)"
-                :grouping-attribute="selectedAttribute"
-                size="big"
-            />
+                <CardView
+                    v-else
+                    :objects="filteredObjects"
+                    :grouped-data="groupedObjects"
+                    :object-type="store.getObjectTypeByCode(activeTab)"
+                    :grouping-attribute="selectedAttribute"
+                    size="big"
+                />
+            </div>
         </div>
     </BaseLayout>
 </template>
@@ -125,10 +128,12 @@ import BaseLayout from "@/components/layouts/BaseLayout.vue";
 import Loading from "@/components/common/Loading.vue";
 import TableView from "@/components/objects/TableView.vue";
 import CardView from "@/components/objects/CardView.vue";
+import ListWidgetBar from "@/components/objects/ListWidgetBar.vue";
 
 export default {
     name: "ObjectsView",
     components: {
+        ListWidgetBar,
         Loading,
         BaseLayout,
         TableView,

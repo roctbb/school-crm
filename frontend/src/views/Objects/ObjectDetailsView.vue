@@ -14,11 +14,11 @@
                 <!-- Заголовок -->
                 <div class="flex-grow-1">
                     <h2 class="me-2">
-                        {{ capitalize(object_type.name) }}: {{ object.name }}
+                        <small class="text-muted">{{ capitalize(object_type.name) }}:</small> {{ object.name }}
                     </h2>
                     <div>
-                        <AttributePresenter :object="object" :type="object_type" />
-                        <WidgetBar :object="object" :type="object_type" />
+                        <AttributePresenter :object="object" :type="object_type"/>
+                        <DetailsWidgetBar :object="object" :type="object_type"/>
                     </div>
                 </div>
                 <!-- Блок выпадающего списка -->
@@ -180,7 +180,7 @@
 
                 <!-- Панель комментариев -->
                 <div class="col-md-4">
-                    <CommentsPanel :object="object" />
+                    <CommentsPanel :object="object"/>
                 </div>
             </div>
 
@@ -191,28 +191,28 @@
                 Назад
             </button>
         </div>
-        <Loading v-else />
+        <Loading v-else/>
     </BaseLayout>
 </template>
 
 <script>
 import useMainStore from "@/stores/mainStore.js";
-import { deleteObject } from "@/api/objects_api.js";
+import {deleteObject} from "@/api/objects_api.js";
 import BaseLayout from "@/components/layouts/BaseLayout.vue";
 import Loading from "@/components/common/Loading.vue";
-import { capitalize } from "@/utils/helpers.js";
+import {capitalize} from "@/utils/helpers.js";
 import ObjectCard from "@/components/objects/ObjectCard.vue";
 import AttributePresenter from "@/components/objects/AttributePresenter.vue";
 import CommentsPanel from "@/components/objects/CommentsPanel.vue";
 import SubmissionCard from "@/components/submissions/SubmissionCard.vue";
 import TableView from "@/components/objects/TableView.vue";
 import CardView from "@/components/objects/CardView.vue";
-import WidgetBar from "@/components/objects/WidgetBar.vue";
+import DetailsWidgetBar from "@/components/objects/DetailsWidgetBar.vue";
 
 export default {
     name: "ObjectDetailsView",
     components: {
-        WidgetBar,
+        DetailsWidgetBar,
         BaseLayout,
         Loading,
         ObjectCard,
@@ -284,7 +284,7 @@ export default {
          */
         async load() {
             this.connectedTypes = [];
-            let { object_type, object_id } = this.$route.params;
+            let {object_type, object_id} = this.$route.params;
             object_id = parseInt(object_id);
             await this.store.loadObjects();
             this.object_type = this.store.getObjectTypeByCode(object_type);

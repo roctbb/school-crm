@@ -11,7 +11,7 @@
 
             <!-- string -->
             <input
-                v-if="attribute.type === 'string'"
+                v-if="attribute.type === 'string' || attribute.type === 'link'"
                 :id="attribute.code"
                 v-model="localAttributes[attribute.code]"
                 type="text"
