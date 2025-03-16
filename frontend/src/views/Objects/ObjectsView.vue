@@ -18,7 +18,7 @@
                             v-if="objectCounts[type.code] > 0"
                             :class="[
                                 'badge',
-                                hasUnconfirmed(type.code) ? 'bg-warning text-dark' : 'bg-secondary',
+                                hasTeacherAccess() && hasUnconfirmed(type.code) ? 'bg-warning text-dark' : 'bg-secondary',
                                 'rounded-5',
                                 'ms-1'
                             ]"

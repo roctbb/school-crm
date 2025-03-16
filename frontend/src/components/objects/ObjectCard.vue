@@ -20,7 +20,7 @@
         <div class="card-body flex-grow-1 pb-0">
             <h5 class="card-title mb-2">{{ object.name }}</h5>
 
-            <div class="badge bg-warning mt-0" v-if="object.isNotApproved()">Не подтвержден</div>
+            <div class="badge bg-warning mt-0" v-if="hasTeacherAccess() && object.isNotApproved()">Не подтвержден</div>
 
             <AttributePresenter class="mt-2" :object="object" :type="type" :display="false" :show_off="true"/>
         </div>
@@ -39,10 +39,12 @@
 
 <script>
 import useMainStore from "@/stores/mainStore.js";
-import AttributePresenter from "@/components/objects/AttributePresenter.vue"; // Подключаем Pinia store
+import AttributePresenter from "@/components/objects/AttributePresenter.vue";
+import {hasTeacherAccess} from "@/utils/access.js"; // Подключаем Pinia store
 
 export default {
     name: "ObjectCard",
+    methods: {hasTeacherAccess},
     components: {AttributePresenter},
     props: {
         object: {
