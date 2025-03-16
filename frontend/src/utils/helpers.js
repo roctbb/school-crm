@@ -121,6 +121,10 @@ const isEventActive = function (event, object) {
     const endDate = end ? parseDate(end) : null;
     const now = new Date();
 
+    if (endDate) {
+        endDate.setHours(23, 59, 59, 999);
+    }
+
     // Функция для сравнения только года, месяца и дня
     const isSameDay = (d1, d2) =>
         d1.getFullYear() === d2.getFullYear() &&
