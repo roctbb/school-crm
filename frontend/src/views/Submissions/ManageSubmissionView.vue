@@ -259,8 +259,8 @@ export default {
                     if (field.default === 'current_learn_year') {
                         field.answer = getAcademicYear()
                     }
-                    if (field.default === 'class' && this.object.attributes.class) {
-                        field.answer = this.object.attributes.class
+                    if (field.default === 'grade' && this.object.attributes.grade) {
+                        field.answer = this.object.attributes.grade
                     }
                 });
             }
