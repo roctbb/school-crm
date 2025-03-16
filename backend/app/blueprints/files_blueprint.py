@@ -1,6 +1,6 @@
 # файлик с Blueprint (пример)
 import os
-from flask import Blueprint, request, jsonify, send_from_directory
+from flask import Blueprint, request, jsonify, send_from_directory, make_response
 from app.helpers.decorators import requires_user
 from app.methods import upload_new_file
 from app.constants import UPLOAD_FOLDER
@@ -22,4 +22,10 @@ def upload_file(user):
 @files_blueprint.route('/<string:folder>/<path:filename>', methods=['GET'])
 def get_file(folder, filename):
     file_dir = os.path.join(UPLOAD_FOLDER, folder)
-    return send_from_directory(file_dir, filename, as_attachment=False)
+    response = make_response(
+        send_from_directory(file_dir, filename, as_attachment=False)
+    )
+    # Дополнительно, если нужно конкретно задать Cache-Control:
+    response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+
+    return response
