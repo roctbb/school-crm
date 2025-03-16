@@ -114,6 +114,9 @@ def delete_submission(user, submission):
     submission.deleted_at = db.func.now()
     submission.deleter_id = user.id
 
+    if all(submission.is_approved for submission in submission.object.submissions):
+        submission.object.has_unapproved_submissions = False
+
 
 @transaction
 def approve_submission(user, submission):
