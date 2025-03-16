@@ -116,7 +116,7 @@ export default {
             const possibleChildrenCodes = this.object_type.params?.possible_children;
 
             if (possibleChildrenCodes) {
-                this.childrenOptions = possibleChildrenCodes.map((type_code) => this.store.getObjectTypeByCode(type_code))
+                this.childrenOptions = possibleChildrenCodes.map((type_code) => this.store.getObjectTypeByCode(type_code)).filter(Boolean)
             }
         }
     },
