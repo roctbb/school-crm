@@ -18,6 +18,7 @@
                     </h2>
                     <div>
                         <AttributePresenter :object="object" :type="object_type" />
+                        <WidgetBar :object="object" :type="object_type" />
                     </div>
                 </div>
                 <!-- Блок выпадающего списка -->
@@ -206,10 +207,12 @@ import CommentsPanel from "@/components/objects/CommentsPanel.vue";
 import SubmissionCard from "@/components/submissions/SubmissionCard.vue";
 import TableView from "@/components/objects/TableView.vue";
 import CardView from "@/components/objects/CardView.vue";
+import WidgetBar from "@/components/objects/WidgetBar.vue";
 
 export default {
     name: "ObjectDetailsView",
     components: {
+        WidgetBar,
         BaseLayout,
         Loading,
         ObjectCard,
