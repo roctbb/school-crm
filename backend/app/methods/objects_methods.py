@@ -3,6 +3,7 @@ import logging
 from sqlalchemy.orm import subqueryload, selectinload
 
 from app import Comment
+from app.methods.access_methods import has_teacher_access
 from app.models import ObjectType, Object, db
 from app.helpers.exceptions import LogicException
 from app.helpers.decorators import transaction
@@ -38,6 +39,7 @@ def get_object_type_by_code(type_code):
 
     return object_type
 
+
 @transaction
 def approve_object(user, object):
     object.is_approved = True
@@ -46,11 +48,11 @@ def approve_object(user, object):
     return object
 
 
-
 def get_available_objects_by_type_code(type_code):
     object_type = get_object_type_by_code(type_code)
 
-    result = Object.query.filter_by(type_id=object_type.id, deleted_at=None).options(selectinload(Object.type), selectinload(Object.parents),
+    result = Object.query.filter_by(type_id=object_type.id, deleted_at=None).options(selectinload(Object.type),
+                                                                                     selectinload(Object.parents),
                                                                                      selectinload(Object.children),
                                                                                      selectinload(Object.owners),
                                                                                      selectinload(
@@ -96,16 +98,24 @@ def delete_object(user, obj):
 
 
 @transaction
-def update_object(obj, data):
+def update_object(user, obj, data):
+    from app.presenters.presenters import present_object
+
+    if obj.is_approved:
+        obj.backup = present_object(obj)
+
     obj.name = data.get("name", obj.name)
     obj.attributes = data.get("attributes", obj.attributes)
     obj.params = data.get("params", obj.params)
+
+    if not has_teacher_access(user):
+        obj.is_approved = False
 
     return obj
 
 
 @transaction
-def update_object_children(obj, children_ids):
+def update_object_children(user, obj, children_ids):
     children = Object.query.filter(
         Object.id.in_(children_ids),
         Object.deleted_at == None
@@ -115,6 +125,10 @@ def update_object_children(obj, children_ids):
         raise LogicException("Некоторые объекты из списка children не найдены или удалены.", 422)
 
     obj.children = children
+
+    if not has_teacher_access(user):
+        obj.is_approved = False
+
     return obj
 
 

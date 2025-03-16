@@ -60,7 +60,7 @@ def approve_object_endpoint(user, object_id,):
 def update_object_endpoint(validated_data, user, object_id):
     obj = get_object_by_id(object_id)
     if can_modify_object(user, obj):
-        return jsonify(present_object(update_object(obj, validated_data))), 200
+        return jsonify(present_object(update_object(user, obj, validated_data))), 200
 
 
 @objects_blueprint.route('/<int:object_id>', methods=['DELETE'])
@@ -80,7 +80,7 @@ def update_object_children_endpoint(validated_data, user, object_id):
     obj = get_object_by_id(object_id)
     children_ids = validated_data.get('children', [])
     if can_modify_object(user, obj):
-        updated_object = update_object_children(obj, children_ids)
+        updated_object = update_object_children(user, obj, children_ids)
         return jsonify([present_connected_object(child) for child in updated_object.children]), 200
 
 

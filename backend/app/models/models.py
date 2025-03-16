@@ -49,6 +49,8 @@ class Object(db.Model):
     updated_at = db.Column(db.DateTime, nullable=True, server_default=db.func.now(), onupdate=db.func.now())
     deleted_at = db.Column(db.DateTime, nullable=True)
 
+    backup = db.Column(db.JSON, server_default=db.text("'{}'::json"))
+
     is_approved = db.Column(db.Boolean, nullable=False, server_default=db.text("'true'::boolean"))
     has_unapproved_submissions = db.Column(db.Boolean, nullable=False, server_default=db.text("'false'::boolean"))
 
