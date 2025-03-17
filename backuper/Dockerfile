@@ -1,7 +1,8 @@
 FROM amazon/aws-cli:2.13.7
 
-# Устанавливаем PostgreSQL-клиент для Alpine Linux
-RUN apk add --no-cache postgresql-client
+# Устанавливаем PostgreSQL-клиент на Amazon Linux 2
+RUN yum install -y postgresql && \
+    yum clean all
 
 WORKDIR /app
 
