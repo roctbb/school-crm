@@ -2,7 +2,7 @@
     <div class="row my-3">
         <div class="col-12 col-md-12 col-lg-8">
             <div class="card">
-                <div class="card-body">
+                <div class="card-body p-3">
                     <!-- Горизонтальный контейнер -->
                     <div class="d-flex align-items-center">
                         <!-- Кружок с уровнем, цвет зависит от уровня -->
@@ -17,7 +17,7 @@
                         <!-- Прогресс и подписи справа -->
                         <div class="flex-grow-1 ms-3">
                             <!-- Прогресс-бар (всегда от 0 до 100) -->
-                            <div class="progress" style="height: 20px;">
+                            <div class="progress mt-2" style="height: 20px;">
                                 <div
                                     class="progress-bar bg-success progress-bar-striped"
                                     role="progressbar"
@@ -177,12 +177,12 @@ export default {
             // - уровни 3-5: bg-primary
             // - уровни 6-9: bg-info
             // - 10+: bg-danger
-            if (this.level < 1) {
-                return "bg-secondary";
-            } else if (this.level < 3) {
-                return "bg-primary";
-            } else if (this.level < 6) {
+            if (this.level <= 1) {
                 return "bg-info";
+            } else if (this.level < 3) {
+                return "bg-success";
+            } else if (this.level < 6) {
+                return "bg-primary";
             } else {
                 return "bg-danger";
             }
