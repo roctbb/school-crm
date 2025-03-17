@@ -20,7 +20,6 @@
                     <div>
                         <div class="badge bg-warning mb-2" v-if="!object.is_approved">Не подтвержден</div>
                         <AttributePresenter :object="object" :type="object_type"/>
-                        <DetailsWidgetBar :object="object" :type="object_type"/>
                     </div>
                 </div>
                 <!-- Блок выпадающего списка -->
@@ -62,6 +61,7 @@
                     </div>
                 </div>
             </div>
+            <DetailsWidgetBar :object="object" :type="object_type"/>
 
             <div class="row">
                 <div class="col-md-8">
