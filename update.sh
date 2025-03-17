@@ -1,3 +1,18 @@
-docker compose down
+#!/bin/bash
+
+# 1. Обновить репозиторий
 git pull
-docker compose up --build -d
+
+# 2. Сборка контейнеров; если сборка пройдет неуспешно, скрипт прервется
+docker compose build --pull
+if [ $? -ne 0 ]; then
+  echo "Сборка завершилась с ошибкой."
+  exit 1
+fi
+
+# 3. Остановить и удалить старые контейнеры
+docker compose down
+
+# 4. Запустить новые контейнеры в фоновом режиме
+docker compose up -d
+echo "Успешно развернули обновленные контейнеры!"

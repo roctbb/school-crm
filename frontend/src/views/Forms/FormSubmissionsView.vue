@@ -1,7 +1,7 @@
 <template>
     <BaseLayout>
         <div class="container mt-3">
-            <loading v-if="isLoading"/>
+            <loading v-if="isLoading" />
             <div v-else>
                 <h3 class="mb-4">Ответы на форму: {{ form.name }}</h3>
 
@@ -15,22 +15,13 @@
                     />
                 </div>
 
-                <!-- Сгруппированные ответы по типу объекта -->
-                <div
-                    v-for="(submissions, objectType) in groupedSubmissions"
-                    :key="objectType"
-                    class="mb-5"
-                >
+                <!-- Сгруппированные ответы по типу объекта (группировка по ВСЕМ данным, без фильтрации) -->
+                <div v-for="(submissions, objectType) in groupedSubmissions" :key="objectType" class="mb-5">
                     <div class="d-flex align-items-center mb-2">
                         <h4 class="mb-0">
-                            {{ objectType === "Без объекта"
-                            ? "Объекты без типа"
-                            : ("Тип объекта: " + objectType) }}
+                            {{ objectType === 'Без объекта' ? 'Объекты без типа' : ('Тип объекта: ' + store.getObjectTypeByCode(objectType)?.name) }}
                         </h4>
-                        <button
-                            class="btn btn-sm btn-secondary ms-auto"
-                            @click="exportFilteredSubmissionsToExcel"
-                        >
+                        <button class="btn btn-sm btn-secondary ms-auto" @click="exportFilteredSubmissionsToExcel">
                             <i class="bi bi-download me-1"></i> Выгрузить
                         </button>
                     </div>
@@ -50,9 +41,9 @@
                     {{ getSortDirection('object_name') === 'asc' ? '↑' : '↓' }}
                   </span>
                             </th>
-                            <!-- Столбцы для атрибутов (используем имена атрибутов) -->
+                            <!-- Столбцы для атрибутов -->
                             <th
-                                v-for="attr in getAttributeColumns(submissions)"
+                                v-for="attr in getAttributeColumns(submissions, objectType)"
                                 :key="attr.code"
                                 @click="changeSort('attr_' + attr.code)"
                                 style="cursor: pointer"
@@ -81,7 +72,6 @@
                   </span>
                             </th>
                         </tr>
-
                         <!-- Строка фильтров для каждого столбца -->
                         <tr>
                             <th>
@@ -102,7 +92,7 @@
                             </th>
                             <!-- Фильтры для атрибутов -->
                             <th
-                                v-for="attr in getAttributeColumns(submissions)"
+                                v-for="attr in getAttributeColumns(submissions, objectType)"
                                 :key="attr.code"
                             >
                                 <input
@@ -135,18 +125,13 @@
                         </tr>
                         </thead>
                         <tbody>
-                        <tr v-if="submissions.length === 0">
-                            <td
-                                :colspan="
-                    2 + getAttributeColumns(submissions).length + 1 + form.fields.length
-                  "
-                                class="text-center text-muted"
-                            >
+                        <tr v-if="sortedSubmissions(objectType).length === 0">
+                            <td :colspan="2 + getAttributeColumns(submissions, objectType).length + 1 + form.fields.length" class="text-center text-muted">
                                 Нет результатов для отображения.
                             </td>
                         </tr>
                         <tr
-                            v-for="submission in submissions"
+                            v-for="submission in sortedSubmissions(objectType)"
                             :key="submission.id"
                             :class="{ 'table-warning': submission.is_approved === false }"
                         >
@@ -181,18 +166,12 @@
                                 <span v-else>Без объекта</span>
                             </td>
                             <!-- Вывод столбцов атрибутов -->
-                            <td
-                                v-for="attr in getAttributeColumns(submissions)"
-                                :key="attr.code"
-                            >
+                            <td v-for="attr in getAttributeColumns(submissions, objectType)" :key="attr.code">
                                 {{ getAttributeValue(submission, attr.code) }}
                             </td>
                             <td>{{ formatDateTime(submission.created_at) }}</td>
                             <!-- Данные полей формы -->
-                            <td
-                                v-for="(field, i) in submission.fields"
-                                :key="i"
-                            >
+                            <td v-for="(field, i) in submission.fields" :key="i">
                   <span v-if="Array.isArray(field.answer)">
                     {{ field.answer.join(', ') }}
                   </span>
@@ -209,15 +188,15 @@
     </BaseLayout>
 </template>
 
-<script>
-import {fetchFormSubmissions} from '@/api/forms_api.js';
+<script lang="js">
+import { fetchFormSubmissions } from '@/api/forms_api.js';
 import Loading from '@/components/common/Loading.vue';
 import BaseLayout from '@/components/layouts/BaseLayout.vue';
 import useMainStore from '@/stores/mainStore.js';
 
 // Подключаем библиотеки xlsx и file-saver
 import * as XLSX from 'xlsx';
-import {saveAs} from 'file-saver';
+import { saveAs } from 'file-saver';
 
 export default {
     name: 'FormSubmissionsView',
@@ -244,81 +223,125 @@ export default {
                 id: '',
                 objectName: '',
                 createdAt: '',
+                // Фильтры для полей формы будут добавлены динамически по коду поля
             },
         };
     },
     computed: {
         /**
-         * Возвращает отсортированный и отфильтрованный список submissions.
+         * Группировка по типу объекта.
+         * Группировка производится по ВСЕМ полученным данным, чтобы заголовок таблицы оставался виден.
          */
-        filteredSubmissions() {
-            // Сначала фильтруем
-            let result = this.submissions.filter((item) => {
-                let passes = true;
-                // Глобальный фильтр по имени объекта
-                if (this.searchQuery.trim()) {
-                    const globalObject = item.object?.name?.toLowerCase() || '';
-                    if (!globalObject.includes(this.searchQuery.toLowerCase())) {
+        groupedSubmissions() {
+            const groups = {};
+            this.submissions.forEach((submission) => {
+                const key =
+                    submission.object && submission.object.type
+                        ? submission.object.type
+                        : 'Без объекта';
+                if (!groups[key]) {
+                    groups[key] = [];
+                }
+                groups[key].push(submission);
+            });
+            return groups;
+        },
+    },
+    methods: {
+        async loadSubmissions() {
+            await this.store.loadObjects();
+            this.form = this.store.getForm(this.formId);
+
+            // Инициализация фильтров для полей формы, если они ещё не установлены
+            if (this.form && this.form.fields) {
+                this.form.fields.forEach((field) => {
+                    if (!(field.code in this.filters)) {
+                        this.filters[field.code] = '';
+                    }
+                });
+            }
+            try {
+                this.isLoading = true;
+                const data = await fetchFormSubmissions(this.formId);
+                this.submissions = data || [];
+            } finally {
+                this.isLoading = false;
+            }
+        },
+        /**
+         * Функция фильтрации одной строки.
+         * Логика аналогична предыдущей реализации фильтрации.
+         */
+        filterSubmission(submission) {
+            let passes = true;
+            // Глобальный фильтр по имени объекта
+            if (this.searchQuery.trim()) {
+                const globalObject = submission.object?.name?.toLowerCase() || '';
+                if (!globalObject.includes(this.searchQuery.toLowerCase())) {
+                    passes = false;
+                }
+            }
+            // Фильтр по ID
+            if (this.filters.id && !String(submission.id).includes(this.filters.id)) {
+                passes = false;
+            }
+            // Фильтр по названию объекта
+            if (
+                this.filters.objectName &&
+                !(submission.object?.name?.toLowerCase().includes(this.filters.objectName.toLowerCase()))
+            ) {
+                passes = false;
+            }
+            // Фильтры для атрибутов
+            Object.keys(this.filters).forEach((key) => {
+                if (key.startsWith('attr_') && this.filters[key].trim()) {
+                    const attrCode = key.slice(5);
+                    const attrValue =
+                        submission.object && submission.object.attributes
+                            ? submission.object.attributes[attrCode]
+                            : '';
+                    if (!String(attrValue).toLowerCase().includes(this.filters[key].toLowerCase())) {
                         passes = false;
                     }
                 }
-                // Фильтр по ID
-                if (this.filters.id && !String(item.id).includes(this.filters.id)) {
-                    passes = false;
-                }
-                // Фильтр по названию объекта
-                if (
-                    this.filters.objectName &&
-                    !(item.object?.name?.toLowerCase().includes(this.filters.objectName.toLowerCase()))
-                ) {
-                    passes = false;
-                }
-                // Фильтры для атрибутов
-                Object.keys(this.filters).forEach((key) => {
-                    if (key.startsWith('attr_') && this.filters[key].trim()) {
-                        const attrCode = key.slice(5);
-                        const attrValue = item.object && item.object.attributes
-                            ? item.object.attributes[attrCode]
-                            : '';
-                        if (!String(attrValue).toLowerCase().includes(this.filters[key].toLowerCase())) {
+            });
+            // Фильтр по дате
+            const formattedDate = this.formatDateTime(submission.created_at);
+            if (
+                this.filters.createdAt &&
+                !formattedDate.toLowerCase().includes(this.filters.createdAt.toLowerCase())
+            ) {
+                passes = false;
+            }
+            // Фильтры для полей формы
+            if (this.form && this.form.fields && Array.isArray(submission.fields)) {
+                this.form.fields.forEach((field, index) => {
+                    const filterValue = this.filters[field.code];
+                    if (filterValue) {
+                        const fieldData = submission.fields[index];
+                        let answerValue = '';
+                        if (fieldData) {
+                            answerValue = Array.isArray(fieldData.answer)
+                                ? fieldData.answer.join(', ')
+                                : fieldData.answer;
+                        }
+                        if (!String(answerValue).toLowerCase().includes(filterValue.toLowerCase())) {
                             passes = false;
                         }
                     }
                 });
-                // Фильтр по дате
-                const formattedDate = this.formatDateTime(item.created_at);
-                if (
-                    this.filters.createdAt &&
-                    !formattedDate.toLowerCase().includes(this.filters.createdAt.toLowerCase())
-                ) {
-                    passes = false;
-                }
-                // Фильтры по полям формы
-                if (this.form && this.form.fields && Array.isArray(item.fields)) {
-                    this.form.fields.forEach((field, index) => {
-                        const filterValue = this.filters[field.code];
-                        if (filterValue) {
-                            const fieldData = item.fields[index];
-                            let answerValue = '';
-                            if (fieldData) {
-                                answerValue = Array.isArray(fieldData.answer)
-                                    ? fieldData.answer.join(', ')
-                                    : fieldData.answer;
-                            }
-                            if (!String(answerValue).toLowerCase().includes(filterValue.toLowerCase())) {
-                                passes = false;
-                            }
-                        }
-                    });
-                }
-                return passes;
-            });
-
-            // Затем сортируем по массиву sortCriteria
+            }
+            return passes;
+        },
+        /**
+         * Применение сортировки к переданному массиву строк.
+         * Копия массива сортируется согласно this.sortCriteria.
+         */
+        sortSubmissions(rows) {
+            const result = [...rows];
             result.sort((a, b) => {
                 for (const criterion of this.sortCriteria) {
                     let valA, valB;
-
                     if (criterion.column === 'object_name') {
                         valA = a.object?.name || '';
                         valB = b.object?.name || '';
@@ -337,11 +360,11 @@ export default {
                             ? (b.object.attributes[attrCode] ?? '')
                             : '';
                     } else {
-                        // Сортируем по коду поля формы
+                        // Сортировка по полям формы (код поля)
                         const fieldIndex = this.form.fields.findIndex(
                             (field) => field.code === criterion.column
                         );
-                        if (fieldIndex === -1) continue; // неизвестное поле
+                        if (fieldIndex === -1) continue;
                         const getAnswerValue = (submission) => {
                             let answerValue = submission.fields[fieldIndex]?.answer || '';
                             if (Array.isArray(answerValue)) {
@@ -352,94 +375,51 @@ export default {
                         valA = getAnswerValue(a);
                         valB = getAnswerValue(b);
                     }
-
-                    // Сравниваем
                     if (valA < valB) return criterion.ascending ? -1 : 1;
                     if (valA > valB) return criterion.ascending ? 1 : -1;
-                    // Если равны, переходим к следующему критерию
+                    // Если равны, проверяем следующий критерий
                 }
                 return 0;
             });
-
             return result;
         },
         /**
-         * Группировка по типу объекта для удобства отображения.
+         * Удобный метод для получения отсортированного и отфильтрованного списка строк для группы.
+         * objectType – ключ группы, submissions – полный список строк группы (без фильтрации).
          */
-        groupedSubmissions() {
-            const groups = {};
-            this.filteredSubmissions.forEach((submission) => {
-                const key = submission.object && submission.object.type
-                    ? submission.object.type
-                    : 'Без объекта';
-                if (!groups[key]) {
-                    groups[key] = [];
-                }
-                groups[key].push(submission);
-            });
-            return groups;
+        sortedSubmissions(objectType) {
+            const groupRows = this.groupedSubmissions[objectType] || [];
+            const filteredRows = groupRows.filter(this.filterSubmission);
+            return this.sortSubmissions(filteredRows);
         },
         /**
-         * Возвращаем первый элемент критерия как «активную» колонку — если нужно.
-         */
-        activeSort() {
-            return this.sortCriteria[0] || {column: '', ascending: true};
-        },
-    },
-    methods: {
-        async loadSubmissions() {
-            await this.store.loadObjects();
-            this.form = this.store.getForm(this.formId);
-
-            // Инициализируем фильтры для каждого поля формы
-            if (this.form && this.form.fields) {
-                this.form.fields.forEach((field) => {
-                    if (!(field.code in this.filters)) {
-                        this.filters[field.code] = '';
-                    }
-                });
-            }
-            try {
-                this.isLoading = true;
-                const data = await fetchFormSubmissions(this.formId);
-                this.submissions = data || [];
-            } finally {
-                this.isLoading = false;
-            }
-        },
-        /**
-         * Метод для 3-кликовой логики многоколоночной сортировки.
+         * Метод трёхкликовой сортировки (многоколоночная).
          */
         changeSort(column) {
-            // Ищем существующий критерий
             const existingIndex = this.sortCriteria.findIndex((c) => c.column === column);
-
             if (existingIndex === -1) {
-                // Колонка ещё не в списке: добавляем с ascending = true
-                this.sortCriteria.unshift({column, ascending: true});
+                // Колонка ещё не используется – добавляем с направлением по возрастанию.
+                this.sortCriteria.unshift({ column, ascending: true });
             } else {
-                // Колонка уже есть; проверим направление
                 const existing = this.sortCriteria[existingIndex];
                 if (existing.ascending) {
-                    // Был ascending -> станет descending
                     existing.ascending = false;
-                    // Перенесём в начало массива
                     this.sortCriteria.splice(existingIndex, 1);
                     this.sortCriteria.unshift(existing);
                 } else {
-                    // Был descending -> убираем колонку
+                    // Если уже было обратное направление – убираем критерий.
                     this.sortCriteria.splice(existingIndex, 1);
                 }
             }
         },
         /**
-         * Проверяем, сортируем ли сейчас по этой колонке (asc или desc).
+         * Проверка, применяется ли сортировка по указанной колонке.
          */
         isColumnSorted(column) {
             return this.sortCriteria.some((c) => c.column === column);
         },
         /**
-         * Определяем, какая сортировка (asc/desc) у конкретной колонки.
+         * Получение направления сортировки для колонки.
          */
         getSortDirection(column) {
             const criterion = this.sortCriteria.find((c) => c.column === column);
@@ -447,7 +427,7 @@ export default {
             return criterion.ascending ? 'asc' : 'desc';
         },
         /**
-         * Формат даты для отображения.
+         * Форматирование даты для отображения.
          */
         formatDateTime(dateString) {
             if (!dateString) return '';
@@ -455,41 +435,51 @@ export default {
             return date.toLocaleString('ru-RU');
         },
         /**
-         * Получаем атрибуты объекта для формирования столбцов в таблице.
+         * Возвращает атрибуты для формирования столбцов таблицы.
+         * Если в группе строк нет ни одной записи, то пытаемся получить атрибуты по типу объекта из хранилища.
          */
-        getAttributeColumns(submissions) {
-            if (!submissions.length) return [];
-            const sampleObject = submissions.find((s) => s.object)?.object;
-            if (!sampleObject) return [];
-            const type = this.store.getObjectTypeByCode(sampleObject.type);
-            // Фильтруем только атрибуты, у которых show_off === true
-            return (type?.available_attributes?.filter((attr) => attr.show_off === true)) || [];
+        getAttributeColumns(submissions, objectType) {
+            // Если есть хоть одна запись с объектом – используем её тип.
+            let sampleSubmission = submissions.find((s) => s.object);
+            if (sampleSubmission) {
+                const type = this.store.getObjectTypeByCode(sampleSubmission.object.type);
+                return (type?.available_attributes?.filter((attr) => attr.show_off === true)) || [];
+            }
+            // Если группа пуста, но это не "Без объекта" – пытаемся получить тип по коду.
+            if (objectType !== 'Без объекта') {
+                const type = this.store.getObjectTypeByCode(objectType);
+                return (type?.available_attributes?.filter((attr) => attr.show_off === true)) || [];
+            }
+            return [];
         },
         /**
-         * Возвращаем значение конкретного атрибута.
+         * Возвращает значение атрибута для записи.
          */
         getAttributeValue(submission, attrCode) {
             return submission.object && submission.object.attributes
                 ? submission.object.attributes[attrCode]
                 : '';
         },
-
         /**
-         * Экспорт отфильтрованных данных (filteredSubmissions) в Excel.
-         * Используем имена атрибутов вместо кодов.
+         * Экспорт отфильтрованных данных (согласно применённым фильтрам и сортировке) в Excel.
          */
         exportFilteredSubmissionsToExcel() {
-            // Шаг 1. Подготовим данные в виде массива объектов
-            const exportData = this.filteredSubmissions.map((submission) => {
+            // Собираем все строки, проходящие фильтр
+            let allFiltered = [];
+            Object.keys(this.groupedSubmissions).forEach((objectType) => {
+                const rows = this.sortedSubmissions(objectType);
+                allFiltered = allFiltered.concat(rows);
+            });
+            // Подготавливаем данные для экспорта
+            const exportData = allFiltered.map((submission) => {
                 let rowData = {
                     'ID': submission.id,
                     'Объект': submission.object ? submission.object.name : 'Без объекта',
                     'Дата создания': this.formatDateTime(submission.created_at),
                 };
-
-                // Добавим атрибуты объекта по именам
+                // Добавляем атрибуты объекта по именам
                 if (submission.object) {
-                    const attrs = this.getAttributeColumns([submission]);
+                    const attrs = this.getAttributeColumns([submission], submission.object.type);
                     for (const attr of attrs) {
                         const attrValue = submission.object.attributes
                             ? submission.object.attributes[attr.code]
@@ -497,8 +487,7 @@ export default {
                         rowData[`Атрибут: ${attr.name}`] = attrValue;
                     }
                 }
-
-                // Добавим данные полей формы
+                // Добавляем данные полей формы
                 if (Array.isArray(submission.fields)) {
                     submission.fields.forEach((field) => {
                         const answerText = Array.isArray(field.answer)
@@ -507,25 +496,14 @@ export default {
                         rowData[field.name] = answerText;
                     });
                 }
-
                 return rowData;
             });
-
-            // Шаг 2. Создаём worksheet из массива объектов
+            // Создаём worksheet и рабочую книгу
             const worksheet = XLSX.utils.json_to_sheet(exportData);
-
-            // Шаг 3. Создаём новую рабочую книгу и добавляем worksheet
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, 'Данные');
-
-            // Шаг 4. Генерируем файл в виде массива двоичных данных
-            const excelBuffer = XLSX.write(workbook, {
-                bookType: 'xlsx',
-                type: 'array',
-            });
-
-            // Шаг 5. Сохраняем результат с помощью file-saver
-            const blob = new Blob([excelBuffer], {type: 'application/octet-stream'});
+            const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+            const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
             saveAs(blob, 'filtered_submissions.xlsx');
         },
     },
@@ -536,5 +514,5 @@ export default {
 </script>
 
 <style scoped>
-/* При необходимости можно добавить стили для кнопок и др. элементов */
+/* Стили можно расширить по необходимости */
 </style>
