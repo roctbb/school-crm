@@ -8,3 +8,5 @@ WORKDIR /app
 
 COPY backup.sh /app/backup.sh
 RUN chmod +x /app/backup.sh
+
+CMD ["sh /app/backup.sh"]
