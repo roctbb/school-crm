@@ -75,9 +75,6 @@ services:
         max-size: "10m"   # Максимальный размер лога (10 мегабайт)
         max-file: "3"     # Число файлов при ротации
 
-
-
-
 volumes:
   postgres_data:
   backend_storage:
