@@ -1,7 +1,7 @@
 FROM amazon/aws-cli:2.13.7
 
 # Устанавливаем PostgreSQL-клиент на Amazon Linux 2
-RUN yum install -y postgresql && \
+RUN yum install -y postgresql16 && \
     yum clean all
 
 WORKDIR /app
