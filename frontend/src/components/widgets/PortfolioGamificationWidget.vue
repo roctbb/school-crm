@@ -172,11 +172,6 @@ export default {
          * Можно задавать более тонкую логику (например, разные цвета каждые несколько уровней).
          */
         levelCircleClass() {
-            // Пример:
-            // - уровни 1-2: bg-secondary
-            // - уровни 3-5: bg-primary
-            // - уровни 6-9: bg-info
-            // - 10+: bg-danger
             if (this.level <= 1) {
                 return "bg-info";
             } else if (this.level < 3) {

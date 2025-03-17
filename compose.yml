@@ -15,6 +15,12 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"   # Максимальный размер лога (10 мегабайт)
+        max-file: "3"     # Число файлов при ротации
+
 
   backend:
     build: ./backend
@@ -31,6 +37,12 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"   # Максимальный размер лога (10 мегабайт)
+        max-file: "3"     # Число файлов при ротации
+
 
   nginx:
     build:
@@ -41,6 +53,46 @@ services:
       - "8383:80" # Публикуем порт 80 для доступа
     depends_on:
       - backend
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"   # Максимальный размер лога (10 мегабайт)
+        max-file: "3"     # Число файлов при ротации
+
+  backup:
+    image: amazon/aws-cli:2.13.7
+    container_name: crm_backup
+    env_file:
+      - .env
+    depends_on:
+      - db
+    # Монтируем том backend_storage, чтобы скопировать файлы
+    volumes:
+      - backend_storage:/data_to_backup:ro
+    command: >
+      sh -c "
+      # 1. Делаем дамп базы в /tmp
+      pg_dump -h db -U postgres -d postgres > /tmp/db_backup.sql &&
+      echo 'Дамп базы выполнен.' &&
+
+      # 2. Загружаем нижесозданный дамп в S3
+      aws s3 cp /tmp/db_backup.sql s3://${S3_BUCKET_NAME}/db_backup_$(date +%Y%m%d_%H%M%S).sql
+                --endpoint-url ${S3_ENDPOINT_URL} &&
+      echo 'Дамп базы загружен в S3.' &&
+
+      # 3. Синхронизируем данные из backend_storage
+      aws s3 sync /data_to_backup s3://${S3_BUCKET_NAME}/backend_storage
+                  --endpoint-url ${S3_ENDPOINT_URL} &&
+      echo 'Файлы из backend_storage синхронизированы.'
+      "
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"   # Максимальный размер лога (10 мегабайт)
+        max-file: "3"     # Число файлов при ротации
+
+
+
 
 volumes:
   postgres_data:
