@@ -61,7 +61,7 @@
                             </th>
                             <!-- Заголовки для полей формы -->
                             <th
-                                v-for="field in form.fields"
+                                v-for="field in formFields"
                                 :key="field.code"
                                 @click="changeSort(field.code)"
                                 style="cursor: pointer"
@@ -112,7 +112,7 @@
                             </th>
                             <!-- Фильтры для полей формы -->
                             <th
-                                v-for="field in form.fields"
+                                v-for="field in formFields"
                                 :key="field.code"
                             >
                                 <input
@@ -126,7 +126,7 @@
                         </thead>
                         <tbody>
                         <tr v-if="sortedSubmissions(objectType).length === 0">
-                            <td :colspan="2 + getAttributeColumns(submissions, objectType).length + 1 + form.fields.length" class="text-center text-muted">
+                            <td :colspan="2 + getAttributeColumns(submissions, objectType).length + 1 + formFields.length" class="text-center text-muted">
                                 Нет результатов для отображения.
                             </td>
                         </tr>
@@ -246,15 +246,17 @@ export default {
             });
             return groups;
         },
+        formFields() {
+            return [...this.form._category?.common_fields, ...this.form.fields]
+        }
     },
     methods: {
         async loadSubmissions() {
             await this.store.loadObjects();
             this.form = this.store.getForm(this.formId);
 
-            // Инициализация фильтров для полей формы, если они ещё не установлены
             if (this.form && this.form.fields) {
-                this.form.fields.forEach((field) => {
+                this.formFields.forEach((field) => {
                     if (!(field.code in this.filters)) {
                         this.filters[field.code] = '';
                     }
@@ -314,8 +316,8 @@ export default {
                 passes = false;
             }
             // Фильтры для полей формы
-            if (this.form && this.form.fields && Array.isArray(submission.fields)) {
-                this.form.fields.forEach((field, index) => {
+            if (this.form && this.formFields && Array.isArray(submission.fields)) {
+                this.formFields.forEach((field, index) => {
                     const filterValue = this.filters[field.code];
                     if (filterValue) {
                         const fieldData = submission.fields[index];
@@ -361,7 +363,7 @@ export default {
                             : '';
                     } else {
                         // Сортировка по полям формы (код поля)
-                        const fieldIndex = this.form.fields.findIndex(
+                        const fieldIndex = this.formFields.findIndex(
                             (field) => field.code === criterion.column
                         );
                         if (fieldIndex === -1) continue;
