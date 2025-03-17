@@ -4,7 +4,7 @@ set -e
 echo "Начинаем резервное копирование..."
 
 # Делаем дамп базы (замените db, postgres и т.п. при необходимости)
-pg_dump -h db -U postgres -d postgres > /tmp/db_backup.sql
+pg_dump -h db -U postgres --dbname=postgres > /tmp/db_backup.sql
 echo "Дамп базы выполнен."
 
 # Загружаем дамп в S3 (переменные окружения заранее должны быть заданы)
