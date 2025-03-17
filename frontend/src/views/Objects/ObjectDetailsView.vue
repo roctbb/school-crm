@@ -15,7 +15,7 @@
                 <div class="flex-grow-1">
                     <h2 class="me-2">
                         <small class="text-muted">{{ capitalize(object_type.name) }}:</small> {{ object.name }} <i
-                        class="bi bi-check-lg" v-if="object.hasStudentOwner()"></i>
+                        class="bi bi-person-check" v-if="object.has_registered_owner"></i>
                     </h2>
                     <div>
                         <div class="badge bg-warning mb-2" v-if="!object.is_approved">Не подтвержден</div>

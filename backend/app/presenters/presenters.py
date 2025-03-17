@@ -1,6 +1,6 @@
 import logging
 
-from app.methods import can_get_form_category
+from app.methods import can_get_form_category, has_admin_access
 
 
 def present_user(user):
@@ -37,7 +37,18 @@ def present_connected_object(obj):
     }
 
 
-def present_object(obj):
+def present_object(obj, user):
+    invitation = None
+    has_registered_owner = bool([invitation for invitation in obj.invitations if
+                                 invitation.used_at])
+
+    if has_admin_access(user):
+        invitations = [invitation for invitation in obj.invitations if
+                       not invitation.used_at and not invitation.deleted_at]
+
+        if invitations:
+            invitation = present_invitation(invitations[0])
+
     return {
         'id': obj.id,
         'name': obj.name,
@@ -54,7 +65,9 @@ def present_object(obj):
         'owners': [present_user(owner) for owner in obj.owners],
         'children': [present_connected_object(child) for child in obj.children if not child.deleted_at],
         'parents': [present_connected_object(child) for child in obj.parents if not child.deleted_at],
-        'comments': [present_comment(comment) for comment in obj.comments if not comment.deleted_at]
+        'comments': [present_comment(comment) for comment in obj.comments if not comment.deleted_at],
+        'invitation': invitation,
+        'has_registered_owner': has_registered_owner
     }
 
 
@@ -100,7 +113,7 @@ def present_form(form):
     }
 
 
-def present_submission(submission):
+def present_submission(submission, object=None):
     return {
         'id': submission.id,
         'params': submission.params,
@@ -117,7 +130,8 @@ def present_submission(submission):
         'deleter': present_user(submission.deleted_by) if submission.deleted_by else None,
         'created_at': submission.created_at.isoformat(),
         'updated_at': submission.updated_at.isoformat(),
-        'deleted_at': submission.deleted_at.isoformat() if submission.deleted_at else None
+        'deleted_at': submission.deleted_at.isoformat() if submission.deleted_at else None,
+        'object': object
     }
 
 

@@ -81,6 +81,8 @@ class Object(db.Model):
     deleted_by = db.relationship('User', foreign_keys=[deleter_id], lazy='joined')
     approver_by = db.relationship('User', foreign_keys=[approver_id], lazy='joined')
 
+    invitations = db.relationship('Invitation', backref='object', lazy=False)
+
 
 class FormCategory(db.Model):
     __tablename__ = 'form_categories'
@@ -187,7 +189,6 @@ class Invitation(db.Model):
     created_by = db.relationship('User', foreign_keys=[creator_id])
     deleted_by = db.relationship('User', foreign_keys=[deleter_id])
     used_by = db.relationship('User', foreign_keys=[user_id])
-    object = db.relationship('Object')
 
 
 class UploadedFile(db.Model):

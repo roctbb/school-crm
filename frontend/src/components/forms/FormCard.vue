@@ -17,15 +17,22 @@
 
             </div>
 
-
+            <div class="mt-3">
+                <button
+                    type="button"
+                    class="my-1 btn btn-sm btn-light"
+                    @click="editForm"
+                >
+                    Редактировать
+                </button>
+                <router-link
+                    :to="`/forms/${this.form.id}/submissions`" class="my-1 btn btn-sm btn-light"
+                >
+                    Ответы
+                </router-link>
+            </div>
             <!-- Кнопка "Редактировать" -->
-            <button
-                type="button"
-                class="mt-3 btn btn-sm btn-light"
-                @click="editForm"
-            >
-                Редактировать
-            </button>
+
         </div>
     </div>
 </template>

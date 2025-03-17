@@ -52,10 +52,6 @@ class CrmObject extends Model {
         return this;
     }
 
-    hasStudentOwner() {
-        return this.owners.filter(owner => owner.role === 'student').length > 0;
-    }
-
     isNotApproved() {
         if (this._submissions.length > 0) {
             this.has_unapproved_submissions = this._submissions.some(submission => !submission.is_approved)
