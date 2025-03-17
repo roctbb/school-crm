@@ -31,6 +31,12 @@ export async function fetchFormDetails(formId) {
     });
 }
 
+export async function fetchFormSubmissions(formId) {
+    return await api_client.fetch(`/forms/${formId}/submissions`, {
+        method: 'GET',
+    });
+}
+
 // Обновление формы
 export async function updateForm(formId, data) {
     return await api_client.fetch(`/forms/${formId}`, {

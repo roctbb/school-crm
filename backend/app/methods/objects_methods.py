@@ -102,7 +102,7 @@ def update_object(user, obj, data):
     from app.presenters.presenters import present_object
 
     if obj.is_approved:
-        obj.backup = present_object(obj)
+        obj.backup = present_object(obj, user)
 
     obj.name = data.get("name", obj.name)
     obj.attributes = data.get("attributes", obj.attributes)

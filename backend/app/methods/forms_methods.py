@@ -78,6 +78,20 @@ def get_object_submissions(object):
         .all()
     )
 
+def get_form_submissions(form):
+    return (
+        db.session.query(Submission)
+        # Подгружаем связанные данные:
+        .options(
+            joinedload(Submission.object)
+        )
+        .filter(
+            Submission.form_id == form.id,
+            Submission.deleted_at.is_(None)
+        )
+        .all()
+    )
+
 
 @transaction
 def create_submission(user, form, object, data):

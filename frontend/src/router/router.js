@@ -129,6 +129,16 @@ const routes = [
         component: () => import('@/views/Invitations/InvitationsView.vue'),
         meta: {requiresAuth: true}
     },
+    {
+        path: '/forms/:formId/submissions',
+        name: 'FormSubmissions',
+        component: () => import('@/views/Forms/FormSubmissionsView.vue'),
+        meta: {requiresAuth: true},
+        props: route => ({
+            formId: Number(route.params.formId)
+        })
+    },
+
 
 ];
 

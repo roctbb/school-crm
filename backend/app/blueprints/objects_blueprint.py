@@ -27,14 +27,14 @@ def object_types(user):
 @requires_user
 def object_type_endpoint(user, type_code):
     objects = get_available_objects_by_type_code(type_code)
-    return jsonify([present_object(obj) for obj in objects if can_get_object(user, obj)]), 200
+    return jsonify([present_object(obj, user) for obj in objects if can_get_object(user, obj)]), 200
 
 
 @objects_blueprint.route('', methods=['GET'])
 @requires_user
 def objects_endpoint(user):
     objects = get_available_objects()
-    return jsonify([present_object(obj) for obj in objects if can_get_object(user, obj)]), 200
+    return jsonify([present_object(obj, user) for obj in objects if can_get_object(user, obj)]), 200
 
 
 @objects_blueprint.route('/<string:type_code>/create', methods=['POST'])
@@ -44,7 +44,7 @@ def create_object_endpoint(validated_data, user, type_code):
     object_type = get_object_type_by_code(type_code)
 
     if can_create_by_type(user, object_type):
-        return jsonify(present_object(create_object(user, object_type, validated_data))), 201
+        return jsonify(present_object(create_object(user, object_type, validated_data), user)), 201
 
 
 @objects_blueprint.route('/<int:object_id>/approve', methods=['POST'])
@@ -52,7 +52,7 @@ def create_object_endpoint(validated_data, user, type_code):
 @requires_roles(['admin', 'teacher'])
 def approve_object_endpoint(user, object_id,):
     obj = get_object_by_id(object_id)
-    return jsonify(present_object(approve_object(user, obj))), 200
+    return jsonify(present_object(approve_object(user, obj), user)), 200
 
 @objects_blueprint.route('/<int:object_id>', methods=['PUT'])
 @requires_user
@@ -60,7 +60,7 @@ def approve_object_endpoint(user, object_id,):
 def update_object_endpoint(validated_data, user, object_id):
     obj = get_object_by_id(object_id)
     if can_modify_object(user, obj):
-        return jsonify(present_object(update_object(user, obj, validated_data))), 200
+        return jsonify(present_object(update_object(user, obj, validated_data), user)), 200
 
 
 @objects_blueprint.route('/<int:object_id>', methods=['DELETE'])
