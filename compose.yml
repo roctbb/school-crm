@@ -71,23 +71,13 @@ services:
       - backend_storage:/data_to_backup:ro
     command: >
       sh -c "
-      echo $S3_BUCKET_NAME
-      echo $S3_ENDPOINT_URL
-      aws s3 ls --endpoint-url $S3_ENDPOINT_URL s3://$S3_BUCKET_NAME
-      
-      
-      # 1. Делаем дамп базы в /tmp
       pg_dump -h db -U postgres -d postgres > /tmp/db_backup.sql &&
       echo 'Дамп базы выполнен.' &&
 
-      # 2. Загружаем нижесозданный дамп в S3
-      aws s3 cp /tmp/db_backup.sql s3://${S3_BUCKET_NAME}/db_backup_$(date +%Y%m%d_%H%M%S).sql
-                --endpoint-url ${S3_ENDPOINT_URL} &&
+      aws s3 cp /tmp/db_backup.sql s3://${S3_BUCKET_NAME}/db_backup_$(date +%Y%m%d_%H%M%S).sql --endpoint-url ${S3_ENDPOINT_URL} &&
       echo 'Дамп базы загружен в S3.' &&
 
-      # 3. Синхронизируем данные из backend_storage
-      aws s3 sync /data_to_backup s3://${S3_BUCKET_NAME}/backend_storage
-                  --endpoint-url ${S3_ENDPOINT_URL} &&
+      aws s3 sync /data_to_backup s3://${S3_BUCKET_NAME}/backend_storage --endpoint-url ${S3_ENDPOINT_URL} &&
       echo 'Файлы из backend_storage синхронизированы.'
       "
     logging:
