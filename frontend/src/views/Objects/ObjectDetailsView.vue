@@ -113,49 +113,50 @@
                         :key="form_category.id"
                         class="mb-4"
                     >
-                        <h5 class="pb-2">{{ form_category.name }}</h5>
+                        <div v-if="submissionsInCategory(form_category).length">
+                            <h5 class="pb-2">{{ form_category.name }}</h5>
 
-                        <div class="row">
-                            <div
-                                class="col-md-6 col-lg-4 col-xl-3 col-xl-2 mb-4 d-flex align-items-stretch"
-                                v-for="submission in object._submissions.filter(
-                  (submission) =>
-                    submission._form.category_id === form_category.id
-                )"
-                                :key="submission.id"
-                            >
-                                <SubmissionCard
-                                    :submission="submission"
-                                    :object="object"
-                                />
-                            </div>
-                        </div>
-
-                        <!-- Выпадающий список форм -->
-                        <div class="btn-group" v-if="canFillInCategory(form_category) && canModifyObject(object)">
-                            <button
-                                class="btn btn-sm btn-light dropdown-toggle"
-                                type="button"
-                                data-bs-toggle="dropdown"
-                                aria-expanded="false"
-                            >
-                                Добавить
-                            </button>
-                            <ul class="dropdown-menu">
-                                <li
-                                    v-for="form in store.getFormCategory(form_category.id).forms"
-                                    :key="form.id"
+                            <div class="row">
+                                <div
+                                    class="col-md-6 col-lg-4 col-xl-3 col-xl-2 mb-4 d-flex align-items-stretch"
+                                    v-for="submission in submissionsInCategory(form_category)"
+                                    :key="submission.id"
                                 >
-                                    <a
-                                        class="dropdown-item"
-                                        href="#"
-                                        @click.prevent="goToCreateSubmission(form.id)"
+                                    <SubmissionCard
+                                        :submission="submission"
+                                        :object="object"
+                                    />
+                                </div>
+                            </div>
+
+                            <!-- Выпадающий список форм -->
+                            <div class="btn-group" v-if="canFillInCategory(form_category) && canModifyObject(object)">
+                                <button
+                                    class="btn btn-sm btn-light dropdown-toggle"
+                                    type="button"
+                                    data-bs-toggle="dropdown"
+                                    aria-expanded="false"
+                                >
+                                    Добавить
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li
+                                        v-for="form in store.getFormCategory(form_category.id).forms"
+                                        :key="form.id"
                                     >
-                                        {{ form.name }}
-                                    </a>
-                                </li>
-                            </ul>
+                                        <a
+                                            class="dropdown-item"
+                                            href="#"
+                                            @click.prevent="goToCreateSubmission(form.id)"
+                                        >
+                                            {{ form.name }}
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+
                         </div>
+
                     </div>
 
                     <!-- Отображение внешних категорий (is_external) -->
@@ -343,6 +344,12 @@ export default {
                 return true;
             }
             return false;
+        },
+        submissionsInCategory(category) {
+            return this.object._submissions.filter(
+                  (submission) =>
+                    submission._form.category_id === category.id
+                )
         }
     },
     computed: {

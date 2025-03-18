@@ -1,16 +1,8 @@
 from flask import Blueprint, jsonify
 
-from app import LogicException
 from app.helpers.decorators import requires_user, validate_request_with, requires_roles
-from app.methods import get_objects_types, get_object_type_by_code, get_available_objects_by_type_code, create_object, \
-    get_available_objects, get_object_by_id, update_object, delete_object, update_object_children, create_comment, \
-    delete_comment, get_comment_by_id, create_submission, get_form_by_id, get_submission_by_id, update_submission, \
-    delete_submission, get_object_submissions, can_create_by_type, can_get_submission, approve_object, \
-    approve_submission
-from app.methods.access_methods import can_fill_in_category, can_modify_object, can_comment_object, can_delete_comment, \
-    can_modify_submission, can_delete_object, can_get_object_type, can_get_object
-from app.presenters.presenters import present_object, present_object_type, present_connected_object, present_comment, \
-    present_submission
+from app.methods import *
+from app.presenters import *
 from app.validators import validate_object, validate_object_children, validate_comment, validate_submission
 
 objects_blueprint = Blueprint('objects', __name__, url_prefix='/objects')
@@ -50,9 +42,10 @@ def create_object_endpoint(validated_data, user, type_code):
 @objects_blueprint.route('/<int:object_id>/approve', methods=['POST'])
 @requires_user
 @requires_roles(['admin', 'teacher'])
-def approve_object_endpoint(user, object_id,):
+def approve_object_endpoint(user, object_id, ):
     obj = get_object_by_id(object_id)
     return jsonify(present_object(approve_object(user, obj), user)), 200
+
 
 @objects_blueprint.route('/<int:object_id>', methods=['PUT'])
 @requires_user
@@ -60,6 +53,10 @@ def approve_object_endpoint(user, object_id,):
 def update_object_endpoint(validated_data, user, object_id):
     obj = get_object_by_id(object_id)
     if can_modify_object(user, obj):
+        if not has_teacher_access(user):
+            deapprove_object(obj)
+
+        validated_data = filter_object_description_for_update(user, obj, validated_data)
         return jsonify(present_object(update_object(user, obj, validated_data), user)), 200
 
 
@@ -120,7 +117,8 @@ def create_submission_endpoint(validated_data, user, object_id, form_id):
 @requires_user
 def get_submissions_endpoint(user, object_id):
     object = get_object_by_id(object_id)
-    return [present_submission(submission) for submission in get_object_submissions(object) if can_get_submission(user, submission)], 200
+    return [present_submission(submission) for submission in get_object_submissions(object) if
+            can_get_submission(user, object, submission)], 200
 
 
 @objects_blueprint.route('/<int:object_id>/submissions/<int:submission_id>', methods=['PUT'])
@@ -132,6 +130,7 @@ def update_submission_endpoint(validated_data, user, object_id, submission_id):
     if can_modify_submission(user, sub):
         updated = update_submission(sub, validated_data)
         return jsonify(present_submission(updated)), 200
+
 
 @objects_blueprint.route('/<int:object_id>/submissions/<int:submission_id>/approve', methods=['POST'])
 @requires_user

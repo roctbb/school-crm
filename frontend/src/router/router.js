@@ -1,4 +1,3 @@
-// src/router/index.js
 import {createRouter, createWebHistory} from 'vue-router';
 import useMainStore from "@/stores/mainStore.js";
 
@@ -19,7 +18,14 @@ const routes = [
         path: '/',
         name: 'Objects',
         component: () => import('@/views/Objects/ObjectsView.vue'),
-        meta: {requiresAuth: true}
+        meta: {requiresAuth: true},
+        // Передаём параметры через query
+        props: route => ({
+            view: route.query.view || 'cards',
+            grouping: route.query.grouping || '',
+            search: route.query.search || '',
+            unconfirmed: route.query.unconfirmed === 'true'
+        })
     },
     {
         path: '/:object_type',
@@ -27,7 +33,12 @@ const routes = [
         component: () => import('@/views/Objects/ObjectsView.vue'),
         meta: {requiresAuth: true},
         props: route => ({
-            objectTypeCode: route.params.object_type
+            objectTypeCode: route.params.object_type,
+            // Аналогично, вытягиваем нужные параметры из query
+            view: route.query.view || 'cards',
+            grouping: route.query.grouping || '',
+            search: route.query.search || '',
+            unconfirmed: route.query.unconfirmed === 'true'
         })
     },
     {
@@ -122,24 +133,7 @@ const routes = [
         name: 'Import',
         component: () => import('@/views/Import/ImportView.vue'),
         meta: {requiresAuth: true}
-    },
-    {
-        path: '/invitations',
-        name: 'Invitations',
-        component: () => import('@/views/Invitations/InvitationsView.vue'),
-        meta: {requiresAuth: true}
-    },
-    {
-        path: '/forms/:formId/submissions',
-        name: 'FormSubmissions',
-        component: () => import('@/views/Forms/FormSubmissionsView.vue'),
-        meta: {requiresAuth: true},
-        props: route => ({
-            formId: Number(route.params.formId)
-        })
-    },
-
-
+    }
 ];
 
 const router = createRouter({
@@ -147,7 +141,7 @@ const router = createRouter({
     routes
 });
 
-// Навигационный охранник
+// Пример проверки аутентификации
 router.beforeEach(async (to, from, next) => {
     const has_auth = await useMainStore().checkAuth();
     console.log("Router auth check: ", has_auth ? "OK" : "FAIL");

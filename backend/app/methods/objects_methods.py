@@ -3,6 +3,7 @@ import logging
 from sqlalchemy.orm import subqueryload, selectinload
 
 from app import Comment
+from app.methods import has_admin_access
 from app.methods.access_methods import has_teacher_access
 from app.models import ObjectType, Object, db
 from app.helpers.exceptions import LogicException
@@ -46,6 +47,16 @@ def approve_object(user, object):
     object.approved_by = user
 
     return object
+
+
+@transaction
+def deapprove_object(object):
+    from app.presenters.presenters import present_object
+
+    if object.is_approved:
+        object.backup = present_object(object)
+
+    object.is_approved = False
 
 
 def get_available_objects_by_type_code(type_code):
@@ -99,19 +110,20 @@ def delete_object(user, obj):
 
 @transaction
 def update_object(user, obj, data):
-    from app.presenters.presenters import present_object
-
-    if obj.is_approved:
-        obj.backup = present_object(obj, user)
-
     obj.name = data.get("name", obj.name)
-    obj.attributes = data.get("attributes", obj.attributes)
     obj.params = data.get("params", obj.params)
-
-    if not has_teacher_access(user):
-        obj.is_approved = False
+    obj.attributes = data.get("attributes", obj.attributes)
 
     return obj
+
+
+@transaction
+def restore_object(obj):
+    if obj.backup:
+        obj.attributes = obj.backup["attributes"]
+        obj.params = obj.backup["params"]
+        obj.name = obj.backup["name"]
+        obj.is_approved = True
 
 
 @transaction

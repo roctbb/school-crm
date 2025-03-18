@@ -80,10 +80,10 @@ def can_modify_submission(user, submission):
 
 
 def can_get_object_type(user, object_type):
-    if has_admin_access(user):
+    if has_teacher_access(user):
         return True
 
-    if user.role not in object_type.params.get('hidden_from', []):
+    if not object_type.params.get('is_hidden', []):
         return True
 
     return False
@@ -98,20 +98,47 @@ def can_get_object(user, object):
 
     return False
 
+
 def can_get_form_category(user, form_category):
-    if has_admin_access(user):
+    if has_teacher_access(user):
         return True
 
-    if user.role not in form_category.params.get('hidden_from', []):
+    if not form_category.params.get('is_hidden'):
         return True
 
     return False
 
-def can_get_submission(user, submission):
-    if has_admin_access(user):
+
+def can_get_submission(user, object, submission):
+    if has_teacher_access(user):
         return True
+
+    if submission.form.category.params.get('is_private') and user not in object.owners:
+        return False
 
     if not submission.form or can_get_form_category(user, submission.form.category):
         return True
 
     return False
+
+
+def filter_object_description_for_update(user, object, new_values):
+    if has_teacher_access(user):
+        return new_values
+
+    new_attributes = new_values.get('attributes')
+
+    if new_attributes:
+        for attribute in object.type.available_attributes:
+            if attribute.get('is_locked') and new_attributes.get(attribute.get('code')):
+                del new_attributes[attribute.get('code')]
+
+                if object.attributes.get(attribute.get('code')):
+                    new_attributes[attribute.get('code')] = object.attributes[attribute.get('code')]
+    else:
+        new_attributes = object.attributes
+
+    new_values['attributes'] = new_attributes
+    new_values['params'] = object.params
+
+    return new_values

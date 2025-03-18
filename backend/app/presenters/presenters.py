@@ -37,12 +37,26 @@ def present_connected_object(obj):
     }
 
 
-def present_object(obj, user):
+def present_object(obj, user=None):
+    def filter_attributes(attributes):
+        if user and has_admin_access(user):
+            return attributes
+
+        for attribute in obj.type.available_attributes:
+            if attribute.get('code') in attributes:
+                if attribute.get('is_private') and user not in obj.owners:
+                    del attributes[attribute.get('code')]
+
+                elif attribute.get('is_hidden'):
+                    del attributes[attribute.get('code')]
+
+        return attributes
+
     invitation = None
     has_registered_owner = bool([invitation for invitation in obj.invitations if
                                  invitation.used_at])
 
-    if has_admin_access(user):
+    if user and has_admin_access(user):
         invitations = [invitation for invitation in obj.invitations if
                        not invitation.used_at and not invitation.deleted_at]
 
@@ -53,7 +67,7 @@ def present_object(obj, user):
         'id': obj.id,
         'name': obj.name,
         'params': obj.params,
-        'attributes': obj.attributes,
+        'attributes': filter_attributes(obj.attributes),
         'type': obj.type.code,
         'is_approved': obj.is_approved,
         'has_unapproved_submissions': obj.has_unapproved_submissions,

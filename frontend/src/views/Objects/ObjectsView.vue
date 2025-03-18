@@ -131,7 +131,7 @@
                 <!-- Кнопка переключения карточного/табличного вида -->
                 <button
                     class="btn btn-outline-secondary btn-sm"
-                    @click="isTableView = !isTableView"
+                    @click="toggleTableView()"
                 >
                     <i v-if="isTableView" class="bi bi-grid"></i>
                     <i v-else class="bi bi-list"></i>
@@ -202,6 +202,35 @@ import {canCreateByType, hasTeacherAccess} from "@/utils/access.js";
 
 export default {
     name: "ObjectsView",
+
+    /**
+     * Получаем параметры напрямую из роутера, например:
+     * objectTypeCode -> :object_type,
+     * view, grouping, search, unconfirmed -> из query
+     */
+    props: {
+        objectTypeCode: {
+            type: String,
+            default: ""
+        },
+        view: {
+            type: String,
+            default: "cards"
+        },
+        grouping: {
+            type: String,
+            default: ""
+        },
+        search: {
+            type: String,
+            default: ""
+        },
+        unconfirmed: {
+            type: Boolean,
+            default: false
+        }
+    },
+
     components: {
         ListWidgetBar,
         Loading,
@@ -209,6 +238,7 @@ export default {
         TableView,
         CardView
     },
+
     data() {
         return {
             activeTab: "",
@@ -219,13 +249,11 @@ export default {
             sortKey: "name",
             sortDirection: "asc",
             isMenuOpen: false,
-
-            // Новая переменная для включения режима "только неподтверждённые"
             onlyUnconfirmed: false
         };
     },
+
     computed: {
-        // Массив всех объектов, где owner = текущий пользователь
         portfolioObjects() {
             const userId = this.store.profile?.id;
             if (!userId || hasTeacherAccess()) return [];
@@ -233,12 +261,10 @@ export default {
                 obj.owners.some(owner => owner.id === userId)
             );
         },
-        // Меняем порядок вкладок: если портфолио не пустое, добавляем новую вкладку в начало
         objectTypesWithPortfolio() {
             const sortedTypes = [...this.store.objectTypes].sort(
                 (a, b) => a.params.index - b.params.index
             );
-            // Если объекты для портфолио есть – показываем вкладку "Моё портфолио"
             if (this.portfolioObjects.length > 0) {
                 return [
                     {code: "portfolio", name: "Мое портфолио"},
@@ -248,7 +274,6 @@ export default {
                 return sortedTypes;
             }
         },
-        // Если выбрана вкладка "portfolio", показываем данные из portfolioObjects
         activeObjects() {
             if (this.activeTab === "portfolio") {
                 return this.portfolioObjects;
@@ -257,27 +282,25 @@ export default {
                 obj => !this.onlyUnconfirmed || obj.isNotApproved()
             );
         },
-        // Массив неподтверждённых объектов для текущей вкладки
         nonConfirmedObjects() {
             return this.store.getObjectsByType(this.activeTab).filter(
                 obj => obj.isNotApproved()
             );
         },
-        // Фильтрация с учётом поиска + фильтра неподтверждённых
         filteredObjects() {
             let result = this.activeObjects
                 .filter(obj =>
-                    obj.name.toLowerCase().includes(this.searchQuery.toLowerCase())
+                    obj.name
+                        .toLowerCase()
+                        .includes(this.searchQuery.toLowerCase())
                 )
                 .sort((a, b) => a.name.localeCompare(b.name));
 
             if (this.onlyUnconfirmed) {
-                // Допустим, у объектов есть поле isConfirmed
                 result = result.filter(obj => !obj.isConfirmed);
             }
             return result;
         },
-        // Подсчёт количества объектов (дополнительно для "portfolio")
         objectCounts() {
             const counts = {};
             this.store.objectTypes.forEach(type => {
@@ -288,14 +311,12 @@ export default {
             }
             return counts;
         },
-        // Возможные атрибуты для группировки
         groupingAttributes() {
             const activeType = this.store.getObjectTypeByCode(this.activeTab);
             return activeType
                 ? activeType.available_attributes.filter(attr => attr.group)
                 : [];
         },
-        // Сгруппированные объекты при выборе группировки
         groupedObjects() {
             if (!this.selectedAttribute.code) return null;
             const groups = {};
@@ -317,17 +338,14 @@ export default {
             });
             return groups;
         },
-        // Проверка состояния загрузки
         isLoading() {
             return this.store.isLoading;
         },
-        // Для табличного вида – какие атрибуты отображать в колонках
         tableAttributes() {
             const activeType = this.store.getObjectTypeByCode(this.activeTab);
             if (!activeType) return [];
             return activeType.available_attributes.filter(a => a.show_off);
         },
-        // Сортированные объекты (только для TableView)
         sortedObjects() {
             const sorted = [...this.filteredObjects];
             sorted.sort((a, b) => {
@@ -352,64 +370,99 @@ export default {
             return sorted;
         }
     },
+
     async created() {
-        // Если ещё не загружены типы объектов — загружаем
         if (!this.store.objectTypes.length) {
             await this.store.loadObjects();
         }
-        this.handleRouteChange();
+        // Устанавливаем активную вкладку из props, если есть, иначе берём первую
+        if (this.objectTypeCode) {
+            this.activeTab = this.objectTypeCode;
+        } else if (this.objectTypesWithPortfolio.length) {
+            this.activeTab = this.objectTypesWithPortfolio[0].code;
+            this.$router.replace(`/${this.activeTab}`);
+        }
+        // Переключаем вид в зависимости от view
+        this.isTableView = this.view === "table";
+        // Начальный поисковый запрос
+        this.searchQuery = this.search;
+        // Фильтр неподтверждённых
+        this.onlyUnconfirmed = this.unconfirmed;
     },
+
     watch: {
-        // Отслеживаем изменение маршрута
-        "$route"(newRoute) {
-            this.handleRouteChange(newRoute);
+        // Если меняются входные параметры, подстраиваемся под них
+        objectTypeCode(newVal) {
+            if (newVal && newVal !== this.activeTab) {
+                this.activeTab = newVal;
+            }
         },
-        // Сброс поиска при смене выбранного атрибута
+        view(newVal) {
+            this.isTableView = newVal === "table";
+        },
+        search(newVal) {
+            this.searchQuery = newVal;
+        },
+        unconfirmed(newVal) {
+            this.onlyUnconfirmed = newVal;
+        },
         selectedAttribute() {
             this.searchQuery = "";
         }
     },
+
     methods: {
         canCreateByType,
         hasTeacherAccess,
-        // Подхватываем вкладку из URL, или выбираем первую доступную
-        handleRouteChange(newRoute = this.$route) {
-            const pathTab = newRoute.path.replace("/", "");
-            if (pathTab && this.activeTab !== pathTab) {
-                this.activeTab = pathTab;
-            } else if (!pathTab && this.objectTypesWithPortfolio.length) {
-                this.activeTab = this.objectTypesWithPortfolio[0].code;
-                this.$router.replace(`/${this.activeTab}`);
-            }
-        },
-        // Смена вкладки
+
+        // Смена вкладки с учётом роутера
         selectTab(tabCode) {
             if (this.activeTab !== tabCode) {
-                this.$router.push(`/${tabCode}`);
+                this.$router.push({
+                    path: `/${tabCode}`,
+                    query: {
+                        view: this.isTableView ? "table" : "cards",
+                        search: this.searchQuery,
+                        grouping: this.selectedAttribute?.code || "",
+                        unconfirmed: String(this.onlyUnconfirmed)
+                    }
+                });
             }
             this.selectedAttribute = {};
         },
-        // Создание нового объекта
         createObject(typeCode) {
             this.$router.push(`/${typeCode}/create`);
         },
-        // Открыть/закрыть меню группировки
         toggleMenu() {
             this.isMenuOpen = !this.isMenuOpen;
         },
-        // Установить группировку по выбранному атрибуту
         selectGrouping(attribute) {
             this.selectedAttribute = attribute;
             this.isMenuOpen = false;
+            this.updatePath();
         },
-        // Проверка, есть ли у типа code хотя бы один неподтверждённый объект
         hasUnconfirmed(typeCode) {
             const objects = this.store.getObjectsByType(typeCode);
             return objects.some(obj => obj.isNotApproved());
         },
-        // Включение/выключение фильтра на неподтверждённые объекты
         toggleUnconfirmed() {
             this.onlyUnconfirmed = !this.onlyUnconfirmed;
+            this.updatePath();
+        },
+        toggleTableView() {
+            this.isTableView = !this.isTableView;
+            this.updatePath();
+        },
+        updatePath() {
+            this.$router.push({
+                path: `/${this.activeTab}`,
+                query: {
+                    view: this.isTableView ? "table" : "cards",
+                    search: this.searchQuery,
+                    grouping: this.selectedAttribute?.code || "",
+                    unconfirmed: String(this.onlyUnconfirmed)
+                }
+            });
         }
     }
 };

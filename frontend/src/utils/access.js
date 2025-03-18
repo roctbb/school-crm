@@ -91,10 +91,10 @@ function canModifySubmission(submission) {
 
 function canGetObjectType(objectType) {
     const user = useMainStore().profile;
-    if (hasAdminAccess(user)) {
+    if (hasTeacherAccess(user)) {
         return true;
     }
-    if (!objectType?.params?.hidden_from?.includes(user.role)) {
+    if (!objectType?.params?.is_hidden) {
         return true;
     }
     return false; // По умолчанию доступ запрещён
