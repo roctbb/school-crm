@@ -57,6 +57,7 @@ def update_object_endpoint(validated_data, user, object_id):
             deapprove_object(obj)
 
         validated_data = filter_object_description_for_update(user, obj, validated_data)
+        print(validated_data)
         return jsonify(present_object(update_object(user, obj, validated_data), user)), 200
 
 
