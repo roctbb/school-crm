@@ -53,7 +53,7 @@
                 </button>
                 <button
                     type="button"
-                    class="btn btn-secondary ms-2"
+                    class="btn btn-light ms-2"
                     @click="resetChanges"
                 >
                     Назад

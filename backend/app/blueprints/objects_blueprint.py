@@ -46,6 +46,13 @@ def approve_object_endpoint(user, object_id, ):
     obj = get_object_by_id(object_id)
     return jsonify(present_object(approve_object(user, obj), user)), 200
 
+@objects_blueprint.route('/<int:object_id>/restore', methods=['POST'])
+@requires_user
+@requires_roles(['admin', 'teacher'])
+def restore_object_endpoint(user, object_id, ):
+    obj = get_object_by_id(object_id)
+    return jsonify(present_object(restore_object(obj), user)), 200
+
 
 @objects_blueprint.route('/<int:object_id>', methods=['PUT'])
 @requires_user
@@ -138,6 +145,7 @@ def update_submission_endpoint(validated_data, user, object_id, submission_id):
 def approve_submission_endpoint(user, object_id, submission_id):
     sub = get_submission_by_id(submission_id)
     return jsonify(present_submission(approve_submission(user, sub))), 200
+
 
 
 @objects_blueprint.route('/<int:object_id>/submissions/<int:submission_id>', methods=['DELETE'])

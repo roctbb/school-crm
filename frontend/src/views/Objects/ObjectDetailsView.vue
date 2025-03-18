@@ -18,7 +18,7 @@
                         class="bi bi-person-check" v-if="object.has_registered_owner"></i>
                     </h2>
                     <div>
-                        <div class="badge bg-warning mb-2" v-if="!object.is_approved">Не подтвержден</div>
+                        <div class="badge bg-warning mb-2" v-if="!object.is_approved" @click="hasTeacherAccess() && handleApprove()">Не подтвержден</div>
                         <AttributePresenter :object="object" :type="object_type"/>
                     </div>
                 </div>
@@ -46,6 +46,12 @@
                             <li v-if="!object.is_approved && hasTeacherAccess()">
                                 <button class="dropdown-item" @click="handleApprove">
                                     <i class="bi bi-check-circle text-success me-1"></i> Утвердить
+                                </button>
+                            </li>
+
+                            <li v-if="!object.is_approved && hasTeacherAccess()">
+                                <button class="dropdown-item" @click="handleRestore">
+                                    <i class="bi bi-stop-circle me-1"></i> Отменить изменения
                                 </button>
                             </li>
 
@@ -77,7 +83,7 @@
                                 <span>
                                     {{ type.name }}
                                     <span
-                                        class="badge bg-secondary rounded-pill py-1 px-2"
+                                        class="badge text-bg-light rounded-pill py-1 px-2"
                                         style="font-size: 0.75rem;"
                                     >{{ findRelativesByType(type).length }}</span>
                                 </span>
@@ -113,8 +119,15 @@
                         :key="form_category.id"
                         class="mb-4"
                     >
-                        <div v-if="submissionsInCategory(form_category).length || (canFillInCategory(form_category) && canModifyObject(object))">
-                            <h5 class="pb-2">{{ form_category.name }}</h5>
+                        <div
+                            v-if="submissionsInCategory(form_category).length || (canFillInCategory(form_category) && canModifyObject(object))">
+
+                            <h5 class="pb-2">{{ form_category.name }} <span class="badge text-bg-light"
+                                                                            v-if="form_category.params.is_private">Приватный раздел<i
+                                class="ms-1 bi bi-eye-slash"></i></span><span
+                                class="badge text-bg-light"
+                                v-if="form_category.params.is_hidden">Скрытый раздел<i class="ms-1 bi bi-eye-slash"></i></span>
+                            </h5>
 
                             <div class="row">
                                 <div
@@ -191,7 +204,7 @@
             </div>
 
             <button
-                class="btn btn-secondary btn-sm"
+                class="btn btn-light btn-sm"
                 @click="$router.back()"
             >
                 Назад
@@ -271,6 +284,12 @@ export default {
                 await this.object.approve();
             }
         },
+        async handleRestore() {
+            const confirmed = window.confirm("Вы действительно хотите откатить изменения для этого объекта?");
+            if (confirmed) {
+                await this.object.restore();
+            }
+        },
         /**
          * Находит связанные объекты определённого типа:
          * children + parents того же типа, отсортированные по имени.
@@ -347,9 +366,9 @@ export default {
         },
         submissionsInCategory(category) {
             return this.object._submissions.filter(
-                  (submission) =>
+                (submission) =>
                     submission._form.category_id === category.id
-                )
+            )
         }
     },
     computed: {

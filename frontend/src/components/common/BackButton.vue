@@ -1,6 +1,6 @@
 <template>
     <button
-        class="btn btn-sm btn-outline-secondary me-3"
+        class="btn btn-sm btn-outline-light me-3"
         @click="$router.go(-1)"
     >
         <i class="bi bi-arrow-left"></i> Назад

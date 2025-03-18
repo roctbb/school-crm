@@ -1,6 +1,6 @@
 import logging
 
-from app.methods import can_get_form_category, has_admin_access
+from app.methods import can_get_form_category, has_admin_access, has_teacher_access
 
 
 def present_user(user):
@@ -65,7 +65,7 @@ def present_object(obj, user=None):
 
     comments = []
 
-    if (user and has_admin_access(user)) or not obj.type.params.get('comments_hidden'):
+    if (user and has_teacher_access(user)) or not obj.type.params.get('comments_hidden'):
         comments = [present_comment(comment) for comment in obj.comments if not comment.deleted_at]
 
     return {

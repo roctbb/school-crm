@@ -125,6 +125,8 @@ def restore_object(obj):
         obj.name = obj.backup["name"]
         obj.is_approved = True
 
+    return obj
+
 
 @transaction
 def update_object_children(user, obj, children_ids):

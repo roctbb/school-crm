@@ -69,3 +69,9 @@ export async function approveObject(objectId) {
         method: "POST"
     });
 }
+
+export async function restoreObject(objectId) {
+    return await api_client.fetch(`/objects/${objectId}/restore`, {
+        method: "POST"
+    });
+}
