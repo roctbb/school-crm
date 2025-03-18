@@ -165,7 +165,7 @@
                     <button type="submit" class="btn btn-primary me-1">
                         Сохранить
                     </button>
-                    <button type="submit" class="btn btn-secondary" @click="cancel">
+                    <button type="submit" class="btn btn-light" @click="cancel">
                         Назад
                     </button>
 

@@ -1,6 +1,6 @@
 import Model from "@/models/common.js";
 import {formatDate} from "@/utils/helpers";
-import {approveObject, createObject, updateObject, updateObjectChildren} from "@/api/objects_api.js";
+import {approveObject, createObject, restoreObject, updateObject, updateObjectChildren} from "@/api/objects_api.js";
 import {fetchObjectSubmissions} from "@/api/submissions_api.js";
 import Submission from "@/models/Submission.js";
 
@@ -52,6 +52,11 @@ class CrmObject extends Model {
 
     async approve() {
         this.init(await approveObject(this.id))
+        return this;
+    }
+
+    async restore() {
+        this.init(await restoreObject(this.id))
         return this;
     }
 

@@ -49,7 +49,7 @@
                     <tbody v-show="!isCollapsed">
                     <tr
                         v-for="object in sortData(objects)"
-                        :key="object.id"
+                        :key="object.id" :class="{'table-warning': !object.is_approved}"
                     >
                         <td>{{ object.name }}</td>
                         <td
@@ -104,7 +104,7 @@
                 <tbody v-show="!isCollapsed">
                 <tr
                     v-for="object in sortData(data)"
-                    :key="object.id"
+                    :key="object.id"  :class="{'table-warning': !object.is_approved}"
                 >
                     <td>{{ object.name }}</td>
                     <td

@@ -1,6 +1,6 @@
 <template>
     <div class="comments-panel mb-3">
-        <h5>Комментарии</h5>
+        <h5>Комментарии <i v-if="commentsHidden" class="ms-1 bi bi-eye-slash"></i></h5>
         <!-- Список комментариев -->
         <div v-for="comment in sortedComments" :key="comment.id" class="mb-3">
             <!-- Шапка: автор, время и иконка удаления -->
@@ -47,6 +47,7 @@
 <script>
 import {postComment, deleteComment} from "@/api/objects_api.js";
 import {canCommentObject, canDeleteComment} from "@/utils/access.js";
+import useMainStore from "@/stores/mainStore.js";
 
 export default {
     name: "CommentsPanel",
@@ -59,6 +60,7 @@ export default {
     data() {
         return {
             newComment: "",
+            store: useMainStore()
         };
     },
     computed: {
@@ -67,6 +69,9 @@ export default {
             return [...this.object.comments].sort((a, b) => {
                 return new Date(a.created_at) - new Date(b.created_at);
             });
+        },
+        commentsHidden() {
+            return this.store.getObjectTypeByCode(this.object.type).params.comments_hidden
         }
     },
     methods: {

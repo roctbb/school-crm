@@ -49,6 +49,16 @@ def approve_object(user, object):
     return object
 
 
+def check_changes(object, data):
+    if object.name != data.get("name"):
+        return True
+    if object.params != data.get("params"):
+        return True
+    if object.attributes != data.get("attributes"):
+        return True
+    return False
+
+
 @transaction
 def deapprove_object(object):
     from app.presenters.presenters import present_object
@@ -124,6 +134,8 @@ def restore_object(obj):
         obj.params = obj.backup["params"]
         obj.name = obj.backup["name"]
         obj.is_approved = True
+
+    return obj
 
 
 @transaction

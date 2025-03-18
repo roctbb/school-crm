@@ -3,7 +3,9 @@
         <!-- Основное содержимое карточки -->
         <div class="card-body flex-grow-1 pb-0">
             <h5 class="card-title">{{ form.name }}</h5>
-            <div class="badge bg-warning mt-0" v-if="!submission.is_approved">Не подтверждено</div>
+            <div class="badge bg-warning mt-0" v-if="!submission.is_approved"
+                 @click="hasTeacherAccess() && handleApprove()">Не подтверждено
+            </div>
             <p v-if="submission.created_at" class="created-at-text">
                 {{ formatDateTime(submission.created_at) }}
             </p>
@@ -26,11 +28,20 @@
 import useMainStore from "@/stores/mainStore.js";
 import {formatDateTime} from "@/utils/helpers.js";
 import ShowoffPresenter from "@/components/submissions/ShowoffPresenter.vue";
+import {hasTeacherAccess} from "@/utils/access.js";
 
 export default {
     name: "SubmissionCard",
     components: {ShowoffPresenter},
-    methods: {formatDateTime},
+    methods: {
+        hasTeacherAccess, formatDateTime,
+        async handleApprove() {
+            const confirmed = confirm("Вы действительно хотите утвердить этот ответ?");
+            if (confirmed) {
+                await this.submission.approve(this.object.id)
+            }
+        }
+    },
     props: {
         submission: {
             type: Object,

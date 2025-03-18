@@ -47,17 +47,27 @@ def approve_object_endpoint(user, object_id, ):
     return jsonify(present_object(approve_object(user, obj), user)), 200
 
 
+@objects_blueprint.route('/<int:object_id>/restore', methods=['POST'])
+@requires_user
+@requires_roles(['admin', 'teacher'])
+def restore_object_endpoint(user, object_id, ):
+    obj = get_object_by_id(object_id)
+    return jsonify(present_object(restore_object(obj), user)), 200
+
+
 @objects_blueprint.route('/<int:object_id>', methods=['PUT'])
 @requires_user
 @validate_request_with(validate_object)
 def update_object_endpoint(validated_data, user, object_id):
     obj = get_object_by_id(object_id)
     if can_modify_object(user, obj):
-        if not has_teacher_access(user):
-            deapprove_object(obj)
-
         validated_data = filter_object_description_for_update(user, obj, validated_data)
-        return jsonify(present_object(update_object(user, obj, validated_data), user)), 200
+
+        if not has_teacher_access(user) and check_changes(obj, validated_data):
+            deapprove_object(obj)
+            obj = update_object(user, obj, validated_data)
+
+        return jsonify(present_object(obj, user)), 200
 
 
 @objects_blueprint.route('/<int:object_id>', methods=['DELETE'])
