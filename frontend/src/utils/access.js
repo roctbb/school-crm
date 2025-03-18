@@ -48,7 +48,7 @@ function canDeleteObject(object) {
     if (hasTeacherAccess(user)) {
         return true;
     }
-    if (object?.owners?.some(owner => owner.id === user.id) && !object.is_approved) {
+    if (object?.owners?.some(owner => owner.id === user.id) && !object.is_approved && object.params?.can_delete?.includes(user.role)) {
         return true;
     }
     return false

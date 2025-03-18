@@ -43,7 +43,7 @@ def can_delete_object(user, object):
     if has_teacher_access(user):
         return True
 
-    if user in object.owners and not object.is_approved:
+    if user in object.owners and not object.is_approved and user.role in object.params.get('can_delete', []):
         return True
 
     raise LogicException("Доступ запрещен", 403)
