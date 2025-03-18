@@ -63,6 +63,11 @@ def present_object(obj, user=None):
         if invitations:
             invitation = present_invitation(invitations[0])
 
+    comments = []
+
+    if (user and has_admin_access(user)) or not obj.type.params.get('comments_hidden'):
+        comments = [present_comment(comment) for comment in obj.comments if not comment.deleted_at]
+
     return {
         'id': obj.id,
         'name': obj.name,
@@ -79,7 +84,7 @@ def present_object(obj, user=None):
         'owners': [present_user(owner) for owner in obj.owners],
         'children': [present_connected_object(child) for child in obj.children if not child.deleted_at],
         'parents': [present_connected_object(child) for child in obj.parents if not child.deleted_at],
-        'comments': [present_comment(comment) for comment in obj.comments if not comment.deleted_at],
+        'comments': comments,
         'invitation': invitation,
         'has_registered_owner': has_registered_owner
     }

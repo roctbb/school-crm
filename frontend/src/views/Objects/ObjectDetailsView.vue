@@ -185,7 +185,7 @@
                 </div>
 
                 <!-- Панель комментариев -->
-                <div class="col-md-4" v-if="object.comments || canCommentObject(object)">
+                <div class="col-md-4" v-if="object.comments.length || canCommentObject(object)">
                     <CommentsPanel :object="object"/>
                 </div>
             </div>
