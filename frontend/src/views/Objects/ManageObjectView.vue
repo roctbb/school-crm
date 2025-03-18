@@ -127,11 +127,9 @@ export default {
         if (this.object_type.params?.possible_children?.length) {
             const possibleChildrenCodes = this.object_type.params?.possible_children;
             // Можно сгруппировать по коду или создавать объекты с дополнительными параметрами
-            this.childrenOptions = possibleChildrenCodes.map((code) => ({
-                code,
-                // Дополнительные параметры для группы (название, описание и т.д.)
-                // Можно хранить в object_type.params или где-то ещё
-            }));
+            this.childrenOptions = possibleChildrenCodes.map((code) =>
+                this.store.getObjectTypeByCode(code)
+            );
         }
     },
     methods: {
