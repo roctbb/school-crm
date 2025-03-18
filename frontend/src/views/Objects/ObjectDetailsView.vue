@@ -113,7 +113,7 @@
                         :key="form_category.id"
                         class="mb-4"
                     >
-                        <div v-if="submissionsInCategory(form_category).length">
+                        <div v-if="submissionsInCategory(form_category).length || (canFillInCategory(form_category) && canModifyObject(object))">
                             <h5 class="pb-2">{{ form_category.name }}</h5>
 
                             <div class="row">
@@ -185,14 +185,14 @@
                 </div>
 
                 <!-- Панель комментариев -->
-                <div class="col-md-4" v-if="object.comment || canCommentObject(object)">
+                <div class="col-md-4" v-if="object.comments || canCommentObject(object)">
                     <CommentsPanel :object="object"/>
                 </div>
             </div>
 
             <button
                 class="btn btn-secondary btn-sm"
-                @click="$router.push(`/`)"
+                @click="$router.back()"
             >
                 Назад
             </button>
