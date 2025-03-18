@@ -1,5 +1,6 @@
 <script>
 import {external_url} from "@/utils/helpers.js";
+import {hasTeacherAccess} from "@/utils/access.js";
 
 export default {
     name: "AttributePresenter",
@@ -20,9 +21,10 @@ export default {
         filteredAttributes() {
             if (!this.object || !this.type) return [];
             return this.type.available_attributes.filter(attr => {
+                const isShown = hasTeacherAccess() || !attr.is_hidden
                 const isVisible = (attr.display && this.display) || (attr.show_off && this.show_off);
                 const hasData = this.object.attributes[attr.code] && this.object.attributes[attr.code].length > 0;
-                return isVisible && hasData;
+                return isVisible && hasData && isShown;
             });
         }
     }

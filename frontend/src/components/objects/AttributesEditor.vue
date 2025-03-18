@@ -5,7 +5,7 @@
             :key="attribute.code"
             class="mb-3"
         >
-            <div v-if="!attribute.is_locked || hasTeacherAccess()">
+            <div v-if="canEditAttribute(attribute) || hasTeacherAccess()">
                 <label :for="attribute.code" class="form-label">
                     {{ attribute.name }}
                 </label>
@@ -189,6 +189,9 @@ export default {
                 this.isUploading = false;
             }
         },
+        canEditAttribute(attribute) {
+            return !attribute.is_hidden && !attribute.is_locked;
+        }
     },
     watch: {
         localAttributes: {
