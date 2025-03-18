@@ -129,7 +129,7 @@ export default {
             // Можно сгруппировать по коду или создавать объекты с дополнительными параметрами
             this.childrenOptions = possibleChildrenCodes.map((code) =>
                 this.store.getObjectTypeByCode(code)
-            );
+            ).filter(Boolean);
         }
     },
     methods: {
