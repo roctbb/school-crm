@@ -65,8 +65,8 @@ def update_object_endpoint(validated_data, user, object_id):
 
         if not has_teacher_access(user) and check_changes(obj, validated_data):
             deapprove_object(obj)
-            obj = update_object(user, obj, validated_data)
 
+        obj = update_object(user, obj, validated_data)
         return jsonify(present_object(obj, user)), 200
 
 
