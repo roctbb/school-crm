@@ -17,6 +17,9 @@ class CrmObject extends Model {
         if (!this.children) {
             this.children = []
         }
+        if (!this.parents) {
+            this.parents = []
+        }
     }
 
     async save() {

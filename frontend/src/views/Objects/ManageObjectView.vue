@@ -1,12 +1,16 @@
 <template>
     <BaseLayout>
         <div v-if="object">
-            <h3 class="my-3">{{ capitalize(object_type.name) }}:
-                {{ isEditMode ? object.name : "добавление записи" }}</h3>
+            <h3 class="my-3">
+                {{ capitalize(object_type.name) }}:
+                {{ isEditMode ? object.name : "добавление записи" }}
+            </h3>
 
-            <div v-if="object_type.params.edit_description" v-html="object_type.params.edit_description"
-                 class="alert alert-warning">
-            </div>
+            <div
+                v-if="object_type.params.edit_description"
+                v-html="object_type.params.edit_description"
+                class="alert alert-warning"
+            ></div>
 
             <form @submit.prevent="handleSave">
                 <!-- Поле для имени -->
@@ -21,6 +25,7 @@
                     />
                 </div>
 
+                <!-- Редактор атрибутов -->
                 <div class="mb-3">
                     <AttributesEditor
                         v-model:attributes="object.attributes"
@@ -36,8 +41,9 @@
                         class="mb-4"
                     >
                         <ChildrenFilterEditor
-                            v-model:children="object.children"
                             :group="group"
+                            :children="object.children"
+                            @update-children="updateGroupChildren"
                         />
                     </div>
                 </div>
@@ -59,7 +65,8 @@
 </template>
 
 <script>
-import useMainStore from "@/stores/mainStore.js"; // Pinia стейт
+// Подключаем нужные объекты
+import useMainStore from "@/stores/mainStore.js";
 import CrmObject from "@/models/CrmObject.js";
 import BaseLayout from "@/components/layouts/BaseLayout.vue";
 import {capitalize} from "@/utils/helpers.js";
@@ -86,7 +93,7 @@ export default {
     },
     computed: {
         isEditMode() {
-            return !!this.objectId; // Режим редактирования, если указан `objectId`
+            return !!this.objectId; // Режим редактирования, если задан objectId
         },
     },
     data() {
@@ -95,18 +102,19 @@ export default {
             object: null,
             object_type: null,
             error: null,
-            childrenOptions: [], // Группированные дети по типам
+            childrenOptions: [], // Группированные варианты детей по типам
         };
     },
     async created() {
+        // Подгружаем типы и объекты, если их ещё нет
         if (!this.store.objectTypes.length) {
-            await this.store.loadObjects()
+            await this.store.loadObjects();
         }
 
-        // Установить тип объекта
-        this.object_type = this.store.getObjectTypeByCode(this.objectTypeCode)
+        // Устанавливаем тип объекта
+        this.object_type = this.store.getObjectTypeByCode(this.objectTypeCode);
 
-        // Установить сам объект
+        // Устанавливаем сам объект (редактирование или новый экземпляр)
         if (this.isEditMode) {
             this.object = this.store.objects[this.objectTypeCode]?.find(
                 (obj) => obj.id === parseInt(this.objectId)
@@ -115,17 +123,29 @@ export default {
             this.object = new CrmObject({type: this.objectTypeCode}, this.store);
         }
 
-        // Формируем группы детей (доступные для каждой категории)
+        // Подготавливаем список групп возможных детей
         if (this.object_type.params?.possible_children?.length) {
             const possibleChildrenCodes = this.object_type.params?.possible_children;
-
-            if (possibleChildrenCodes) {
-                this.childrenOptions = possibleChildrenCodes.map((type_code) => this.store.getObjectTypeByCode(type_code)).filter(Boolean)
-            }
+            // Можно сгруппировать по коду или создавать объекты с дополнительными параметрами
+            this.childrenOptions = possibleChildrenCodes.map((code) => ({
+                code,
+                // Дополнительные параметры для группы (название, описание и т.д.)
+                // Можно хранить в object_type.params или где-то ещё
+            }));
         }
     },
     methods: {
         capitalize,
+        // При обновлении детей для конкретной группы
+        updateGroupChildren({groupCode, childrenItems}) {
+            // Удаляем из объекта всех детей данной группы
+            this.object.children = this.object.children.filter(
+                (ch) => ch.type !== groupCode
+            );
+            // Добавляем обновлённый список
+            this.object.children.push(...childrenItems);
+        },
+
         async handleSave() {
             try {
                 this.error = null;
@@ -145,10 +165,9 @@ export default {
             }
         },
 
+        // Сброс изменений/возврат
         resetChanges() {
-            if (this.isEditMode) {
-                this.object.reset();
-            }
+            // Можно либо просто вернуться назад, либо восстановить исходные данные
             this.$router.back();
         },
     },
@@ -156,7 +175,5 @@ export default {
 </script>
 
 <style scoped>
-.container {
-    margin-top: 20px;
-}
+/* При необходимости ваши стили */
 </style>

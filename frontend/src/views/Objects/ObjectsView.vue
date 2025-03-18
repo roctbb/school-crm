@@ -292,7 +292,7 @@ export default {
         groupingAttributes() {
             const activeType = this.store.getObjectTypeByCode(this.activeTab);
             return activeType
-                ? activeType.available_attributes.filter(attr => attr.show_off)
+                ? activeType.available_attributes.filter(attr => attr.group)
                 : [];
         },
         // Сгруппированные объекты при выборе группировки
