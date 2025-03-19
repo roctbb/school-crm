@@ -45,7 +45,7 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      - backend_storage:/application/storage
+      - backend_storage:/app/storage
     depends_on:
       db:
         condition: service_healthy
