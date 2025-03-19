@@ -39,6 +39,8 @@ services:
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/postgres
       FLASK_ENV: production
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_BACKEND: redis://redis:6379/1
     ports:
       - "5000:5000"
     volumes:
