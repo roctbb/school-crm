@@ -1,9 +1,9 @@
 import pytest
 from flask_jwt_extended import create_access_token
-from app.models import User, Invitation, db
-from app.infrastructure import bcrypt
+from application.models import User, Invitation, db
+from application.infrastructure import bcrypt
 from datetime import datetime
-from app import create_app
+from application import create_app
 
 
 @pytest.fixture

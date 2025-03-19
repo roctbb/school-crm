@@ -1,5 +1,5 @@
-from app.models import ObjectType
-from app.presenters.presenters import present_object_type
+from application.models import ObjectType
+from application.presenters.presenters import present_object_type
 from .fixtures import *
 
 

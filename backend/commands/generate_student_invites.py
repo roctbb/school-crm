@@ -1,8 +1,8 @@
 import secrets
 
-from app import create_app
-from app.methods import create_invitations_for
-app = create_app()
+from application import create_app
+from application.methods import create_invitations_for
+app, _ = create_app()
 
 with app.app_context():
 

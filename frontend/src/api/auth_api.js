@@ -21,3 +21,17 @@ export async function getProfile(token) {
         method: 'GET'
     });
 }
+
+export async function sendPasswordResetEmail(email) {
+    return await api_client.fetch(`/password/email`, {
+        method: 'POST',
+        body: JSON.stringify({email: email}),
+    });
+}
+
+export async function resetPassword({token, password}) {
+    return await api_client.fetch(`/password/reset`, {
+        method: 'POST',
+        body: JSON.stringify({reset_token: token, password: password}),
+    });
+}

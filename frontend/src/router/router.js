@@ -15,6 +15,18 @@ const routes = [
         meta: {withoutAuth: true}
     },
     {
+        path: '/password/email',
+        name: 'ForgotPassword',
+        component: () => import('@/views/Auth/ForgotPasswordView.vue'),
+        meta: {withoutAuth: true} // Для гостей, чтобы не требовал авторизации
+    },
+    {
+        path: '/password/reset',
+        name: 'ResetPassword',
+        component: () => import('@/views/Auth/ResetPasswordView.vue'),
+        meta: {withoutAuth: true} // Для гостей, чтобы не требовал авторизации
+    },
+    {
         path: '/',
         name: 'Objects',
         component: () => import('@/views/Objects/ObjectsView.vue'),
