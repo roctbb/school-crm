@@ -31,6 +31,11 @@
                 <button type="submit" class="btn btn-primary w-100">Войти</button>
             </form>
 
+            <div class="text-center mt-2">
+                <router-link to="/password/email">Забыли пароль?</router-link>
+            </div>
+
+
             <!-- Ссылка на регистрацию -->
             <div class="mt-3 text-center">
                 <p class="mb-0">

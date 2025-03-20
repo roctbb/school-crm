@@ -11,25 +11,36 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready --dbname=postgres --username=postgres" ]
+      test: ["CMD-SHELL", "pg_isready --dbname=postgres --username=postgres"]
       interval: 5s
       timeout: 5s
       retries: 5
     logging:
       driver: "json-file"
       options:
-        max-size: "10m"   # Максимальный размер лога (10 мегабайт)
-        max-file: "3"     # Число файлов при ротации
+        max-size: "10m"
+        max-file: "3"
 
+  redis:
+    image: redis:7
+    container_name: crm_redis
+    command: ["redis-server", "--appendonly", "yes"]
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   backend:
     build: ./backend
     container_name: crm_backend
     env_file:
-      - .env  # Загружаем переменные из .env
+      - .env
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/postgres
       FLASK_ENV: production
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_BACKEND: redis://redis:6379/1
     ports:
       - "5000:5000"
     volumes:
@@ -37,12 +48,35 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_started
     logging:
       driver: "json-file"
       options:
-        max-size: "10m"   # Максимальный размер лога (10 мегабайт)
-        max-file: "3"     # Число файлов при ротации
+        max-size: "10m"
+        max-file: "3"
 
+  worker:
+    build: ./backend
+    container_name: crm_worker
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/postgres
+      FLASK_ENV: production
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_BACKEND: redis://redis:6379/1
+    command: celery -A wsgi.celery worker --loglevel=info
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   nginx:
     build:
@@ -50,18 +84,18 @@ services:
       dockerfile: Dockerfile
     container_name: crm_nginx
     ports:
-      - "8383:80" # Публикуем порт 80 для доступа
+      - "8383:80"
     depends_on:
       - backend
     logging:
       driver: "json-file"
       options:
-        max-size: "10m"   # Максимальный размер лога (10 мегабайт)
-        max-file: "3"     # Число файлов при ротации
+        max-size: "10m"
+        max-file: "3"
 
   backup:
     build:
-      context: ./backuper  #
+      context: ./backuper
     container_name: crm_backup
     env_file:
       - .env
@@ -72,8 +106,8 @@ services:
     logging:
       driver: "json-file"
       options:
-        max-size: "10m"   # Максимальный размер лога (10 мегабайт)
-        max-file: "3"     # Число файлов при ротации
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   postgres_data:

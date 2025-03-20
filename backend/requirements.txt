@@ -12,3 +12,6 @@ flask-jwt-extended
 flask-bcrypt
 pytest
 validate_email_address
+celery
+redis
+flask_mail
