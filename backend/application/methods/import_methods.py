@@ -24,8 +24,8 @@ def import_objects(user, file):
 
     for row in data:
         # Извлекаем обязательные поля
-        name = row.get('name')
-        type_code = row.get('type')
+        name = row.get('name').strip()
+        type_code = row.get('type').strip()
 
         if not name or not type_code:
             current_app.logger.warning(f"Пропущена строка: name или type отсутствует. {row}")
@@ -104,8 +104,8 @@ def import_submissions(user, file):
     imported_submissions = []
 
     for row in data:
-        object_name = row.get('name')
-        form_name = row.get('form')
+        object_name = row.get('name').strip()
+        form_name = row.get('form').strip()
 
         if not object_name or not form_name:
             current_app.logger.warning(
@@ -140,15 +140,15 @@ def import_submissions(user, file):
         # Собираем поля Submission: заполняем answers из CSV
         filled_fields = []
         for field_info in fields:
-            field_name = field_info.get("name")
+            field_name = field_info.get("name").strip()
             if not field_name:
                 continue
 
             csv_value = row.get(field_name, "").strip()
 
             filled_fields.append({
-                "name": field_info.get("name"),
-                "type": field_info.get("type"),
+                "name": field_info.get("name").strip(),
+                "type": field_info.get("type").strip(),
                 "required": field_info.get("required", False),
                 "options": field_info.get("options", []),
                 "showoff": field_info.get("showoff", False),  # Если в форме есть такое поле
@@ -159,7 +159,7 @@ def import_submissions(user, file):
         showoff_attributes = {}
         for f in filled_fields:
             if f.get("showoff") and f.get("answer"):
-                showoff_attributes[f["name"]] = f["answer"]
+                showoff_attributes[f["name"].strip()] = f["answer"].strip()
 
         submission_data = {
             "fields": filled_fields,
