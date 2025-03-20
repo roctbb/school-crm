@@ -80,10 +80,7 @@ export default {
         };
     },
     methods: {
-        capitalize,
         canCommentObject,
-        canModifyObject,
-        hasTeacherAccess,
         async handleDelete() {
             const confirmed = window.confirm("Вы действительно хотите удалить этот объект?");
             if (confirmed) {
