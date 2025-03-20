@@ -1,5 +1,8 @@
 import csv
+from copy import copy
+
 from flask import current_app
+from sqlalchemy.orm.attributes import flag_modified
 
 from application import LogicException, Form
 from application.helpers.decorators import transaction
@@ -60,6 +63,10 @@ def import_objects(user, file):
 
             for key in params:
                 existing_object.params[key] = params[key]
+
+            flag_modified(existing_object, "attributes")
+            flag_modified(existing_object, "params")
+
 
         else:
             new_object = Object(

@@ -1,11 +1,8 @@
 from flask import Blueprint, jsonify
-from application.helpers.decorators import requires_user, validate_request_with, requires_roles
+from application.helpers.decorators import *
 from application.validators import validate_form
-from application.presenters.presenters import present_form, present_form_category, present_submission, present_object
-from application.methods import (
-    get_form_by_id, get_forms, get_form_categories, create_form, update_form, delete_form,
-    get_category_by_id, can_get_form_category, get_form_submissions
-)
+from application.presenters.presenters import *
+from application.methods import *
 
 forms_blueprint = Blueprint('forms', __name__, url_prefix='/forms')
 submissions_blueprint = Blueprint('submissions', __name__, url_prefix='/submissions')

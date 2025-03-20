@@ -1,12 +1,18 @@
 <template>
     <div class="login-page d-flex justify-content-center align-items-center vh-100">
         <div class="card p-4" style="width: 100%; max-width: 400px;">
+            <!-- Блок с логотипом -->
+            <div class="text-center mb-3">
+                <img src="@/assets/logo.png" alt="Logo" style="max-width: 150px; height: auto;">
+            </div>
+
             <h3 class="card-title text-center mb-3">Вход в систему</h3>
 
             <div class="alert alert-danger my-3 px-3" v-if="error">{{ error }}</div>
 
             <!-- Форма входа -->
             <form @submit.prevent="handleLogin">
+                <!-- Поля ввода -->
                 <div class="mb-3">
                     <label for="email" class="form-label">Email</label>
                     <input
@@ -28,29 +34,22 @@
                         required
                     />
                 </div>
+                <!-- Кнопка входа -->
                 <button type="submit" class="btn btn-primary w-100">Войти</button>
             </form>
 
-            <div class="text-center mt-2">
+            <!-- Блок со ссылками -->
+            <div class="d-flex justify-content-between align-items-center mt-3">
                 <router-link to="/password/email">Забыли пароль?</router-link>
-            </div>
-
-
-            <!-- Ссылка на регистрацию -->
-            <div class="mt-3 text-center">
-                <p class="mb-0">
-                    Нет аккаунта?
-                    <router-link to="/register">Зарегистрироваться</router-link>
-                </p>
+                <router-link to="/register">Регистрация</router-link>
             </div>
         </div>
     </div>
 </template>
 
 <script>
-import useMainStore from "@/stores/mainStore.js"; // Подключаем Pinia-хранилище
-import {mapActions} from "pinia"; // Операции Pinia
-import {login} from "@/api/auth_api.js";
+import useMainStore from "@/stores/mainStore.js";
+import { login } from "@/api/auth_api.js";
 
 export default {
     name: "LoginView",
@@ -76,7 +75,6 @@ export default {
 </script>
 
 <style>
-
 .login-page {
     background-color: #f8f9fa;
 }
