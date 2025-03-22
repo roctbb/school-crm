@@ -130,8 +130,9 @@ def filter_object_description_for_update(user, object, new_values):
 
     if new_attributes:
         for attribute in object.type.available_attributes:
-            if (attribute.get('is_hidden') or attribute.get('is_locked')) and new_attributes.get(attribute.get('code')):
-                del new_attributes[attribute.get('code')]
+            if attribute.get('is_hidden') or attribute.get('is_locked'):
+                if new_attributes.get(attribute.get('code')):
+                    del new_attributes[attribute.get('code')]
 
                 if object.attributes.get(attribute.get('code')):
                     new_attributes[attribute.get('code')] = object.attributes[attribute.get('code')]
