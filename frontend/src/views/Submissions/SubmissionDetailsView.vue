@@ -90,7 +90,8 @@
                                         :key="i"
                                     >
                                         <td>{{ field.name }}</td>
-                                        <td>{{ formatValue(field.answer) }}</td>
+                                        <td v-if="field.type!=='file'">{{ formatValue(field.answer) }}</td>
+                                        <td v-else><a :href="field.answer" target="_blank">Открыть</a></td>
                                     </tr>
                                     </tbody>
                                 </table>

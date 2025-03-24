@@ -27,6 +27,12 @@
                             :placeholder="field.name"
                         />
 
+                        <FileUploadField
+                            v-if="field.type === 'file'"
+                            v-model="field.answer"
+                            :required="field.required"
+                        />
+
                         <!-- Поле-текст (textarea) -->
                         <textarea
                             v-else-if="field.type === 'text'"
@@ -186,10 +192,11 @@ import BaseLayout from "@/components/layouts/BaseLayout.vue";
 import ChildrenFilterEditor from "@/components/objects/ChildrenFilterEditor.vue";
 import {getAcademicYear} from "@/utils/helpers.js";
 import {hasTeacherAccess} from "@/utils/access.js";
+import FileUploadField from "@/components/common/FileUploadField.vue";
 
 export default {
     name: "ManageSubmissionView",
-    components: {ChildrenFilterEditor, BaseLayout, Loading, VueDatePicker},
+    components: {FileUploadField, ChildrenFilterEditor, BaseLayout, Loading, VueDatePicker},
     props: {
         objectId: {
             type: Number,
