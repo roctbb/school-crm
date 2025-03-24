@@ -1,5 +1,11 @@
 import Model from "@/models/common.js";
-import {approveSubmission, createSubmission, deleteSubmission, updateSubmission} from "@/api/submissions_api.js";
+import {
+    approveSubmission,
+    createSubmission,
+    deleteSubmission,
+    restoreSubmission,
+    updateSubmission
+} from "@/api/submissions_api.js";
 import {approveObject} from "@/api/objects_api.js";
 
 class Submission extends Model {
@@ -26,6 +32,11 @@ class Submission extends Model {
 
     async approve(objectId) {
         this.init(await approveSubmission(objectId, this.id))
+        return this;
+    }
+
+    async restore(objectId) {
+        this.init(await restoreSubmission(objectId, this.id))
         return this;
     }
 

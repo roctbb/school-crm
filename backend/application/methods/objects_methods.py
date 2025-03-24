@@ -49,7 +49,7 @@ def approve_object(user, object):
     return object
 
 
-def check_changes(object, data):
+def check_changes_in_object(object, data):
     if object.name != data.get("name"):
         return True
     if object.params != data.get("params"):
