@@ -1,0 +1,17 @@
+// custom-bootstrap.scss
+
+// 1. Импортируем переменные из Bootstrap
+@import "bootstrap/scss/functions";
+@import "bootstrap/scss/variables";
+@import "bootstrap/scss/maps";
+
+
+// 2. Переопределяем переменные
+$primary: #397698;   // Пример: основной цвет
+$warning: #EACF72;   // Пример: warning
+$danger: #C92325;    // Пример: danger
+// 3. (Опционально) переопределяем другие переменные, 
+//    если нужно менять, например, success, dark, light и т.д.
+
+// 4. Импортируем всё остальное из Bootstrap
+@import "bootstrap/scss/bootstrap";

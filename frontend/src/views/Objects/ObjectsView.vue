@@ -1,69 +1,28 @@
 <template>
     <BaseLayout>
-        <!-- Динамические вкладки с кнопкой создания объекта -->
+        <!-- Навигация по вкладкам -->
         <div class="d-flex align-items-center justify-content-between border-bottom mt-3">
-            <ul class="nav nav-tabs flex-grow-1 border-0">
-                <li
-                    class="nav-item"
-                    v-for="type in objectTypesWithPortfolio"
-                    :key="type.code"
-                >
-                    <button
-                        class="nav-link"
-                        :class="{ active: activeTab === type.code }"
-                        @click="selectTab(type.code)"
-                    >
-                        {{ type.name }}
-                        <span
-                            v-if="objectCounts[type.code] > 0"
-                            :class="[
-                                'badge',
-                                hasTeacherAccess() && hasUnconfirmed(type.code) ? 'bg-warning text-dark' : 'bg-secondary',
-                                'rounded-5',
-                                'ms-1'
-                            ]"
-                        >
-                            {{ objectCounts[type.code] }}
-                        </span>
-                    </button>
-                </li>
-            </ul>
-            <div v-if="activeTab !== 'portfolio'" class="d-flex align-items-center">
-                <button
-                    v-if="activeTab && canCreateByType(store.getObjectTypeByCode(activeTab))"
-                    class="btn btn-success btn-sm ms-1"
-                    @click="createObject(activeTab)"
-                >
-                    <i class="bi bi-plus me-1"></i> Создать
-                </button>
-            </div>
-            <div v-if="activeTab === 'portfolio'" class="d-flex align-items-center">
-                <div class="dropdown">
-                    <button
-                        class="btn btn-success btn-sm dropdown-toggle"
-                        type="button"
-                        data-bs-toggle="dropdown"
-                    >
-                        <i class="bi bi-plus me-1"></i> Создать
-                    </button>
-                    <ul class="dropdown-menu">
-                        <li v-for="type in store.objectTypes.filter(type => canCreateByType(type))" :key="type.code">
-                            <button
-                                class="dropdown-item"
-                                @click="createObject(type.code)"
-                            >
-                                {{ type.name }}
-                            </button>
-                        </li>
-                    </ul>
-                </div>
+            <TabNavigation
+                :tabs="objectTypesWithPortfolio"
+                :active-tab="activeTab"
+                :object-counts="objectCounts"
+                :has-teacher-access="hasTeacherAccess()"
+                :hasUnconfirmed="hasUnconfirmed"
+                @tab-selected="selectTab"
+            />
 
-            </div>
-
+            <!-- Область создания объектов -->
+            <CreateObjectArea
+                :active-tab="activeTab"
+                :store="store"
+                :canCreateByType="canCreateByType"
+                @createObject="createObject"
+            />
         </div>
 
-        <div v-if="activeTab === 'portfolio'">
-            <div class="tab-content mt-3">
+        <!-- Если выбрана вкладка "portfolio" -->
+        <div v-if="activeTab === 'portfolio'" class="tab-content">
+            <div class="mt-3">
                 <loading v-if="isLoading"/>
                 <div v-else>
                     <CardView
@@ -74,11 +33,15 @@
             </div>
         </div>
 
-        <div v-if="activeTab !== 'portfolio'">
-            <!-- Панель фильтров, если выбрана вкладка -->
-            <ListWidgetBar v-if="activeTab" :type="store.getObjectTypeByCode(activeTab)"/>
+        <!-- Если выбрана любая другая вкладка -->
+        <div v-if="activeTab !== 'portfolio'" class="tab-content">
+            <!-- Панель фильтров, если вкладка действительно выбрана -->
+            <ListWidgetBar
+                v-if="activeTab"
+                :type="store.getObjectTypeByCode(activeTab)"
+            />
 
-            <!-- Поле поиска и выпадающее меню -->
+            <!-- Поиск и выпадающее меню группировки -->
             <div class="d-flex mt-3 align-items-center">
                 <input
                     type="text"
@@ -86,13 +49,13 @@
                     placeholder="Введите текст для поиска..."
                     v-model="searchQuery"
                 />
-
-                <!-- Кнопка-иконка для группировки -->
+                <!-- Кнопка -->
                 <div class="dropdown" :class="{ show: isMenuOpen }">
                     <button
                         class="btn btn-sm btn-outline-secondary dropdown-toggle me-1"
                         type="button"
                         @click="toggleMenu"
+                        :class="{ show: isMenuOpen }"
                     >
                         <i class="bi bi-filter"></i>
                     </button>
@@ -121,20 +84,27 @@
                                     v-if="selectedAttribute.code === attribute.code"
                                     class="me-1"
                                 >
-                                    <i class="bi bi-check2"></i>
-                                </span>
+            <i class="bi bi-check2"></i>
+          </span>
                             </button>
                         </li>
                     </ul>
                 </div>
 
-                <!-- Кнопка переключения карточного/табличного вида -->
+
+                <!-- Кнопка переключения вида (таблица/карточки) -->
                 <button
                     class="btn btn-outline-secondary btn-sm"
                     @click="toggleTableView()"
                 >
-                    <i v-if="isTableView" class="bi bi-grid"></i>
-                    <i v-else class="bi bi-list"></i>
+                    <i
+                        v-if="isTableView"
+                        class="bi bi-grid"
+                    ></i>
+                    <i
+                        v-else
+                        class="bi bi-list"
+                    ></i>
                 </button>
 
                 <!-- Кнопка для преподавателей: фильтр неподтверждённых (иконки) -->
@@ -164,8 +134,8 @@
 
             </div>
 
-            <!-- Контент вкладок -->
-            <div class="tab-content mt-3">
+            <!-- Содержимое вкладки -->
+            <div class="mt-3">
                 <loading v-if="isLoading"/>
                 <div v-else>
                     <TableView
@@ -198,45 +168,47 @@ import Loading from "@/components/common/Loading.vue";
 import TableView from "@/components/objects/TableView.vue";
 import CardView from "@/components/objects/CardView.vue";
 import ListWidgetBar from "@/components/objects/ListWidgetBar.vue";
+
+// Новые компоненты
+import TabNavigation from "@/components/objects/TabNavigation.vue";
+import CreateObjectArea from "@/components/objects/CreateObjectArea.vue";
+
 import {canCreateByType, hasTeacherAccess} from "@/utils/access.js";
 
 export default {
     name: "ObjectsView",
 
-    /**
-     * Получаем параметры напрямую из роутера, например:
-     * objectTypeCode -> :object_type,
-     * view, grouping, search, unconfirmed -> из query
-     */
     props: {
         objectTypeCode: {
             type: String,
-            default: ""
+            default: "",
         },
         view: {
             type: String,
-            default: "cards"
+            default: "cards",
         },
         grouping: {
             type: String,
-            default: ""
+            default: "",
         },
         search: {
             type: String,
-            default: ""
+            default: "",
         },
         unconfirmed: {
             type: Boolean,
-            default: false
-        }
+            default: false,
+        },
     },
 
     components: {
-        ListWidgetBar,
-        Loading,
         BaseLayout,
+        Loading,
         TableView,
-        CardView
+        CardView,
+        ListWidgetBar,
+        TabNavigation,
+        CreateObjectArea,
     },
 
     data() {
@@ -249,7 +221,7 @@ export default {
             sortKey: "name",
             sortDirection: "asc",
             isMenuOpen: false,
-            onlyUnconfirmed: false
+            onlyUnconfirmed: false,
         };
     },
 
@@ -257,8 +229,8 @@ export default {
         portfolioObjects() {
             const userId = this.store.profile?.id;
             if (!userId || hasTeacherAccess()) return [];
-            return this.store.allObjects().filter(obj =>
-                obj.owners.some(owner => owner.id === userId)
+            return this.store.allObjects().filter((obj) =>
+                obj.owners.some((owner) => owner.id === userId)
             );
         },
         objectTypesWithPortfolio() {
@@ -266,44 +238,13 @@ export default {
                 (a, b) => a.params.index - b.params.index
             );
             if (this.portfolioObjects.length > 0) {
-                return [
-                    {code: "portfolio", name: "Мое портфолио"},
-                    ...sortedTypes
-                ];
-            } else {
-                return sortedTypes;
+                return [{code: "portfolio", name: "Мое портфолио"}, ...sortedTypes];
             }
-        },
-        activeObjects() {
-            if (this.activeTab === "portfolio") {
-                return this.portfolioObjects;
-            }
-            return this.store.getObjectsByType(this.activeTab).filter(
-                obj => !this.onlyUnconfirmed || obj.isNotApproved()
-            );
-        },
-        nonConfirmedObjects() {
-            return this.store.getObjectsByType(this.activeTab).filter(
-                obj => obj.isNotApproved()
-            );
-        },
-        filteredObjects() {
-            let result = this.activeObjects
-                .filter(obj =>
-                    obj.name
-                        .toLowerCase()
-                        .includes(this.searchQuery.toLowerCase())
-                )
-                .sort((a, b) => a.name.localeCompare(b.name));
-
-            if (this.onlyUnconfirmed) {
-                result = result.filter(obj => !obj.isConfirmed);
-            }
-            return result;
+            return sortedTypes;
         },
         objectCounts() {
             const counts = {};
-            this.store.objectTypes.forEach(type => {
+            this.store.objectTypes.forEach((type) => {
                 counts[type.code] = this.store.getObjectsByType(type.code).length;
             });
             if (this.portfolioObjects.length > 0) {
@@ -311,29 +252,54 @@ export default {
             }
             return counts;
         },
+        activeObjects() {
+            if (this.activeTab === "portfolio") {
+                return this.portfolioObjects;
+            }
+            return this.store.getObjectsByType(this.activeTab).filter(
+                (obj) => !this.onlyUnconfirmed || obj.isNotApproved()
+            );
+        },
+        nonConfirmedObjects() {
+            return this.store
+                .getObjectsByType(this.activeTab)
+                .filter((obj) => obj.isNotApproved());
+        },
+        filteredObjects() {
+            let result = this.activeObjects
+                .filter((obj) =>
+                    obj.name.toLowerCase().includes(this.searchQuery.toLowerCase())
+                )
+                .sort((a, b) => a.name.localeCompare(b.name));
+
+            if (this.onlyUnconfirmed) {
+                result = result.filter((obj) => !obj.isConfirmed);
+            }
+            return result;
+        },
         groupingAttributes() {
             const activeType = this.store.getObjectTypeByCode(this.activeTab);
             return activeType
-                ? activeType.available_attributes.filter(attr => attr.group)
+                ? activeType.available_attributes.filter((attr) => attr.group)
                 : [];
         },
         groupedObjects() {
             if (!this.selectedAttribute.code) return null;
             const groups = {};
-            this.filteredObjects.forEach(object => {
-                const attributeValue = object.attributes[this.selectedAttribute.code];
+            this.filteredObjects.forEach((obj) => {
+                const attributeValue = obj.attributes[this.selectedAttribute.code];
                 if (Array.isArray(attributeValue) && attributeValue.length > 0) {
-                    attributeValue.forEach(val => {
+                    attributeValue.forEach((val) => {
                         if (!groups[val]) groups[val] = [];
-                        groups[val].push(object);
+                        groups[val].push(obj);
                     });
                 } else {
                     const key = attributeValue || "Без группы";
                     if (!groups[key]) groups[key] = [];
-                    groups[key].push(object);
+                    groups[key].push(obj);
                 }
             });
-            Object.keys(groups).forEach(groupKey => {
+            Object.keys(groups).forEach((groupKey) => {
                 groups[groupKey].sort((a, b) => a.name.localeCompare(b.name));
             });
             return groups;
@@ -344,19 +310,13 @@ export default {
         tableAttributes() {
             const activeType = this.store.getObjectTypeByCode(this.activeTab);
             if (!activeType) return [];
-            return activeType.available_attributes.filter(a => a.show_off);
+            return activeType.available_attributes.filter((a) => a.show_off);
         },
         sortedObjects() {
             const sorted = [...this.filteredObjects];
             sorted.sort((a, b) => {
-                let aVal =
-                    this.sortKey === "name"
-                        ? a.name
-                        : a.attributes[this.sortKey];
-                let bVal =
-                    this.sortKey === "name"
-                        ? b.name
-                        : b.attributes[this.sortKey];
+                let aVal = this.sortKey === "name" ? a.name : a.attributes[this.sortKey];
+                let bVal = this.sortKey === "name" ? b.name : b.attributes[this.sortKey];
 
                 if (typeof aVal === "number" && typeof bVal === "number") {
                     return this.sortDirection === "asc" ? aVal - bVal : bVal - aVal;
@@ -368,30 +328,27 @@ export default {
                     : bStr.localeCompare(aStr);
             });
             return sorted;
-        }
+        },
     },
 
     async created() {
         if (!this.store.objectTypes.length) {
             await this.store.loadObjects();
         }
-        // Устанавливаем активную вкладку из props, если есть, иначе берём первую
+
         if (this.objectTypeCode) {
             this.activeTab = this.objectTypeCode;
         } else if (this.objectTypesWithPortfolio.length) {
             this.activeTab = this.objectTypesWithPortfolio[0].code;
             this.$router.replace(`/${this.activeTab}`);
         }
-        // Переключаем вид в зависимости от view
+
         this.isTableView = this.view === "table";
-        // Начальный поисковый запрос
         this.searchQuery = this.search;
-        // Фильтр неподтверждённых
         this.onlyUnconfirmed = this.unconfirmed;
     },
 
     watch: {
-        // Если меняются входные параметры, подстраиваемся под них
         objectTypeCode(newVal) {
             if (newVal && newVal !== this.activeTab) {
                 this.activeTab = newVal;
@@ -407,15 +364,15 @@ export default {
             this.onlyUnconfirmed = newVal;
         },
         selectedAttribute() {
+            // При смене группировки сбрасываем поиск
             this.searchQuery = "";
-        }
+        },
     },
 
     methods: {
         canCreateByType,
         hasTeacherAccess,
 
-        // Смена вкладки с учётом роутера
         selectTab(tabCode) {
             if (this.activeTab !== tabCode) {
                 this.$router.push({
@@ -424,8 +381,8 @@ export default {
                         view: this.isTableView ? "table" : "cards",
                         search: this.searchQuery,
                         grouping: this.selectedAttribute?.code || "",
-                        unconfirmed: String(this.onlyUnconfirmed)
-                    }
+                        unconfirmed: String(this.onlyUnconfirmed),
+                    },
                 });
             }
             this.selectedAttribute = {};
@@ -443,7 +400,7 @@ export default {
         },
         hasUnconfirmed(typeCode) {
             const objects = this.store.getObjectsByType(typeCode);
-            return objects.some(obj => obj.isNotApproved());
+            return objects.some((obj) => obj.isNotApproved());
         },
         toggleUnconfirmed() {
             this.onlyUnconfirmed = !this.onlyUnconfirmed;
@@ -460,16 +417,45 @@ export default {
                     view: this.isTableView ? "table" : "cards",
                     search: this.searchQuery,
                     grouping: this.selectedAttribute?.code || "",
-                    unconfirmed: String(this.onlyUnconfirmed)
-                }
+                    unconfirmed: String(this.onlyUnconfirmed),
+                },
             });
-        }
-    }
+        },
+    },
 };
 </script>
 
 <style scoped>
-.table-grouped-row td {
-    background-color: #fafafa;
+.tab-content {
+    padding: 1rem;
+    border: 1px solid #dee2e6;
+    border-top: none;
+}
+
+/* Анимация плавного появления и исчезновения контента */
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.3s ease;
+}
+
+.fade-enter,
+.fade-leave-to {
+    opacity: 0;
+}
+
+/* Анимация выезда меню сверху вниз */
+.menu-slide-enter-active,
+.menu-slide-leave-active {
+    transition: all 0.3s ease;
+}
+
+.menu-slide-enter {
+    opacity: 0;
+    transform: translateY(-10px);
+}
+
+.menu-slide-leave-to {
+    opacity: 0;
+    transform: translateY(-10px);
 }
 </style>

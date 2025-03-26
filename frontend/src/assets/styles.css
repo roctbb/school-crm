@@ -34,21 +34,34 @@ label:has(+ textarea[required])::after {
 }
 
 /* Переопределение цвета кнопки .btn-primary */
-.btn-primary {
+.btn-primary, .btn-success {
     background-color: #397698;
     border-color: #397698;
     transition: background-color 0.3s ease, transform 0.3s ease;
 }
-.btn-primary:hover {
-    background-color: #EB4F27;
-    border-color: #EB4F27;
-    transform: scale(1.005);
+.btn-primary:hover, .btn-success:hover, .btn-primary:active, .btn-success:active {
+    background-color: #337093;
+    border-color: #337093;
 }
 
 a {
     color: #397698;
 }
 
-html {
-    background-color: #f8f9fa;
+html, body {
+    background-color: #fdfdfd;
+}
+
+.bg-warning {
+    background: #EACF72 !important;
+    border-color: #EACF72 !important;
+}
+
+.bg-danger {
+    background: #C92325 !important;
+    border-color: #C92325 !important;
+}
+
+.card {
+    border: 1px solid #dee2e6;
 }

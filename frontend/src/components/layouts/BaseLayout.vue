@@ -20,8 +20,3 @@ export default {
 };
 </script>
 
-<style scoped>
-.layout {
-    background-color: #fdfdfd;
-}
-</style>
