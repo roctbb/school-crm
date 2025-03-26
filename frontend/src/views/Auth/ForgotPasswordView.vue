@@ -1,7 +1,7 @@
 <!-- src/views/Auth/ForgotPasswordView.vue -->
 <template>
     <div class="forgot-password-page d-flex justify-content-center align-items-center vh-100">
-        <div class="card p-4" style="width: 100%; max-width: 400px;">
+        <div class="card p-4 m-3" style="width: 100%; max-width: 400px;">
             <div class="text-center mb-3">
                 <img src="@/assets/logo.png" alt="Logo" style="max-width: 150px; height: auto;">
             </div>

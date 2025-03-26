@@ -13,6 +13,42 @@ label:has(+ input[required])::after,
 label:has(+ select[required])::after,
 label:has(+ textarea[required])::after {
   content: "*";
-  color: red;
+  color: #C92325;
+    font-weight: bold;
   margin-left: 2px; /* небольшой отступ от текста метки */
+}
+
+/* Простая анимация для появления карточки */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+.card {
+    animation: fadeIn 0.8s ease forwards;
+}
+
+/* Переопределение цвета кнопки .btn-primary */
+.btn-primary {
+    background-color: #397698;
+    border-color: #397698;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+.btn-primary:hover {
+    background-color: #EB4F27;
+    border-color: #EB4F27;
+    transform: scale(1.005);
+}
+
+a {
+    color: #397698;
+}
+
+html {
+    background-color: #f8f9fa;
 }

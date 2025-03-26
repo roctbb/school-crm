@@ -1,7 +1,7 @@
 <template>
     <div class="login-page d-flex justify-content-center align-items-center vh-100">
-        <div class="card p-4" style="width: 100%; max-width: 400px;">
-            <!-- Блок с логотипом -->
+        <div class="card p-4 m-3" style="width: 100%; max-width: 400px;">
+            <!-- Логотип -->
             <div class="text-center mb-3">
                 <img src="@/assets/logo.png" alt="Logo" style="max-width: 150px; height: auto;">
             </div>
@@ -12,7 +12,6 @@
 
             <!-- Форма входа -->
             <form @submit.prevent="handleLogin">
-                <!-- Поля ввода -->
                 <div class="mb-3">
                     <label for="email" class="form-label">Email</label>
                     <input
@@ -38,7 +37,7 @@
                 <button type="submit" class="btn btn-primary w-100">Войти</button>
             </form>
 
-            <!-- Блок со ссылками -->
+            <!-- Ссылки -->
             <div class="d-flex justify-content-between align-items-center mt-3">
                 <router-link to="/password/email">Забыли пароль?</router-link>
                 <router-link to="/register">Регистрация</router-link>
@@ -47,7 +46,7 @@
     </div>
 </template>
 
-<script>
+<script lang="js">
 import useMainStore from "@/stores/mainStore.js";
 import { login } from "@/api/auth_api.js";
 
@@ -63,7 +62,8 @@ export default {
     methods: {
         async handleLogin() {
             try {
-                await useMainStore().setToken(await login(this.email, this.password));
+                const token = await login(this.email, this.password);
+                await useMainStore().setToken(token);
                 this.$router.push("/");
                 this.error = "";
             } catch (error) {
@@ -74,8 +74,5 @@ export default {
 };
 </script>
 
-<style>
-.login-page {
-    background-color: #f8f9fa;
-}
+<style scoped>
 </style>
