@@ -48,7 +48,7 @@ export default {
                 {{ object.attributes[attribute.code] }}
             </span>
 
-            <span v-if="attribute.is_private"><i class="ms-1 bi bi-eye-slash"></i></span>
+            <span v-if="attribute.is_private || attribute.is_secret"><i class="ms-1 bi bi-eye-slash" :class="{'text-danger': attribute.is_secret}"></i></span>
         </li>
     </ul>
 </template>
