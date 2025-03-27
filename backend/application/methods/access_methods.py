@@ -126,19 +126,21 @@ def can_get_submission(user, object, submission):
 
 
 def filter_object_description_for_update(user, object, new_values):
-    if has_teacher_access(user):
+    if has_admin_access(user):
         return new_values
 
     new_attributes = new_values.get('attributes')
 
     if new_attributes:
         for attribute in object.type.available_attributes:
-            if attribute.get('is_hidden') or attribute.get('is_locked'):
-                if new_attributes.get(attribute.get('code')):
-                    del new_attributes[attribute.get('code')]
+            if (attribute.get('is_hidden') or attribute.get('is_locked')) and not has_teacher_access(
+                    user) or attribute.get('is_secret'):
+                if not has_teacher_access(user):
+                    if new_attributes.get(attribute.get('code')):
+                        del new_attributes[attribute.get('code')]
 
-                if object.attributes.get(attribute.get('code')):
-                    new_attributes[attribute.get('code')] = object.attributes[attribute.get('code')]
+                    if object.attributes.get(attribute.get('code')):
+                        new_attributes[attribute.get('code')] = object.attributes[attribute.get('code')]
     else:
         new_attributes = object.attributes
 
