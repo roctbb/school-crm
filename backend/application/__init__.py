@@ -1,10 +1,12 @@
 from flask import Flask, jsonify
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from flask_mail import Mail
 from flask_migrate import Migrate
 from werkzeug.exceptions import HTTPException
 
 from application.helpers.error_handlers import setup_handlers
-from application.infrastructure import db, jwt, bcrypt, mail, celery
+from application.infrastructure import db, jwt, bcrypt, mail, limiter, celery
 from application.models import *
 from application.config import get_config
 from application.helpers.exceptions import LogicException
@@ -41,6 +43,8 @@ def create_app(config_name=None):
     celery.conf.update(app.config)
     celery.conf.broker_url = app.config['CELERY_BROKER_URL']
     celery.conf.result_backend = app.config['CELERY_BACKEND']
+
+    limiter.init_app(app)
 
     class ContextTask(celery.Task):
         def __call__(self, *args, **kwargs):

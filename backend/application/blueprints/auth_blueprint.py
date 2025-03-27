@@ -7,10 +7,13 @@ from application.presenters.presenters import present_user
 from application.helpers.decorators import *
 from application.validators import *
 
+from application.infrastructure import limiter
+
 auth_blueprint = Blueprint('auth', __name__)
 
 
 @auth_blueprint.route('/signup', methods=['POST'])
+@limiter.limit("3 per day")
 @validate_request_with(validate_signup)
 def signup(user_description):
     user = register_user(user_description)
@@ -18,6 +21,7 @@ def signup(user_description):
 
 
 @auth_blueprint.route('/login', methods=['POST'])
+@limiter.limit("30 per day")
 @validate_request_with(validate_login)
 def login(credentials):
     token = login_user(credentials)
