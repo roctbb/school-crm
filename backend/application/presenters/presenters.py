@@ -39,7 +39,7 @@ def present_connected_object(obj):
 
 def present_object(obj, user=None):
     def filter_attributes(attributes):
-        if user and has_admin_access(user):
+        if not user or has_admin_access(user):
             return attributes
 
         for attribute in obj.type.available_attributes:

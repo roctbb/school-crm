@@ -147,6 +147,8 @@ class Submission(db.Model):
     updated_at = db.Column(db.DateTime, nullable=True, server_default=db.func.now(), onupdate=db.func.now())
     deleted_at = db.Column(db.DateTime, nullable=True)
 
+    backup = db.Column(db.JSON, server_default=db.text("'{}'::json"))
+
     form_name = db.Column(db.String(100), nullable=True)
     form_category_name = db.Column(db.String(100), nullable=True)
     is_external = db.Column(db.Boolean, nullable=False, server_default=db.text("'false'::boolean"))

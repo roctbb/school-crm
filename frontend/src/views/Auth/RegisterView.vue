@@ -1,6 +1,9 @@
 <template>
     <div class="register-page d-flex justify-content-center align-items-center vh-100">
-        <div class="card p-4" style="width: 100%; max-width: 400px;">
+        <div class="card p-4 m-3" style="width: 100%; max-width: 400px;">
+            <div class="text-center mb-3">
+                <img src="@/assets/logo.png" alt="Logo" style="max-width: 150px; height: auto;">
+            </div>
             <h3 class="card-title text-center mb-3">Регистрация</h3>
 
             <div class="alert alert-danger my-2 p-2" v-if="error">{{ error }}</div>
@@ -63,7 +66,8 @@
                         id="invite"
                         class="form-control"
                         v-model="invite"
-                        :class="{ 'is-invalid': errors.invite === true }" :disabled="!errors.invite"
+                        :class="{ 'is-invalid': errors.invite === true }"
+                        :disabled="!errors.invite && $route.query.invite"
                     />
                     <div class="invalid-feedback">Приглашение отсутствует или недействительно</div>
                 </div>

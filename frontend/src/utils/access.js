@@ -83,7 +83,7 @@ function canModifySubmission(submission) {
     if (hasTeacherAccess(user)) {
         return true;
     }
-    if (user?.id === submission.creator.id && !submission.is_approved) {
+    if (user?.id === submission.creator.id) {
         return true;
     }
     return false

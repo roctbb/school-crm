@@ -1,6 +1,11 @@
 <template>
     <div class="login-page d-flex justify-content-center align-items-center vh-100">
-        <div class="card p-4" style="width: 100%; max-width: 400px;">
+        <div class="card p-4 m-3" style="width: 100%; max-width: 400px;">
+            <!-- Логотип -->
+            <div class="text-center mb-3">
+                <img src="@/assets/logo.png" alt="Logo" style="max-width: 150px; height: auto;">
+            </div>
+
             <h3 class="card-title text-center mb-3">Вход в систему</h3>
 
             <div class="alert alert-danger my-3 px-3" v-if="error">{{ error }}</div>
@@ -28,29 +33,22 @@
                         required
                     />
                 </div>
+                <!-- Кнопка входа -->
                 <button type="submit" class="btn btn-primary w-100">Войти</button>
             </form>
 
-            <div class="text-center mt-2">
+            <!-- Ссылки -->
+            <div class="d-flex justify-content-between align-items-center mt-3">
                 <router-link to="/password/email">Забыли пароль?</router-link>
-            </div>
-
-
-            <!-- Ссылка на регистрацию -->
-            <div class="mt-3 text-center">
-                <p class="mb-0">
-                    Нет аккаунта?
-                    <router-link to="/register">Зарегистрироваться</router-link>
-                </p>
+                <router-link to="/register">Регистрация</router-link>
             </div>
         </div>
     </div>
 </template>
 
-<script>
-import useMainStore from "@/stores/mainStore.js"; // Подключаем Pinia-хранилище
-import {mapActions} from "pinia"; // Операции Pinia
-import {login} from "@/api/auth_api.js";
+<script lang="js">
+import useMainStore from "@/stores/mainStore.js";
+import { login } from "@/api/auth_api.js";
 
 export default {
     name: "LoginView",
@@ -64,7 +62,8 @@ export default {
     methods: {
         async handleLogin() {
             try {
-                await useMainStore().setToken(await login(this.email, this.password));
+                const token = await login(this.email, this.password);
+                await useMainStore().setToken(token);
                 this.$router.push("/");
                 this.error = "";
             } catch (error) {
@@ -75,9 +74,5 @@ export default {
 };
 </script>
 
-<style>
-
-.login-page {
-    background-color: #f8f9fa;
-}
+<style scoped>
 </style>

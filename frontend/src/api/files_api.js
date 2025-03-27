@@ -1,5 +1,6 @@
 // src/api/files_api.js
-import api_client from './client.js';  // предполагается, что client.js уже есть
+import api_client from './client.js';
+import {API_URL} from "@/api/common.js";  // предполагается, что client.js уже есть
 
 export async function uploadFile(file) {
     // Готовим FormData для передачи файла
@@ -12,5 +13,5 @@ export async function uploadFile(file) {
         body: formData
     }, '');
 
-    return response.path;
+    return API_URL + response.path;
 }

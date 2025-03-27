@@ -1,10 +1,12 @@
 <template>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-brand">
         <div class="container">
             <!-- Логотип -->
-            <a class="navbar-brand" href="/">Силаэдр CRM</a>
+            <router-link to="/" class="navbar-brand">
+                Силаэдр CRM
+            </router-link>
 
-            <!-- Кнопка (тогглер), показывающая и скрывающая меню на маленьких экранах -->
+            <!-- Кнопка (тогглер) -->
             <button
                 class="navbar-toggler"
                 type="button"
@@ -17,10 +19,13 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
 
-            <!-- Контейнер с навигационными ссылками, который будет сворачиваться -->
+            <!-- Навигационные ссылки -->
             <div class="collapse navbar-collapse" id="navbarContent">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item" v-if="hasAdminAccess()">
+                    <li
+                        v-if="hasAdminAccess()"
+                        class="nav-item"
+                    >
                         <router-link
                             to="/"
                             class="nav-link"
@@ -29,7 +34,10 @@
                             Записи
                         </router-link>
                     </li>
-                    <li class="nav-item" v-if="hasAdminAccess()">
+                    <li
+                        v-if="hasAdminAccess()"
+                        class="nav-item"
+                    >
                         <router-link
                             to="/forms"
                             class="nav-link"
@@ -38,7 +46,10 @@
                             Формы
                         </router-link>
                     </li>
-                    <li class="nav-item" v-if="hasAdminAccess()">
+                    <li
+                        v-if="hasAdminAccess()"
+                        class="nav-item"
+                    >
                         <router-link
                             to="/import"
                             class="nav-link"
@@ -47,7 +58,10 @@
                             Импорт
                         </router-link>
                     </li>
-                    <li class="nav-item" v-if="hasAdminAccess()">
+                    <li
+                        v-if="hasAdminAccess()"
+                        class="nav-item"
+                    >
                         <router-link
                             to="/invitations"
                             class="nav-link"
@@ -56,20 +70,22 @@
                             Инвайты
                         </router-link>
                     </li>
-
                 </ul>
 
-                <!-- Профиль пользователя в правой части -->
-                <div class="dropdown" v-if="profile">
+                <!-- Профиль пользователя -->
+                <div v-if="profile" class="dropdown">
                     <button
-                        class="btn btn-light dropdown-toggle"
+                        class="btn btn-user-menu dropdown-toggle"
                         type="button"
                         id="userMenuButton"
                         data-bs-toggle="dropdown"
                         aria-expanded="false"
                     >
+                        <!-- Иконка пользователя (например, из bootstrap-icons) -->
+                        <i class="bi bi-person-circle me-1"></i>
                         {{ profile.name }}
                     </button>
+
                     <ul
                         class="dropdown-menu dropdown-menu-end"
                         aria-labelledby="userMenuButton"
@@ -91,9 +107,9 @@
 </template>
 
 <script>
-import {mapState, mapActions} from 'pinia'
-import useMainStore from "@/stores/mainStore.js"
-import {hasAdminAccess} from "@/utils/access.js";
+import { mapState, mapActions } from "pinia";
+import useMainStore from "@/stores/mainStore.js";
+import { hasAdminAccess } from "@/utils/access.js";
 
 export default {
     name: "Navbar",
@@ -104,15 +120,37 @@ export default {
         hasAdminAccess,
         ...mapActions(useMainStore, ["logout"]),
         handleLogout() {
-            this.logout()
+            this.logout();
             this.$router.push("/login");
         },
     },
-}
+};
 </script>
 
 <style scoped>
-.navbar {
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+/* Фирменный цвет для Navbar */
+.bg-brand {
+    background-color: #397698; /* Основной брендовый цвет */
 }
+
+/* Темный текст и иконки для кнопки-тогглера */
+.navbar-dark .navbar-toggler-icon {
+    filter: brightness(0) invert(1);
+}
+
+/* Пример плавного перехода для ссылок */
+.nav-link {
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Кнопка с именем пользователя */
+.btn-user-menu {
+    color: #fff;
+    background-color: transparent;
+    border: none;
+}
+
+/* Плавное раскрытие dropdown (Bootstrap 5 по умолчанию скрывает)
+   Для наглядности можно добавить transition, но придётся переопределять сегменты BS.
+   Проще оставить «как есть», чтобы не усложнять. */
 </style>

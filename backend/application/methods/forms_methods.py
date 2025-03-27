@@ -58,7 +58,7 @@ def delete_form(user, form):
 
 
 def get_submission_by_id(sub_id):
-    sub = Submission.query.filter_by(id=sub_id, deleted_at=None).first()
+    sub = Submission.query.filter_by(id=sub_id).first()
     if not sub:
         raise LogicException("Ответ не найден", 404)
     return sub
@@ -72,11 +72,11 @@ def get_object_submissions(object):
             joinedload(Submission.form).joinedload(Form.category)
         )
         .filter(
-            Submission.object_id == object.id,
-            Submission.deleted_at.is_(None)
+            Submission.object_id == object.id
         )
         .all()
     )
+
 
 def get_form_submissions(form):
     return (
@@ -123,6 +123,27 @@ def update_submission(submission, data):
     return submission
 
 
+def check_changes_in_submission(submission, data):
+    if submission.params != data.get("params"):
+        return True
+    if submission.fields != data.get("fields"):
+        return True
+    if submission.showoff_attributes != data.get("showoff_attributes"):
+        return True
+    return False
+
+
+@transaction
+def deapprove_submission(submission):
+    from application.presenters.presenters import present_submission
+
+    if submission.is_approved:
+        submission.backup = present_submission(submission)
+
+    submission.is_approved = False
+    submission.object.has_unapproved_submissions = True
+
+
 @transaction
 def delete_submission(user, submission):
     submission.deleted_at = db.func.now()
@@ -139,5 +160,18 @@ def approve_submission(user, submission):
 
     if all(submission.is_approved for submission in submission.object.submissions if not submission.deleted_at):
         submission.object.has_unapproved_submissions = False
+
+    return submission
+
+
+@transaction
+def restore_submission(submission):
+    if submission.backup:
+        submission.fields = submission.backup["fields"]
+        submission.params = submission.backup["params"]
+        submission.showoff_attributes = submission.backup["showoff_attributes"]
+        submission.is_approved = True
+        submission.deleted_at = None
+        submission.deleter_id = None
 
     return submission

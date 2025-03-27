@@ -3,7 +3,7 @@
         <!-- Основное содержимое карточки -->
         <div class="card-body flex-grow-1 pb-0">
             <h5 class="card-title">{{ form.name }}</h5>
-            <div class="badge bg-warning mt-0" v-if="!submission.is_approved"
+            <div :class="{'bg-danger': submission.deleted_at, 'bg-warning': !submission.deleted_at}" class="badge mt-0" v-if="!submission.is_approved"
                  @click="hasTeacherAccess() && handleApprove()">Не подтверждено
             </div>
             <p v-if="submission.created_at" class="created-at-text">

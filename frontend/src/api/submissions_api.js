@@ -33,3 +33,9 @@ export async function approveSubmission(objectId, submissionId) {
         method: "POST"
     });
 }
+
+export async function restoreSubmission(objectId, submissionId) {
+    return await api_client.fetch(`/objects/${objectId}/submissions/${submissionId}/restore`, {
+        method: "POST"
+    });
+}

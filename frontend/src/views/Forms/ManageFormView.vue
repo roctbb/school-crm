@@ -95,6 +95,7 @@
                                                 <option value="date">date</option>
                                                 <option value="datetime">datetime</option>
                                                 <option value="select">select</option>
+                                                <option value="file">file</option>
                                                 <option value="checkboxes">checkboxes</option>
                                                 <option value="checkbox">checkbox</option>
                                             </select>

@@ -73,7 +73,7 @@ def can_modify_submission(user, submission):
     if has_teacher_access(user):
         return True
 
-    if user.id == submission.creator_id and not submission.is_approved:
+    if user.id == submission.creator_id and not submission.deleted_at:
         return True
 
     raise LogicException("Доступ запрещен", 403)
@@ -110,8 +110,11 @@ def can_get_form_category(user, form_category):
 
 
 def can_get_submission(user, object, submission):
-    if has_teacher_access(user):
+    if has_teacher_access(user) and (not submission.deleted_at or not submission.is_approved):
         return True
+
+    if submission.deleted_at:
+        return False
 
     if submission.form.category.params.get('is_private') and user not in object.owners:
         return False
@@ -130,8 +133,9 @@ def filter_object_description_for_update(user, object, new_values):
 
     if new_attributes:
         for attribute in object.type.available_attributes:
-            if (attribute.get('is_hidden') or attribute.get('is_locked')) and new_attributes.get(attribute.get('code')):
-                del new_attributes[attribute.get('code')]
+            if attribute.get('is_hidden') or attribute.get('is_locked'):
+                if new_attributes.get(attribute.get('code')):
+                    del new_attributes[attribute.get('code')]
 
                 if object.attributes.get(attribute.get('code')):
                     new_attributes[attribute.get('code')] = object.attributes[attribute.get('code')]

@@ -7,7 +7,7 @@
                     <div class="card">
                         <div class="card-header d-flex align-items-center justify-content-between">
                             <div class="d-flex align-items-center">
-                                <BackButton />
+                                <BackButton/>
 
                                 <h4 class="m-0">
                                     Ответ на форму:
@@ -46,6 +46,11 @@
                                             <i class="bi bi-check-circle text-success me-1"></i> Утвердить
                                         </button>
                                     </li>
+                                    <li v-if="!submission.is_approved && hasTeacherAccess()">
+                                        <button class="dropdown-item" @click="handleRestore()">
+                                            <i class="bi bi-stop-circle me-1"></i> Отменить изменения
+                                        </button>
+                                    </li>
                                     <li>
                                         <button
                                             class="dropdown-item text-danger"
@@ -63,7 +68,8 @@
                                 <i class="bi bi-calendar3 me-1"></i>
                                 Отправлено: {{ formatDateTime(submission.created_at) }}
 
-                                <span class="badge bg-warning ms-1"
+                                <span class="badge ms-1"
+                                      :class="{'bg-danger': submission.deleted_at, 'bg-warning': !submission.deleted_at}"
                                       v-if="!submission.is_approved">Не подтверждено</span>
                             </p>
 
@@ -84,7 +90,8 @@
                                         :key="i"
                                     >
                                         <td>{{ field.name }}</td>
-                                        <td>{{ formatValue(field.answer) }}</td>
+                                        <td v-if="field.type!=='file'">{{ formatValue(field.answer) }}</td>
+                                        <td v-else><a :href="field.answer" target="_blank">Открыть</a></td>
                                     </tr>
                                     </tbody>
                                 </table>
@@ -180,6 +187,12 @@ export default {
             const confirmed = confirm("Вы действительно хотите утвердить этот ответ?");
             if (confirmed) {
                 await this.submission.approve(this.object.id)
+            }
+        },
+        async handleRestore() {
+            const confirmed = window.confirm("Вы действительно хотите откатить изменения для этого ответа?");
+            if (confirmed) {
+                await this.submission.restore(this.object.id);
             }
         }
     },
