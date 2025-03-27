@@ -39,9 +39,9 @@ class DevelopmentConfig(Config):
 class ProductionConfig(Config):
     """Production configuration"""
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL')
-    CELERY_BACKEND = os.getenv('CELERY_BACKEND', "redis://backend:6379/1")
-    CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', "redis://backend:6379/0")
-    RATELIMIT_STORAGE_URI = os.getenv('RATELIMIT_STORAGE_URI', 'redis://backend:6379/2')
+    CELERY_BACKEND = os.getenv('CELERY_BACKEND', "redis://redis:6379/1")
+    CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', "redis://redis:6379/0")
+    RATELIMIT_STORAGE_URI = os.getenv('RATELIMIT_STORAGE_URI', 'redis://redis:6379/2')
     DEBUG = False
     BASE_URL = os.getenv('APP_URL', "https://lk.silaeder.ru")
 
