@@ -6,7 +6,6 @@ from application.methods import register_user, login_user, get_user_by_email, ge
 from application.presenters.presenters import present_user
 from application.helpers.decorators import *
 from application.validators import *
-
 from application.infrastructure import limiter
 
 auth_blueprint = Blueprint('auth', __name__)
@@ -38,6 +37,7 @@ def profile(user):
 
 
 @auth_blueprint.route('/password/email', methods=['POST'])
+@limiter.limit("30 per day")
 @validate_request_with(validate_reset_email_request)
 def password_email_endpoint(validated_data):
     user = get_user_by_email(validated_data.get('email'))
@@ -47,6 +47,7 @@ def password_email_endpoint(validated_data):
 
 
 @auth_blueprint.route('/password/reset', methods=['POST'])
+@limiter.limit("3 per day")
 @validate_request_with(validate_reset_request)
 def password_reset_endpoint(validate_data):
     user = get_user_by_reset_token(validate_data.get('reset_token'))
