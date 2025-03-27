@@ -8,7 +8,7 @@ from application import create_app
 
 @pytest.fixture
 def app():
-    app = create_app('testing')
+    app, _ = create_app('testing')
     # Создаём контекст приложения
     context = app.app_context()
     context.push()
