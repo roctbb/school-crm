@@ -44,10 +44,13 @@ def present_object(obj, user=None):
 
         for attribute in obj.type.available_attributes:
             if attribute.get('code') in attributes:
-                if attribute.get('is_private') and user not in obj.owners:
+                if attribute.get('is_private') and user not in obj.owners and not has_teacher_access(user):
                     del attributes[attribute.get('code')]
 
-                elif attribute.get('is_hidden'):
+                elif attribute.get('is_hidden') and not has_teacher_access(user):
+                    del attributes[attribute.get('code')]
+
+                elif attribute.get('is_secret'):
                     del attributes[attribute.get('code')]
 
         return attributes
