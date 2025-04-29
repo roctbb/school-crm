@@ -20,7 +20,7 @@ def signup(user_description):
 
 
 @auth_blueprint.route('/login', methods=['POST'])
-@limiter.limit("30 per day")
+@limiter.limit("240 per day")
 @validate_request_with(validate_login)
 def login(credentials):
     token = login_user(credentials)
