@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
-      - "5434:5432"
+      - "127.0.0.1:5434:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -41,8 +41,6 @@ services:
       FLASK_ENV: production
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_BACKEND: redis://redis:6379/1
-    ports:
-      - "5000:5000"
     volumes:
       - backend_storage:/app/storage
     depends_on:
@@ -82,7 +80,7 @@ services:
       dockerfile: Dockerfile
     container_name: crm_nginx
     ports:
-      - "8383:80"
+      - "127.0.0.1:8383:80"
     depends_on:
       - backend
     logging:
