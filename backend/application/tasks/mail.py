@@ -4,12 +4,11 @@ from flask_mail import Message
 
 @celery.task
 def send_flask_mail(recipient_email, subject, html):
-        state = mail.init_app(current_app)
         msg = Message(
             subject=subject,
             recipients=[recipient_email],
             html=html
         )
-        print(state.server, state.port, state.use_tls)
+        print(current_app.extensions["mail"].server)
 
         mail.send(msg)
