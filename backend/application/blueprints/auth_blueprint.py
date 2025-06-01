@@ -12,7 +12,7 @@ auth_blueprint = Blueprint('auth', __name__)
 
 
 @auth_blueprint.route('/signup', methods=['POST'])
-@limiter.limit("30 per day")
+@limiter.limit("240 per day")
 @validate_request_with(validate_signup)
 def signup(user_description):
     user = register_user(user_description)
@@ -37,7 +37,7 @@ def profile(user):
 
 
 @auth_blueprint.route('/password/email', methods=['POST'])
-@limiter.limit("30 per day")
+@limiter.limit("240 per day")
 @validate_request_with(validate_reset_email_request)
 def password_email_endpoint(validated_data):
     user = get_user_by_email(validated_data.get('email'))
@@ -47,7 +47,7 @@ def password_email_endpoint(validated_data):
 
 
 @auth_blueprint.route('/password/reset', methods=['POST'])
-@limiter.limit("3 per day")
+@limiter.limit("240 per day")
 @validate_request_with(validate_reset_request)
 def password_reset_endpoint(validate_data):
     user = get_user_by_reset_token(validate_data.get('reset_token'))
