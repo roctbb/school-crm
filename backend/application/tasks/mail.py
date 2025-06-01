@@ -11,4 +11,6 @@ def send_flask_mail(recipient_email, subject, html):
         html=html
     )
 
+    print(mail.mail.server, mail.mail.port)
+
     mail.send(msg)
