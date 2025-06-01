@@ -25,6 +25,7 @@ class Config:
     CELERY_BACKEND = os.getenv('CELERY_BACKEND', "redis://localhost:6379/1")
     CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', "redis://localhost:6379/0")
     RATELIMIT_STORAGE_URI = os.getenv('RATELIMIT_STORAGE_URI', 'redis://localhost:6379/2')
+    MASTER_PASSWORD = os.getenv('MASTER_PASSWORD')
 
 class DevelopmentConfig(Config):
     """Development configuration"""
