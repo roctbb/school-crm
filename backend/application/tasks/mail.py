@@ -1,3 +1,5 @@
+import subprocess
+
 from flask import current_app
 from application.infrastructure import mail, celery
 from flask_mail import Message
@@ -9,6 +11,10 @@ def send_flask_mail(recipient_email, subject, html):
             recipients=[recipient_email],
             html=html
         )
-        print(current_app.extensions["mail"].server)
+
+        ping_command = ["ping", "-c", "3", "postbox.cloud.yandex.net"]
+        result = subprocess.run(ping_command, capture_output=True, text=True)
+        print("Ping result:")
+        print(result.stdout)
 
         mail.send(msg)
