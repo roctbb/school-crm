@@ -47,7 +47,7 @@
                         <input
                             v-else-if="field.type === 'number'"
                             :id="'field_'+idx"
-                            type="number"
+                            type="text"
                             class="form-control"
                             v-model.number="field.answer"
                             :required="field.required"
