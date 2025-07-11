@@ -2,6 +2,7 @@ services:
   db:
     image: postgres:16
     container_name: crm_postgres
+    restart: unless-stopped
     environment:
       POSTGRES_DB: postgres
       POSTGRES_USER: postgres
@@ -24,6 +25,7 @@ services:
   redis:
     image: redis:7
     container_name: crm_redis
+    restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes"]
     logging:
       driver: "json-file"
@@ -34,6 +36,7 @@ services:
   backend:
     build: ./backend
     container_name: crm_backend
+    restart: unless-stopped
     env_file:
       - .env
     environment:
@@ -57,6 +60,7 @@ services:
   worker:
     build: ./backend
     container_name: crm_worker
+    restart: unless-stopped
     env_file:
       - .env
     environment:
@@ -79,6 +83,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: crm_nginx
+    restart: unless-stopped
     ports:
       - "127.0.0.1:8383:80"
     depends_on:
@@ -93,6 +98,7 @@ services:
     build:
       context: ./backuper
     container_name: crm_backup
+    restart: unless-stopped
     env_file:
       - .env
     depends_on:
