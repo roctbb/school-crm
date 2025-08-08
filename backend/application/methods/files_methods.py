@@ -7,7 +7,6 @@ from application.constants import ALLOWED_EXTENSIONS, UPLOAD_FOLDER
 from application.helpers.decorators import transaction
 from application.models import UploadedFile
 from application.helpers.exceptions import LogicException
-from flask import current_app
 
 
 def allowed_file(filename):

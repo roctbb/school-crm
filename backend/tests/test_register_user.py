@@ -114,3 +114,34 @@ def test_profile_no_token(client):
     response = client.get('/api/me')
 
     assert response.status_code == 401
+
+
+def test_login_case_insensitive_email(client, test_invite):
+    """Тест: проверка регистрации и входа с email в разных регистрах"""
+    # Регистрация с email в смешанном регистре
+    signup_response = client.post('/api/signup', json={
+        "name": "Case Test User",
+        "email": "CasE.TeSt@ExAmPlE.com",
+        "password": "securepassword",
+        "invite": "valid-invite-code"
+    })
+    
+    assert signup_response.status_code == 201
+    
+    # Вход с тем же email, но в нижнем регистре
+    login_response = client.post('/api/login', json={
+        "email": "case.test@example.com",
+        "password": "securepassword"
+    })
+    
+    assert login_response.status_code == 200
+    assert "access_token" in login_response.get_json()
+    
+    # Вход с тем же email, но в верхнем регистре
+    login_response_upper = client.post('/api/login', json={
+        "email": "CASE.TEST@EXAMPLE.COM",
+        "password": "securepassword"
+    })
+    
+    assert login_response_upper.status_code == 200
+    assert "access_token" in login_response_upper.get_json()

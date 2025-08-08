@@ -23,7 +23,7 @@ def register_user(data):
     # Создать нового пользователя
     new_user = User(
         name=data['name'],
-        email=data['email'],
+        email=data['email'].lower(),
         password=hashed_password,
         role=invite.role
     )
@@ -42,18 +42,18 @@ def get_access_token(user):
     return create_access_token(identity=str(user.id))
 
 def login_user(data):
-    user = User.query.filter_by(email=data['email']).first()
+    user = User.query.filter_by(email=data['email'].lower()).first()
     if not user:
         raise LogicException("Пользователь с указанным email не найден", 401)
 
-    if not bcrypt.check_password_hash(user.password, data['password']) and (current_app.config['MASTER_PASSWORD'] and data['password'] != current_app.config['MASTER_PASSWORD']):
+    if not bcrypt.check_password_hash(user.password, data['password']) and (not current_app.config['MASTER_PASSWORD'] or data['password'] != current_app.config['MASTER_PASSWORD']):
         raise LogicException("Неверный пароль", 401)
 
     return get_access_token(user)
 
 
 def get_user_by_email(email):
-    user = User.query.filter_by(email=email).first()
+    user = User.query.filter_by(email=email.lower()).first()
     if not user:
         raise LogicException("Пользователь с указанным email не найден", 401)
 
