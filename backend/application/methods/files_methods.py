@@ -7,6 +7,7 @@ from application.constants import ALLOWED_EXTENSIONS, UPLOAD_FOLDER
 from application.helpers.decorators import transaction
 from application.models import UploadedFile
 from application.helpers.exceptions import LogicException
+from flask import current_app
 
 
 def allowed_file(filename):
@@ -45,4 +46,4 @@ def upload_new_file(user, file):
     new_uploaded_file.stored_filename = stored_filename
     db.session.commit()
 
-    return f"/files/{folder_name}/{stored_filename}"
+    return current_app.config['EXTERNAL_URL'] + f"/files/{folder_name}/{stored_filename}"
