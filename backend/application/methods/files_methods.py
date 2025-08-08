@@ -46,4 +46,4 @@ def upload_new_file(user, file):
     new_uploaded_file.stored_filename = stored_filename
     db.session.commit()
 
-    return current_app.config['EXTERNAL_URL'] + f"/files/{folder_name}/{stored_filename}"
+    return f"/files/{folder_name}/{stored_filename}"
