@@ -16,7 +16,7 @@
             <button
                 class="btn btn-success btn-sm dropdown-toggle"
                 type="button"
-                data-bs-toggle="dropdown"
+                @click="toggleDropdown"
             >
                 <i class="bi bi-plus me-1"></i> Создать
             </button>
@@ -82,6 +82,16 @@ export default {
             // Закрываем дропдаун после создания
             this.showDropdown = false;
         },
+        toggleDropdown() {
+            // Переключаем состояние дропдауна
+            this.showDropdown = !this.showDropdown;
+        },
+        handleOutsideClick(event) {
+            const dropdown = this.$el.querySelector(".dropdown");
+            if (dropdown && !dropdown.contains(event.target)) {
+                this.showDropdown = false;
+            }
+        },
     },
     watch: {
         activeTab(newVal) {
@@ -95,22 +105,6 @@ export default {
     },
     beforeUnmount() {
         document.removeEventListener("click", this.handleOutsideClick);
-    },
-    methods: {
-        // Объединяем методы здесь
-        getObjectTypeByCode(code) {
-            return this.store.getObjectTypeByCode(code);
-        },
-        triggerCreateObject(code) {
-            this.$emit("createObject", code);
-            this.showDropdown = false;
-        },
-        handleOutsideClick(event) {
-            const dropdown = this.$el.querySelector(".dropdown");
-            if (dropdown && !dropdown.contains(event.target)) {
-                this.showDropdown = false;
-            }
-        },
     },
 };
 </script>
