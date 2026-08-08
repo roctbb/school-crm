@@ -36,7 +36,8 @@ const routes = [
             view: route.query.view || 'cards',
             grouping: route.query.grouping || '',
             search: route.query.search || '',
-            unconfirmed: route.query.unconfirmed === 'true'
+            unconfirmed: route.query.unconfirmed === 'true',
+            page: Math.max(1, Number.parseInt(route.query.page, 10) || 1)
         })
     },
     {
@@ -73,7 +74,8 @@ const routes = [
             view: route.query.view || 'cards',
             grouping: route.query.grouping || '',
             search: route.query.search || '',
-            unconfirmed: route.query.unconfirmed === 'true'
+            unconfirmed: route.query.unconfirmed === 'true',
+            page: Math.max(1, Number.parseInt(route.query.page, 10) || 1)
         })
     },
     {
@@ -191,26 +193,27 @@ const router = createRouter({
     routes
 });
 
-// Пример проверки аутентификации
-router.beforeEach(async (to, from, next) => {
-    const has_auth = await useMainStore().checkAuth();
+router.beforeEach(async (to) => {
+    const store = useMainStore();
+    const has_auth = await store.checkAuth();
     console.log("Router auth check: ", has_auth ? "OK" : "FAIL");
     if (to.meta.requiresAuth && !has_auth) {
         console.log("Redirecting to login")
-        next({name: 'Login', query: {redirect: to.fullPath}});
-    } else if (to.meta.requiresAdmin && useMainStore().profile?.role !== 'admin') {
-        next({name: 'Objects'});
-    } else if (to.meta.withoutAuth && has_auth) {
+        return {name: 'Login', query: {redirect: to.fullPath}};
+    }
+    if (to.meta.requiresAdmin && store.profile?.role !== 'admin') {
+        return {name: 'Objects'};
+    }
+    if (to.meta.withoutAuth && has_auth) {
         console.log("Redirecting to main")
         const redirect = typeof to.query.redirect === 'string'
             && to.query.redirect.startsWith('/')
             && !to.query.redirect.startsWith('//')
             ? to.query.redirect
             : null;
-        next(redirect || {name: 'Objects'});
-    } else {
-        next();
+        return redirect || {name: 'Objects'};
     }
+    return true;
 });
 
 export default router;

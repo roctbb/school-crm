@@ -30,6 +30,9 @@ def get_file(user, folder, filename):
     response = make_response(
         send_from_directory(file_dir, filename, as_attachment=False)
     )
-    response.headers["Cache-Control"] = "private, no-store"
+    # Uploaded files have immutable URLs (the folder contains the UploadedFile id),
+    # so a private browser cache can safely reuse them between page renders.
+    response.headers["Cache-Control"] = "private, max-age=31536000, immutable"
+    response.headers["Vary"] = "Authorization"
 
     return response

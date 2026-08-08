@@ -86,12 +86,20 @@ def test_file_download_is_authenticated_and_cannot_escape_storage(
     unauthenticated = client.get(f'/api/files/folder_{uploaded_file.id}/document.txt')
     authenticated = client.get(
         f'/api/files/folder_{uploaded_file.id}/document.txt', headers=auth_headers)
+    cached = client.get(
+        f'/api/files/folder_{uploaded_file.id}/document.txt',
+        headers={**auth_headers, 'If-None-Match': authenticated.headers['ETag']},
+    )
     traversal = client.get('/api/files/%2e%2e/requirements.txt', headers=auth_headers)
 
     assert unauthenticated.status_code == 401
     assert authenticated.status_code == 200
     assert authenticated.data == b'safe contents'
-    assert authenticated.headers['Cache-Control'] == 'private, no-store'
+    assert authenticated.headers['Cache-Control'] == 'private, max-age=31536000, immutable'
+    assert authenticated.headers['Vary'] == 'Authorization'
+    assert authenticated.headers['ETag']
+    assert cached.status_code == 304
+    assert cached.headers['Cache-Control'] == 'private, max-age=31536000, immutable'
     assert traversal.status_code == 404
 
 

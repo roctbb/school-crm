@@ -26,7 +26,7 @@
                 <loading v-if="isLoading"/>
                 <div v-else>
                     <CardView
-                        :objects="portfolioObjects"
+                        :objects="paginatedObjects"
                         size="big"
                     />
                 </div>
@@ -63,6 +63,7 @@
                         <li>
                             <button
                                 class="dropdown-item"
+                                type="button"
                                 @click="selectGrouping({})"
                             >
                                 Не группировать
@@ -77,6 +78,7 @@
                         >
                             <button
                                 class="dropdown-item"
+                                type="button"
                                 @click="selectGrouping(attribute)"
                             >
                                 {{ attribute.name }}
@@ -95,6 +97,7 @@
                 <!-- Кнопка переключения вида (таблица/карточки) -->
                 <button
                     class="btn btn-outline-secondary btn-sm"
+                    type="button"
                     @click="toggleTableView()"
                 >
                     <i
@@ -111,6 +114,7 @@
                 <button
                     v-if="hasTeacherAccess()"
                     class="btn btn-outline-secondary btn-sm ms-1 position-relative"
+                    type="button"
                     @click="toggleUnconfirmed"
                 >
                     <i
@@ -140,8 +144,8 @@
                 <div v-else>
                     <TableView
                         v-if="isTableView"
-                        :data="sortedObjects"
-                        :grouped-data="groupedObjects"
+                        :data="paginatedSortedObjects"
+                        :grouped-data="paginatedGroupedObjects"
                         :attributes="tableAttributes"
                         :grouping-attribute="selectedAttribute"
                         :sortKey.sync="sortKey"
@@ -149,8 +153,8 @@
                     />
                     <CardView
                         v-else
-                        :objects="filteredObjects"
-                        :grouped-data="groupedObjects"
+                        :objects="paginatedObjects"
+                        :grouped-data="paginatedGroupedObjects"
                         :object-type="store.getObjectTypeByCode(activeTab)"
                         :grouping-attribute="selectedAttribute"
                         size="big"
@@ -158,6 +162,14 @@
                 </div>
             </div>
         </div>
+
+        <PaginationControls
+            v-if="!isLoading"
+            :current-page="currentPage"
+            :page-size="pageSize"
+            :total-items="filteredObjects.length"
+            @page-selected="selectPage"
+        />
     </BaseLayout>
 </template>
 
@@ -172,6 +184,7 @@ import ListWidgetBar from "@/components/objects/ListWidgetBar.vue";
 // Новые компоненты
 import TabNavigation from "@/components/objects/TabNavigation.vue";
 import CreateObjectArea from "@/components/objects/CreateObjectArea.vue";
+import PaginationControls from "@/components/common/PaginationControls.vue";
 
 import {canCreateByType, hasTeacherAccess} from "@/utils/access.js";
 
@@ -199,6 +212,10 @@ export default {
             type: Boolean,
             default: false,
         },
+        page: {
+            type: Number,
+            default: 1,
+        },
     },
 
     components: {
@@ -209,6 +226,7 @@ export default {
         ListWidgetBar,
         TabNavigation,
         CreateObjectArea,
+        PaginationControls,
     },
 
     data() {
@@ -222,6 +240,10 @@ export default {
             sortDirection: "asc",
             isMenuOpen: false,
             onlyUnconfirmed: false,
+            currentPage: 1,
+            pageSize: 48,
+            searchUpdateTimer: null,
+            isInitializing: true,
         };
     },
 
@@ -272,9 +294,6 @@ export default {
                 )
                 .sort((a, b) => a.name.localeCompare(b.name));
 
-            if (this.onlyUnconfirmed) {
-                result = result.filter((obj) => !obj.isConfirmed);
-            }
             return result;
         },
         groupingAttributes() {
@@ -283,10 +302,11 @@ export default {
                 ? activeType.available_attributes.filter((attr) => attr.group)
                 : [];
         },
-        groupedObjects() {
+        paginatedGroupedObjects() {
             if (!this.selectedAttribute.code) return null;
             const groups = {};
-            this.filteredObjects.forEach((obj) => {
+            const pageObjects = this.isTableView ? this.paginatedSortedObjects : this.paginatedObjects;
+            pageObjects.forEach((obj) => {
                 const attributeValue = obj.attributes[this.selectedAttribute.code];
                 if (Array.isArray(attributeValue) && attributeValue.length > 0) {
                     attributeValue.forEach((val) => {
@@ -329,6 +349,17 @@ export default {
             });
             return sorted;
         },
+        totalPages() {
+            return Math.max(1, Math.ceil(this.filteredObjects.length / this.pageSize));
+        },
+        paginatedObjects() {
+            const start = (this.currentPage - 1) * this.pageSize;
+            return this.filteredObjects.slice(start, start + this.pageSize);
+        },
+        paginatedSortedObjects() {
+            const start = (this.currentPage - 1) * this.pageSize;
+            return this.sortedObjects.slice(start, start + this.pageSize);
+        },
     },
 
     async created() {
@@ -336,36 +367,63 @@ export default {
             await this.store.loadObjects();
         }
 
-        if (this.objectTypeCode) {
-            this.activeTab = this.objectTypeCode;
-        } else if (this.objectTypesWithPortfolio.length) {
-            this.activeTab = this.objectTypesWithPortfolio[0].code;
-            this.$router.replace(`/${this.activeTab}`);
-        }
-
         this.isTableView = this.view === "table";
         this.searchQuery = this.search;
         this.onlyUnconfirmed = this.unconfirmed;
+        this.currentPage = this.page;
+
+        if (this.objectTypeCode) {
+            this.activeTab = this.objectTypeCode;
+        } else if (this.objectTypesWithPortfolio.length) {
+            await this.openDefaultTab();
+        }
+
+        this.syncGrouping(this.grouping);
+        this.currentPage = Math.min(this.currentPage, this.totalPages);
+        this.isInitializing = false;
+    },
+
+    beforeUnmount() {
+        window.clearTimeout(this.searchUpdateTimer);
     },
 
     watch: {
-        objectTypeCode(newVal) {
-            if (newVal && newVal !== this.activeTab) {
+        async objectTypeCode(newVal) {
+            if (newVal) {
                 this.activeTab = newVal;
+                this.currentPage = this.page;
+            } else if (!this.isInitializing) {
+                await this.openDefaultTab();
             }
         },
         view(newVal) {
             this.isTableView = newVal === "table";
         },
         search(newVal) {
-            this.searchQuery = newVal;
+            if (newVal !== this.searchQuery) this.searchQuery = newVal;
         },
         unconfirmed(newVal) {
             this.onlyUnconfirmed = newVal;
         },
-        selectedAttribute() {
-            // При смене группировки сбрасываем поиск
-            this.searchQuery = "";
+        grouping(newVal) {
+            this.syncGrouping(newVal);
+        },
+        page(newVal) {
+            this.currentPage = Math.max(1, newVal);
+        },
+        searchQuery(newVal, oldVal) {
+            if (this.isInitializing || newVal === oldVal || newVal === this.search) return;
+            this.currentPage = 1;
+            window.clearTimeout(this.searchUpdateTimer);
+            this.searchUpdateTimer = window.setTimeout(() => {
+                this.updatePath({replace: true});
+            }, 300);
+        },
+        totalPages(newVal) {
+            if (this.currentPage > newVal) {
+                this.currentPage = newVal;
+                if (!this.isInitializing) this.updatePath({replace: true});
+            }
         },
     },
 
@@ -373,19 +431,13 @@ export default {
         canCreateByType,
         hasTeacherAccess,
 
-        selectTab(tabCode) {
-            if (this.activeTab !== tabCode) {
-                this.$router.push({
-                    path: `/${tabCode}`,
-                    query: {
-                        view: this.isTableView ? "table" : "cards",
-                        search: this.searchQuery,
-                        grouping: this.selectedAttribute?.code || "",
-                        unconfirmed: String(this.onlyUnconfirmed),
-                    },
-                });
-            }
+        async selectTab(tabCode) {
+            if (this.activeTab === tabCode) return;
+
+            this.activeTab = tabCode;
             this.selectedAttribute = {};
+            this.currentPage = 1;
+            await this.updatePath();
         },
         createObject(typeCode) {
             this.$router.push(`/${typeCode}/create`);
@@ -396,6 +448,7 @@ export default {
         selectGrouping(attribute) {
             this.selectedAttribute = attribute;
             this.isMenuOpen = false;
+            this.currentPage = 1;
             this.updatePath();
         },
         hasUnconfirmed(typeCode) {
@@ -404,22 +457,54 @@ export default {
         },
         toggleUnconfirmed() {
             this.onlyUnconfirmed = !this.onlyUnconfirmed;
+            this.currentPage = 1;
             this.updatePath();
         },
         toggleTableView() {
             this.isTableView = !this.isTableView;
+            this.currentPage = 1;
             this.updatePath();
         },
-        updatePath() {
-            this.$router.push({
-                path: `/${this.activeTab}`,
-                query: {
-                    view: this.isTableView ? "table" : "cards",
-                    search: this.searchQuery,
-                    grouping: this.selectedAttribute?.code || "",
-                    unconfirmed: String(this.onlyUnconfirmed),
-                },
-            });
+        routeQuery() {
+            return {
+                view: this.isTableView ? "table" : "cards",
+                search: this.searchQuery,
+                grouping: this.selectedAttribute?.code || "",
+                unconfirmed: String(this.onlyUnconfirmed),
+                page: String(this.currentPage),
+            };
+        },
+        async updatePath({replace = false} = {}) {
+            if (!this.activeTab) return;
+
+            const location = {
+                name: "ObjectType",
+                params: {object_type: this.activeTab},
+                query: this.routeQuery(),
+            };
+            if (this.$router.resolve(location).fullPath === this.$route.fullPath) return;
+            await this.$router[replace ? "replace" : "push"](location);
+        },
+        async openDefaultTab() {
+            const defaultTab = this.objectTypesWithPortfolio[0]?.code;
+            if (!defaultTab) return;
+
+            this.activeTab = defaultTab;
+            this.currentPage = 1;
+            await this.updatePath({replace: true});
+        },
+        syncGrouping(groupingCode) {
+            this.selectedAttribute = this.groupingAttributes.find(
+                attribute => attribute.code === groupingCode
+            ) || {};
+        },
+        async selectPage(pageNumber) {
+            const nextPage = Math.min(Math.max(1, pageNumber), this.totalPages);
+            if (nextPage === this.currentPage) return;
+
+            this.currentPage = nextPage;
+            await this.updatePath();
+            window.scrollTo({top: 0, behavior: "smooth"});
         },
     },
 };

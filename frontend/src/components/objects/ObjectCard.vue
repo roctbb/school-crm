@@ -96,6 +96,7 @@ export default {
             store: useMainStore(),
             showCopied: false,
             photoUrl: null,
+            photoLoadId: 0,
         };
     },
     computed: {
@@ -119,6 +120,7 @@ export default {
         },
     },
     beforeUnmount() {
+        this.photoLoadId += 1;
         this.releasePhotoUrl();
     },
     methods: {
@@ -133,12 +135,18 @@ export default {
         },
 
         async loadPhoto(photo) {
+            const loadId = ++this.photoLoadId;
             this.releasePhotoUrl();
             const currentPhoto = latestFileUrl(photo);
             if (!currentPhoto) return;
 
             try {
-                this.photoUrl = await resolveFileUrl(currentPhoto);
+                const resolvedUrl = await resolveFileUrl(currentPhoto);
+                if (loadId !== this.photoLoadId) {
+                    if (resolvedUrl?.startsWith('blob:')) URL.revokeObjectURL(resolvedUrl);
+                    return;
+                }
+                this.photoUrl = resolvedUrl;
             } catch (error) {
                 console.error("Не удалось загрузить фото объекта", error);
             }

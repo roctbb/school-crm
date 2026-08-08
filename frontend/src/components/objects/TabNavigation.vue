@@ -8,6 +8,7 @@
     >
       <button
         class="nav-link"
+        type="button"
         :class="[
           activeTab === tab.code ? 'active brand-active' : '',
           'position-relative'

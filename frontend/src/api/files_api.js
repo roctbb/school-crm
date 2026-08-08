@@ -2,6 +2,9 @@
 import api_client from './client.js';
 import {API_URL, validateResponse} from "@/api/common.js";
 
+const protectedFileBlobs = new Map();
+const MAX_PROTECTED_FILE_BLOBS = 96;
+
 export function normalizeFileUrls(value) {
     if (Array.isArray(value)) {
         return value.filter(url => typeof url === 'string' && url.length > 0);
@@ -29,11 +32,32 @@ function isProtectedFileUrl(fileUrl) {
 }
 
 async function fetchProtectedFile(fileUrl) {
-    const response = await fetch(fileUrl, {
-        headers: api_client.getAuthorizationHeaders(),
-    });
-    await validateResponse(response);
-    return response.blob();
+    const authorization = api_client.getAuthorizationHeaders().Authorization;
+    const cacheKey = `${authorization}\n${fileUrl}`;
+    let pendingBlob = protectedFileBlobs.get(cacheKey);
+
+    if (!pendingBlob) {
+        pendingBlob = fetch(fileUrl, {
+            headers: {Authorization: authorization},
+            cache: 'default',
+        }).then(async response => {
+            await validateResponse(response);
+            return response.blob();
+        }).catch(error => {
+            protectedFileBlobs.delete(cacheKey);
+            throw error;
+        });
+        protectedFileBlobs.set(cacheKey, pendingBlob);
+        if (protectedFileBlobs.size > MAX_PROTECTED_FILE_BLOBS) {
+            protectedFileBlobs.delete(protectedFileBlobs.keys().next().value);
+        }
+    }
+
+    return pendingBlob;
+}
+
+export function clearProtectedFileCache() {
+    protectedFileBlobs.clear();
 }
 
 export async function resolveFileUrl(fileUrl) {

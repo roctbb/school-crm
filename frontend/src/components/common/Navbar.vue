@@ -2,7 +2,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-brand">
         <div class="container">
             <!-- Логотип -->
-            <router-link to="/" class="navbar-brand">
+            <router-link :to="{name: 'Objects'}" class="navbar-brand">
                 Силаэдр CRM
             </router-link>
 
@@ -27,7 +27,7 @@
                         class="nav-item"
                     >
                         <router-link
-                            to="/"
+                            :to="{name: 'Objects'}"
                             class="nav-link"
                             active-class="active"
                         >
@@ -39,7 +39,7 @@
                         class="nav-item"
                     >
                         <router-link
-                            to="/admin/oauth-clients"
+                            :to="{name: 'OAuthClientsAdmin'}"
                             class="nav-link"
                             active-class="active"
                         >
@@ -51,7 +51,7 @@
                         class="nav-item"
                     >
                         <router-link
-                            to="/admin/object-types"
+                            :to="{name: 'ObjectTypesAdmin'}"
                             class="nav-link"
                             active-class="active"
                         >
@@ -63,7 +63,7 @@
                         class="nav-item"
                     >
                         <router-link
-                            to="/forms"
+                            :to="{name: 'Forms'}"
                             class="nav-link"
                             active-class="active"
                         >
@@ -75,7 +75,7 @@
                         class="nav-item"
                     >
                         <router-link
-                            to="/import"
+                            :to="{name: 'Import'}"
                             class="nav-link"
                             active-class="active"
                         >
@@ -87,7 +87,7 @@
                         class="nav-item"
                     >
                         <router-link
-                            to="/invitations"
+                            :to="{name: 'Invitations'}"
                             class="nav-link"
                             active-class="active"
                         >

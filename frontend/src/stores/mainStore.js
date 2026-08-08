@@ -5,6 +5,7 @@ import api_client from "@/api/client.js";
 import CrmObject from "@/models/CrmObject.js";
 import {fetchFormCategories} from "@/api/forms_api.js";
 import Form from "@/models/Form.js";
+import {clearProtectedFileCache} from "@/api/files_api.js";
 
 const useMainStore = defineStore("mainStore", {
     // Состояние
@@ -60,6 +61,7 @@ const useMainStore = defineStore("mainStore", {
 
         logout() {
             console.log("Logging out");
+            clearProtectedFileCache();
             api_client.setToken(null);
             this.token = null;
             this.profile = null;
