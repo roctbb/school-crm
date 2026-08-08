@@ -13,10 +13,14 @@ from application.blueprints import api_blueprint
 from application.blueprints.oidc_blueprint import oidc_public_blueprint
 from application.oidc import init_oidc
 from flask_cors import CORS
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 
 def create_app(config_name=None):
     app = Flask(__name__)
+    # Backend доступен только через наш nginx. Доверяем одному ближайшему proxy
+    # при определении внешней HTTPS-схемы для OAuth/OIDC transport checks.
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1)
 
     # Загрузка конфигурации из config.py
     app.config.from_object(get_config(config_name))

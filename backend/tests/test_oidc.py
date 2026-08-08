@@ -136,6 +136,23 @@ def test_discovery_and_jwks(client):
     assert key['kid']
 
 
+def test_token_endpoint_trusts_https_from_the_nearest_proxy(client):
+    response = client.post(
+        '/api/oauth/token',
+        base_url='http://lk.silaeder.ru',
+        headers={'X-Forwarded-Proto': 'https'},
+        data={
+            'grant_type': 'authorization_code',
+            'client_id': 'missing-client',
+            'code': 'missing-code',
+            'redirect_uri': REDIRECT_URI,
+            'code_verifier': 'a' * 43,
+        },
+    )
+    assert response.status_code == 400
+    assert response.get_json()['error'] == 'invalid_client'
+
+
 def test_admin_manages_clients_and_secret_is_only_returned_once(client):
     created, admin = _create_registered_client(client)
     secret = created.pop('client_secret')
