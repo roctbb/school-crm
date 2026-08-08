@@ -8,7 +8,7 @@ from joserfc import jwt
 from joserfc.jwk import RSAKey
 
 from application.infrastructure import bcrypt, db
-from application.models import OAuthAuthorizationCode, OAuthClient, OAuthToken, User
+from application.models import OAuthAuthorizationCode, OAuthClient, OAuthConsent, OAuthToken, User
 from application.oidc import token_digest
 from .fixtures import *
 
@@ -282,6 +282,65 @@ def test_authorization_code_pkce_userinfo_refresh_and_revocation(client):
         headers={'Authorization': f"Bearer {refreshed['access_token']}"},
     )
     assert revoked_userinfo.status_code == 401
+
+
+def test_consent_is_remembered_for_the_same_or_smaller_scope(client):
+    _create_registered_client(client)
+    user = _create_user()
+
+    _verifier, initial_params = _authorization_params(scope='openid profile')
+    initial_request = client.get(
+        '/api/oauth/authorize/request',
+        query_string=initial_params,
+        headers=_auth_header(user),
+    )
+    assert initial_request.status_code == 200
+    assert initial_request.get_json()['requires_consent'] is True
+
+    approved = client.post(
+        '/api/oauth/authorize',
+        json={**initial_params, 'decision': True},
+        headers=_auth_header(user),
+    )
+    assert approved.status_code == 200
+    consent = OAuthConsent.query.filter_by(user_id=user.id, client_id=CLIENT_ID).one()
+    assert set(consent.scopes) == {'openid', 'profile'}
+
+    _verifier, repeated_params = _authorization_params(scope='openid profile')
+    repeated = client.get(
+        '/api/oauth/authorize/request',
+        query_string=repeated_params,
+        headers=_auth_header(user),
+    )
+    assert repeated.status_code == 200
+    assert repeated.get_json()['requires_consent'] is False
+
+    _verifier, smaller_params = _authorization_params(scope='openid')
+    smaller = client.get(
+        '/api/oauth/authorize/request',
+        query_string=smaller_params,
+        headers=_auth_header(user),
+    )
+    assert smaller.status_code == 200
+    assert smaller.get_json()['requires_consent'] is False
+
+    _verifier, expanded_params = _authorization_params(scope='openid profile email')
+    expanded = client.get(
+        '/api/oauth/authorize/request',
+        query_string=expanded_params,
+        headers=_auth_header(user),
+    )
+    assert expanded.status_code == 200
+    assert expanded.get_json()['requires_consent'] is True
+
+    _verifier, forced_params = _authorization_params(scope='openid', prompt='consent')
+    forced = client.get(
+        '/api/oauth/authorize/request',
+        query_string=forced_params,
+        headers=_auth_header(user),
+    )
+    assert forced.status_code == 200
+    assert forced.get_json()['requires_consent'] is True
 
 
 def test_pkce_redirect_role_and_public_client_protections(client):

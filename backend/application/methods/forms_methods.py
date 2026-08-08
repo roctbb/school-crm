@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 from sqlalchemy.orm import joinedload
 
 from application import FormCategory
@@ -28,6 +30,58 @@ def get_category_by_id(category_id):
         raise LogicException("Категория не найдена", 404)
 
     return category
+
+
+def get_form_category_usage(category):
+    active_forms = Form.query.filter_by(category_id=category.id, deleted_at=None).all()
+    child_categories = FormCategory.query.filter_by(category_id=category.id, deleted_at=None).all()
+    return {
+        'form_count': len(active_forms),
+        'forms': [{'id': form.id, 'name': form.name} for form in active_forms],
+        'object_type_count': len(category.object_types),
+        'object_types': [
+            {'id': object_type.id, 'name': object_type.name, 'code': object_type.code}
+            for object_type in category.object_types
+        ],
+        'child_category_count': len(child_categories),
+        'child_categories': [
+            {'id': child.id, 'name': child.name} for child in child_categories
+        ],
+    }
+
+
+@transaction
+def create_form_category(user, data):
+    category = FormCategory(
+        name=data['name'],
+        params=deepcopy(data.get('params', {})),
+        common_fields=deepcopy(data.get('common_fields', [])),
+        creator_id=user.id,
+    )
+    db.session.add(category)
+    return category
+
+
+@transaction
+def update_form_category(category, data):
+    category.name = data['name']
+    category.params = deepcopy(data.get('params', {}))
+    category.common_fields = deepcopy(data.get('common_fields', []))
+    return category
+
+
+@transaction
+def delete_form_category(user, category):
+    usage = get_form_category_usage(category)
+    if usage['form_count'] or usage['object_type_count'] or usage['child_category_count']:
+        raise LogicException(
+            "Нельзя удалить используемую категорию. Сначала удалите формы, дочерние категории "
+            "и отвяжите её от типов сущностей.",
+            409,
+        )
+
+    category.deleted_at = db.func.now()
+    category.deleter_id = user.id
 
 
 @transaction

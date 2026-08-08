@@ -18,6 +18,10 @@ OBJECT_TYPE_PARAM_KEYS = {
 }
 OBJECT_TYPE_WIDGETS = {'active_events', 'birthdays', 'calendar', 'portfolio_progress'}
 ROLE_CODES = {'student', 'teacher', 'admin'}
+FORM_FIELD_TYPES = {
+    'number', 'string', 'text', 'date', 'datetime', 'select', 'file',
+    'checkboxes', 'checkbox',
+}
 CODE_PATTERN = re.compile(r'^[a-z][a-z0-9_-]{1,99}$')
 OAUTH_CLIENT_ID_PATTERN = re.compile(r'^[a-z][a-z0-9._-]{2,119}$')
 OAUTH_SCOPES = {'openid', 'profile', 'email', 'roles', 'offline_access'}
@@ -218,6 +222,101 @@ def validate_form(data):
     if not isinstance(data.get('fields', []), list):
         raise LogicException("Поле fields должно быть списком.", 422)
 
+    return data
+
+
+def _validate_form_fields(fields, field_name):
+    if not isinstance(fields, list):
+        raise LogicException(f"Поле {field_name} должно быть списком.", 422, field=field_name)
+
+    for index, field in enumerate(fields):
+        if not isinstance(field, dict):
+            raise LogicException(
+                f"Поле формы #{index + 1} должно быть объектом JSON.",
+                422,
+                field=field_name,
+            )
+
+        name = field.get('name')
+        if not isinstance(name, str) or not name.strip() or len(name.strip()) > 256:
+            raise LogicException(
+                f"Некорректное название поля формы #{index + 1}.",
+                422,
+                field=field_name,
+            )
+
+        field_type = field.get('type')
+        if field_type not in FORM_FIELD_TYPES:
+            raise LogicException(
+                f"Неизвестный тип поля формы #{index + 1}.",
+                422,
+                field=field_name,
+            )
+
+        for boolean_key in ('required', 'showoff'):
+            if boolean_key in field and not isinstance(field[boolean_key], bool):
+                raise LogicException(
+                    f"Параметр {boolean_key} поля формы #{index + 1} должен быть boolean.",
+                    422,
+                    field=field_name,
+                )
+
+        options = field.get('options', [])
+        if not isinstance(options, list) or not all(isinstance(option, str) for option in options):
+            raise LogicException(
+                f"Варианты поля формы #{index + 1} должны быть списком строк.",
+                422,
+                field=field_name,
+            )
+
+        field['name'] = name.strip()
+        field['options'] = list(dict.fromkeys(option.strip() for option in options if option.strip()))
+
+    return fields
+
+
+def validate_form_category(data):
+    if not isinstance(data, dict):
+        raise LogicException("Описание категории должно быть объектом JSON.", 422)
+
+    name = data.get('name')
+    if not isinstance(name, str) or not name.strip():
+        raise LogicException("Название категории обязательно.", 400, field='name')
+    if len(name.strip()) > 256:
+        raise LogicException("Название категории длиннее 256 символов.", 400, field='name')
+    data['name'] = name.strip()
+
+    params = data.get('params', {})
+    if not isinstance(params, dict):
+        raise LogicException("Поле params должно быть объектом JSON.", 422, field='params')
+
+    for key in ('is_hidden', 'is_private'):
+        if key in params and not isinstance(params[key], bool):
+            raise LogicException(f"Параметр {key} должен быть boolean.", 422, field=key)
+
+    can_create = params.get('can_create', [])
+    if not isinstance(can_create, list) or not all(isinstance(role, str) for role in can_create):
+        raise LogicException("Параметр can_create должен быть списком ролей.", 422, field='can_create')
+    invalid_roles = set(can_create) - ROLE_CODES
+    if invalid_roles:
+        raise LogicException(
+            f"Неизвестные роли в can_create: {', '.join(sorted(invalid_roles))}.",
+            422,
+            field='can_create',
+        )
+    params['can_create'] = list(dict.fromkeys(can_create))
+
+    grouping = params.get('show_off_grouping', [])
+    if not isinstance(grouping, list) or not all(isinstance(item, str) for item in grouping):
+        raise LogicException(
+            "Параметр show_off_grouping должен быть списком названий полей.",
+            422,
+            field='show_off_grouping',
+        )
+    params['show_off_grouping'] = list(dict.fromkeys(item.strip() for item in grouping if item.strip()))
+
+    data['params'] = params
+    data['common_fields'] = _validate_form_fields(data.get('common_fields', []), 'common_fields')
     return data
 
 

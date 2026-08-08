@@ -26,3 +26,15 @@ export async function createInvitations(typeCode, role) {
       body: JSON.stringify(payload),
     });
 }
+
+export async function deleteInvitation(invitationId) {
+    return await api_client.fetch(`/invitations/${invitationId}`, {
+        method: "DELETE",
+    });
+}
+
+export async function deleteAllInvitations() {
+    return await api_client.fetch("/invitations", {
+        method: "DELETE",
+    });
+}

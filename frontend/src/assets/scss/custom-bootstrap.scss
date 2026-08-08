@@ -1,17 +1,24 @@
-// custom-bootstrap.scss
-
-// 1. Импортируем переменные из Bootstrap
 @import "bootstrap/scss/functions";
-@import "bootstrap/scss/variables";
-@import "bootstrap/scss/maps";
 
+// Brand palette must be defined before Bootstrap builds $theme-colors and
+// component variables. Defining it after variables/maps leaves components in
+// Bootstrap's default blue.
+$primary: #397698;
+$warning: #EACF72;
+$danger: #C92325;
 
-// 2. Переопределяем переменные
-$primary: #397698;   // Пример: основной цвет
-$warning: #EACF72;   // Пример: warning
-$danger: #C92325;    // Пример: danger
-// 3. (Опционально) переопределяем другие переменные, 
-//    если нужно менять, например, success, dark, light и т.д.
+$pagination-color: $primary;
+$pagination-hover-color: #28556e;
+$pagination-hover-bg: #e8f1f5;
+$pagination-focus-color: #28556e;
+$pagination-focus-bg: #e8f1f5;
+$pagination-focus-box-shadow: 0 0 0 0.25rem rgba($primary, 0.2);
+$pagination-active-bg: $primary;
+$pagination-active-border-color: $primary;
 
-// 4. Импортируем всё остальное из Bootstrap
+$dropdown-link-hover-color: #28556e;
+$dropdown-link-hover-bg: #e8f1f5;
+$dropdown-link-active-color: #fff;
+$dropdown-link-active-bg: $primary;
+
 @import "bootstrap/scss/bootstrap";

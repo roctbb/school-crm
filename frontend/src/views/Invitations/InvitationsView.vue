@@ -4,10 +4,27 @@
             <div class="row justify-content-center">
                 <div class="col-md-10">
                     <div class="card mb-3">
-                        <div class="card-header">
+                        <div class="card-header d-flex justify-content-between align-items-center gap-3">
                             <h3 class="m-0">Список инвайтов</h3>
+                            <button
+                                class="btn btn-sm btn-outline-danger"
+                                type="button"
+                                :disabled="!invitations.length || isDeletingAll"
+                                @click="handleDeleteAllInvitations"
+                            >
+                                <span v-if="isDeletingAll" class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+                                <i v-else class="bi bi-trash me-1"></i>
+                                Удалить все
+                            </button>
                         </div>
                         <div class="card-body">
+                            <div
+                                v-if="deleteMessage"
+                                class="alert"
+                                :class="isDeleteSuccess ? 'alert-success' : 'alert-danger'"
+                            >
+                                {{ deleteMessage }}
+                            </div>
                             <div v-if="isLoading" class="text-center my-3">
                                 <Loading/>
                             </div>
@@ -20,6 +37,7 @@
                                         <th>Роль</th>
                                         <th>Объект</th>
                                         <th>Дата создания</th>
+                                        <th class="text-end">Действия</th>
                                     </tr>
                                     </thead>
                                     <tbody>
@@ -41,6 +59,26 @@
                                         <td>{{ inv.role }}</td>
                                         <td>{{ store.getObject(inv.object_id)?.name }}</td>
                                         <td>{{ formatDateTime(new Date(inv.created_at)) }}</td>
+                                        <td class="text-end">
+                                            <button
+                                                class="btn btn-sm btn-outline-danger"
+                                                type="button"
+                                                :disabled="deletingInvitationId === inv.id || isDeletingAll"
+                                                title="Удалить инвайт"
+                                                @click="handleDeleteInvitation(inv)"
+                                            >
+                                                <span
+                                                    v-if="deletingInvitationId === inv.id"
+                                                    class="spinner-border spinner-border-sm"
+                                                    aria-hidden="true"
+                                                ></span>
+                                                <i v-else class="bi bi-trash"></i>
+                                                <span class="visually-hidden">Удалить инвайт {{ inv.id }}</span>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr v-if="!invitations.length">
+                                        <td colspan="6" class="text-center text-muted py-4">Активных инвайтов нет.</td>
                                     </tr>
                                     </tbody>
                                 </table>
@@ -119,7 +157,12 @@
 </template>
 
 <script>
-import {getInvitations, createInvitations} from "@/api/invitations_api.js";
+import {
+    createInvitations,
+    deleteAllInvitations,
+    deleteInvitation,
+    getInvitations,
+} from "@/api/invitations_api.js";
 import BaseLayout from "@/components/layouts/BaseLayout.vue";
 import Loading from "@/components/common/Loading.vue";
 import {formatDateTime} from "../../utils/helpers.js";
@@ -141,7 +184,12 @@ export default {
             createMessage: "",
             copiedKey: null,
             isCreateSuccess: false,
-            store: useMainStore()
+            store: useMainStore(),
+            availableTypes: [],
+            deletingInvitationId: null,
+            isDeletingAll: false,
+            deleteMessage: "",
+            isDeleteSuccess: false,
         };
     },
     async created() {
@@ -204,6 +252,41 @@ export default {
                 console.error("Ошибка:", error);
             } finally {
                 this.isCreating = false;
+            }
+        },
+        async handleDeleteInvitation(invitation) {
+            if (!window.confirm(`Удалить инвайт #${invitation.id}? Ссылка перестанет работать.`)) return;
+
+            this.deletingInvitationId = invitation.id;
+            this.deleteMessage = "";
+            try {
+                await deleteInvitation(invitation.id);
+                this.invitations = this.invitations.filter(item => item.id !== invitation.id);
+                this.deleteMessage = `Инвайт #${invitation.id} удалён.`;
+                this.isDeleteSuccess = true;
+            } catch (error) {
+                this.deleteMessage = error.message || "Не удалось удалить инвайт.";
+                this.isDeleteSuccess = false;
+            } finally {
+                this.deletingInvitationId = null;
+            }
+        },
+        async handleDeleteAllInvitations() {
+            const count = this.invitations.length;
+            if (!count || !window.confirm(`Удалить все активные инвайты (${count})? Все ссылки перестанут работать.`)) return;
+
+            this.isDeletingAll = true;
+            this.deleteMessage = "";
+            try {
+                const result = await deleteAllInvitations();
+                this.invitations = [];
+                this.deleteMessage = `Удалено инвайтов: ${result.count}.`;
+                this.isDeleteSuccess = true;
+            } catch (error) {
+                this.deleteMessage = error.message || "Не удалось удалить инвайты.";
+                this.isDeleteSuccess = false;
+            } finally {
+                this.isDeletingAll = false;
             }
         },
     },

@@ -47,6 +47,12 @@ const routes = [
         meta: {requiresAuth: true, requiresAdmin: true}
     },
     {
+        path: '/admin/form-categories',
+        name: 'FormCategoriesAdmin',
+        component: () => import('@/views/Admin/FormCategoriesAdminView.vue'),
+        meta: {requiresAuth: true, requiresAdmin: true}
+    },
+    {
         path: '/admin/oauth-clients',
         name: 'OAuthClientsAdmin',
         component: () => import('@/views/Admin/OAuthClientsAdminView.vue'),

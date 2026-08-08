@@ -16,6 +16,32 @@ export async function fetchFormCategories() {
     });
 }
 
+export async function createFormCategory(data) {
+    return await api_client.fetch('/forms/categories', {
+        method: 'POST',
+        body: JSON.stringify(data),
+    });
+}
+
+export async function updateFormCategory(categoryId, data) {
+    return await api_client.fetch(`/forms/categories/${categoryId}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+    });
+}
+
+export async function deleteFormCategory(categoryId) {
+    return await api_client.fetch(`/forms/categories/${categoryId}`, {
+        method: 'DELETE',
+    });
+}
+
+export async function fetchFormCategoryUsage(categoryId) {
+    return await api_client.fetch(`/forms/categories/${categoryId}/usage`, {
+        method: 'GET',
+    });
+}
+
 // Создание новой формы в заданной категории
 export async function createForm(categoryId, data) {
     return await api_client.fetch(`/forms/categories/${categoryId}`, {
@@ -51,4 +77,3 @@ export async function deleteForm(formId) {
         method: 'DELETE',
     });
 }
-

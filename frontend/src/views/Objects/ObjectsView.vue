@@ -146,6 +146,7 @@
                         v-if="isTableView"
                         :data="paginatedSortedObjects"
                         :grouped-data="paginatedGroupedObjects"
+                        :group-counts="groupCounts"
                         :attributes="tableAttributes"
                         :grouping-attribute="selectedAttribute"
                         :sortKey.sync="sortKey"
@@ -155,6 +156,7 @@
                         v-else
                         :objects="paginatedObjects"
                         :grouped-data="paginatedGroupedObjects"
+                        :group-counts="groupCounts"
                         :object-type="store.getObjectTypeByCode(activeTab)"
                         :grouping-attribute="selectedAttribute"
                         size="big"
@@ -167,7 +169,7 @@
             v-if="!isLoading"
             :current-page="currentPage"
             :page-size="pageSize"
-            :total-items="filteredObjects.length"
+            :total-items="paginationTotalItems"
             @page-selected="selectPage"
         />
     </BaseLayout>
@@ -302,11 +304,10 @@ export default {
                 ? activeType.available_attributes.filter((attr) => attr.group)
                 : [];
         },
-        paginatedGroupedObjects() {
+        groupedObjects() {
             if (!this.selectedAttribute.code) return null;
             const groups = {};
-            const pageObjects = this.isTableView ? this.paginatedSortedObjects : this.paginatedObjects;
-            pageObjects.forEach((obj) => {
+            this.filteredObjects.forEach((obj) => {
                 const attributeValue = obj.attributes[this.selectedAttribute.code];
                 if (Array.isArray(attributeValue) && attributeValue.length > 0) {
                     attributeValue.forEach((val) => {
@@ -322,7 +323,32 @@ export default {
             Object.keys(groups).forEach((groupKey) => {
                 groups[groupKey].sort((a, b) => a.name.localeCompare(b.name));
             });
-            return groups;
+            return Object.fromEntries(
+                Object.entries(groups).sort(([a], [b]) => a.localeCompare(b, undefined, {numeric: true}))
+            );
+        },
+        groupedEntries() {
+            if (!this.groupedObjects) return [];
+            return Object.entries(this.groupedObjects).flatMap(([group, objects]) =>
+                objects.map(object => ({group, object}))
+            );
+        },
+        groupCounts() {
+            if (!this.groupedObjects) return {};
+            return Object.fromEntries(
+                Object.entries(this.groupedObjects).map(([group, objects]) => [group, objects.length])
+            );
+        },
+        paginatedGroupedObjects() {
+            if (!this.groupedObjects) return null;
+            const start = (this.currentPage - 1) * this.pageSize;
+            return this.groupedEntries
+                .slice(start, start + this.pageSize)
+                .reduce((groups, {group, object}) => {
+                    if (!groups[group]) groups[group] = [];
+                    groups[group].push(object);
+                    return groups;
+                }, {});
         },
         isLoading() {
             return this.store.isLoading;
@@ -350,7 +376,10 @@ export default {
             return sorted;
         },
         totalPages() {
-            return Math.max(1, Math.ceil(this.filteredObjects.length / this.pageSize));
+            return Math.max(1, Math.ceil(this.paginationTotalItems / this.pageSize));
+        },
+        paginationTotalItems() {
+            return this.selectedAttribute.code ? this.groupedEntries.length : this.filteredObjects.length;
         },
         paginatedObjects() {
             const start = (this.currentPage - 1) * this.pageSize;

@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify
 from application.helpers.decorators import *
 from application.helpers.exceptions import LogicException
-from application.validators import validate_form
+from application.validators import validate_form, validate_form_category
 from application.presenters.presenters import *
 from application.methods import *
 
@@ -19,6 +19,41 @@ def get_forms_endpoint(user):
 @requires_user
 def get_form_categories_endpoint(user):
     return jsonify([present_form_category(fc) for fc in get_form_categories() if can_get_form_category(user, fc)]), 200
+
+
+@forms_blueprint.route('/categories', methods=['POST'])
+@requires_user
+@requires_roles(['admin'])
+@validate_request_with(validate_form_category)
+def create_form_category_endpoint(validated_data, user):
+    category = create_form_category(user, validated_data)
+    return jsonify(present_form_category(category)), 201
+
+
+@forms_blueprint.route('/categories/<int:category_id>', methods=['PUT'])
+@requires_user
+@requires_roles(['admin'])
+@validate_request_with(validate_form_category)
+def update_form_category_endpoint(validated_data, user, category_id):
+    category = get_category_by_id(category_id)
+    return jsonify(present_form_category(update_form_category(category, validated_data))), 200
+
+
+@forms_blueprint.route('/categories/<int:category_id>', methods=['DELETE'])
+@requires_user
+@requires_roles(['admin'])
+def delete_form_category_endpoint(user, category_id):
+    category = get_category_by_id(category_id)
+    delete_form_category(user, category)
+    return jsonify({'deleted': True}), 200
+
+
+@forms_blueprint.route('/categories/<int:category_id>/usage', methods=['GET'])
+@requires_user
+@requires_roles(['admin'])
+def get_form_category_usage_endpoint(user, category_id):
+    category = get_category_by_id(category_id)
+    return jsonify(get_form_category_usage(category)), 200
 
 
 @forms_blueprint.route('/categories/<int:category_id>', methods=['POST'])

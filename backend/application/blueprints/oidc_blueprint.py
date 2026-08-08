@@ -6,6 +6,7 @@ from application.helpers.exceptions import LogicException
 from application.infrastructure import limiter
 from application.methods import (
     authorize_oauth_request,
+    authorization_requires_consent,
     create_oauth_client,
     deny_oauth_request,
     get_oauth_client,
@@ -100,6 +101,7 @@ def oidc_authorization_request(user):
             'email': user.email,
             'role': user.role,
         },
+        'requires_consent': authorization_requires_consent(user, validated),
     })
 
 

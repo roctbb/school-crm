@@ -81,6 +81,9 @@ export default {
     async created() {
         try {
             this.authorization = await fetchAuthorizationRequest(this.requestParams);
+            if (!this.authorization.requires_consent) {
+                await this.decide(true);
+            }
         } catch (error) {
             this.error = error.message || 'Некорректный запрос авторизации.';
         } finally {

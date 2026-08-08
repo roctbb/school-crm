@@ -9,7 +9,7 @@ from flask import current_app
 from application.helpers.decorators import transaction
 from application.helpers.exceptions import LogicException
 from application.infrastructure import bcrypt, db
-from application.models import OAuthAuthorizationCode, OAuthClient, OAuthToken
+from application.models import OAuthAuthorizationCode, OAuthClient, OAuthConsent, OAuthToken
 from application.oidc import get_client_id_from_id_token_hint, token_digest, utcnow
 
 
@@ -71,6 +71,10 @@ def update_oauth_client(client, data):
         or set(client.allowed_roles or []) != set(data['allowed_roles'])
         or not data['is_active']
     )
+    revoke_consents = (
+        revoke_tokens
+        or set(client.redirect_uris or []) != set(data['redirect_uris'])
+    )
 
     new_secret = None
     if data['is_confidential'] and not client.client_secret_hash:
@@ -89,6 +93,8 @@ def update_oauth_client(client, data):
     client.is_active = data['is_active']
 
     OAuthAuthorizationCode.query.filter_by(client_id=client.client_id).delete()
+    if revoke_consents:
+        OAuthConsent.query.filter_by(client_id=client.client_id).delete()
     if revoke_tokens:
         revoked_at = int(time.time())
         OAuthToken.query.filter_by(client_id=client.client_id).update({
@@ -146,6 +152,11 @@ def validate_authorization_request(data, user):
     if user.role not in (client.allowed_roles or []):
         raise LogicException("Вашей роли запрещён доступ к этому сервису.", 403)
 
+    prompt = data.get('prompt', '')
+    if not isinstance(prompt, str):
+        raise LogicException("Некорректный параметр prompt.", 400)
+    prompt_values = prompt.split()
+
     return {
         'client': client,
         'client_id': client.client_id,
@@ -156,7 +167,38 @@ def validate_authorization_request(data, user):
         'nonce': nonce,
         'code_challenge': code_challenge,
         'code_challenge_method': 'S256',
+        'prompt': prompt_values,
     }
+
+
+def authorization_requires_consent(user, validated):
+    if 'consent' in validated.get('prompt', []):
+        return True
+
+    consent = OAuthConsent.query.filter_by(
+        user_id=user.id,
+        client_id=validated['client_id'],
+    ).first()
+    if not consent:
+        return True
+
+    return not set(validated['scopes']).issubset(set(consent.scopes or []))
+
+
+def _remember_oauth_consent(user, validated):
+    consent = OAuthConsent.query.filter_by(
+        user_id=user.id,
+        client_id=validated['client_id'],
+    ).first()
+    if not consent:
+        consent = OAuthConsent(
+            user_id=user.id,
+            client_id=validated['client_id'],
+            scopes=[],
+        )
+        db.session.add(consent)
+
+    consent.scopes = sorted(set(consent.scopes or []) | set(validated['scopes']))
 
 
 def _add_redirect_params(uri, params):
@@ -180,6 +222,8 @@ def authorize_oauth_request(user, data):
     OAuthAuthorizationCode.query.filter(
         OAuthAuthorizationCode.expires_at <= utcnow()
     ).delete(synchronize_session=False)
+
+    _remember_oauth_consent(user, validated)
 
     code = secrets.token_urlsafe(48)
     db.session.add(OAuthAuthorizationCode(

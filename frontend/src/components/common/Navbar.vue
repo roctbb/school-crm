@@ -39,30 +39,6 @@
                         class="nav-item"
                     >
                         <router-link
-                            :to="{name: 'OAuthClientsAdmin'}"
-                            class="nav-link"
-                            active-class="active"
-                        >
-                            Внешний вход
-                        </router-link>
-                    </li>
-                    <li
-                        v-if="hasAdminAccess()"
-                        class="nav-item"
-                    >
-                        <router-link
-                            :to="{name: 'ObjectTypesAdmin'}"
-                            class="nav-link"
-                            active-class="active"
-                        >
-                            Типы сущностей
-                        </router-link>
-                    </li>
-                    <li
-                        v-if="hasAdminAccess()"
-                        class="nav-item"
-                    >
-                        <router-link
                             :to="{name: 'Forms'}"
                             class="nav-link"
                             active-class="active"
@@ -114,13 +90,44 @@
                         class="dropdown-menu dropdown-menu-end"
                         aria-labelledby="userMenuButton"
                     >
+                        <template v-if="hasAdminAccess()">
+                            <li><h6 class="dropdown-header">Администрирование</h6></li>
+                            <li>
+                                <router-link
+                                    :to="{name: 'ObjectTypesAdmin'}"
+                                    class="dropdown-item"
+                                    active-class="active"
+                                >
+                                    <i class="bi bi-diagram-3 me-2"></i>Типы сущностей
+                                </router-link>
+                            </li>
+                            <li>
+                                <router-link
+                                    :to="{name: 'FormCategoriesAdmin'}"
+                                    class="dropdown-item"
+                                    active-class="active"
+                                >
+                                    <i class="bi bi-ui-checks-grid me-2"></i>Категории форм
+                                </router-link>
+                            </li>
+                            <li>
+                                <router-link
+                                    :to="{name: 'OAuthClientsAdmin'}"
+                                    class="dropdown-item"
+                                    active-class="active"
+                                >
+                                    <i class="bi bi-box-arrow-in-right me-2"></i>Внешний вход
+                                </router-link>
+                            </li>
+                            <li><hr class="dropdown-divider" /></li>
+                        </template>
                         <li>
                             <button
                                 class="dropdown-item"
                                 type="button"
                                 @click="handleLogout"
                             >
-                                Выйти
+                                <i class="bi bi-box-arrow-right me-2"></i>Выйти
                             </button>
                         </li>
                     </ul>

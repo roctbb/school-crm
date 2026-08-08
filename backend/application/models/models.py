@@ -58,6 +58,7 @@ class OAuthClient(db.Model):
         'OAuthAuthorizationCode', cascade='all, delete-orphan', back_populates='client'
     )
     tokens = db.relationship('OAuthToken', cascade='all, delete-orphan', back_populates='client')
+    consents = db.relationship('OAuthConsent', cascade='all, delete-orphan', back_populates='client')
 
     def get_client_id(self):
         return self.client_id
@@ -89,6 +90,27 @@ class OAuthClient(db.Model):
 
     def check_grant_type(self, grant_type):
         return grant_type in {'authorization_code', 'refresh_token'}
+
+
+class OAuthConsent(db.Model):
+    __tablename__ = 'oauth_consents'
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'client_id', name='uq_oauth_consents_user_client'),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    client_id = db.Column(
+        db.String(120), db.ForeignKey('oauth_clients.client_id', ondelete='CASCADE'), nullable=False
+    )
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    scopes = db.Column(db.JSON, nullable=False, server_default=db.text("'[]'::json"))
+    created_at = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
+    updated_at = db.Column(
+        db.DateTime, nullable=False, server_default=db.func.now(), onupdate=db.func.now()
+    )
+
+    client = db.relationship('OAuthClient', back_populates='consents')
+    user = db.relationship('User', foreign_keys=[user_id], lazy='joined')
 
 
 class OAuthAuthorizationCode(db.Model):

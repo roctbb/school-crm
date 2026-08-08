@@ -21,7 +21,7 @@
                         class="badge bg-secondary rounded-pill py-1 px-2"
                         style="font-size: 0.75rem;"
                     >
-                      {{ objects.length }}
+                      {{ groupCounts[group] || objects.length }}
                     </span>
                 </h5>
 
@@ -77,6 +77,10 @@ export default {
         groupedData: {
             type: Object,
             default: null
+        },
+        groupCounts: {
+            type: Object,
+            default: () => ({})
         },
         groupingAttribute: {
             type: Object,

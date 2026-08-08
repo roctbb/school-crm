@@ -9,7 +9,7 @@ from flask import current_app
 
 
 def find_invitation(invite_key):
-    return Invitation.query.filter_by(key=invite_key, used_at=None).first()
+    return Invitation.query.filter_by(key=invite_key, used_at=None, deleted_at=None).first()
 
 
 @transaction
