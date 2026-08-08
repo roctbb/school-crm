@@ -1,5 +1,6 @@
 from validate_email_address import validate_email
 import re
+from urllib.parse import urlsplit
 
 from .common import *
 from application.models import ObjectType, Form, Object
@@ -18,6 +19,8 @@ OBJECT_TYPE_PARAM_KEYS = {
 OBJECT_TYPE_WIDGETS = {'active_events', 'birthdays', 'calendar', 'portfolio_progress'}
 ROLE_CODES = {'student', 'teacher', 'admin'}
 CODE_PATTERN = re.compile(r'^[a-z][a-z0-9_-]{1,99}$')
+OAUTH_CLIENT_ID_PATTERN = re.compile(r'^[a-z][a-z0-9._-]{2,119}$')
+OAUTH_SCOPES = {'openid', 'profile', 'email', 'roles', 'offline_access'}
 
 
 def validate_object(data):
@@ -29,6 +32,76 @@ def validate_object(data):
     if not isinstance(data.get('attributes', {}), dict):
         raise LogicException("Поле attributes должно быть объектом JSON.", 422)
 
+    return data
+
+
+def _validate_oauth_uri(uri, field):
+    if not isinstance(uri, str) or not uri or len(uri) > 2000:
+        raise LogicException(f"Некорректный URI в поле {field}.", 422, field=field)
+    parsed = urlsplit(uri)
+    is_local_http = parsed.scheme == 'http' and parsed.hostname in {'localhost', '127.0.0.1'}
+    if parsed.scheme != 'https' and not is_local_http:
+        raise LogicException(
+            f"URI в поле {field} должен использовать HTTPS; HTTP разрешён только для localhost.",
+            422,
+            field=field,
+        )
+    if not parsed.netloc or parsed.username or parsed.password or parsed.fragment:
+        raise LogicException(f"Некорректный URI в поле {field}.", 422, field=field)
+    return uri
+
+
+def validate_oauth_client(data):
+    if not isinstance(data, dict):
+        raise LogicException("Описание OIDC-клиента должно быть объектом JSON.", 422)
+
+    should_have(data, 'name', min_length=1, max_length=120)
+    should_have(data, 'client_id', min_length=3, max_length=120)
+    if not OAUTH_CLIENT_ID_PATTERN.fullmatch(data['client_id']):
+        raise LogicException(
+            "client_id должен начинаться с латинской буквы и содержать только a-z, 0-9, ., _ или -.",
+            422,
+            field='client_id',
+        )
+
+    description = data.get('description', '')
+    if not isinstance(description, str) or len(description) > 4000:
+        raise LogicException("Описание должно быть строкой до 4000 символов.", 422, field='description')
+
+    for field in ('redirect_uris', 'post_logout_redirect_uris'):
+        values = data.get(field, [])
+        if not isinstance(values, list) or not all(isinstance(value, str) for value in values):
+            raise LogicException(f"Поле {field} должно быть списком URI.", 422, field=field)
+        values = list(dict.fromkeys(value.strip() for value in values if value.strip()))
+        data[field] = [_validate_oauth_uri(value, field) for value in values]
+
+    if not data['redirect_uris']:
+        raise LogicException("Нужен хотя бы один redirect URI.", 422, field='redirect_uris')
+
+    scopes = data.get('allowed_scopes', ['openid', 'profile', 'email', 'roles'])
+    if not isinstance(scopes, list) or not all(isinstance(scope, str) for scope in scopes):
+        raise LogicException("allowed_scopes должен быть списком строк.", 422, field='allowed_scopes')
+    scopes = list(dict.fromkeys(scopes))
+    invalid_scopes = set(scopes) - OAUTH_SCOPES
+    if invalid_scopes or 'openid' not in scopes:
+        raise LogicException("Клиент должен иметь scope openid и только поддерживаемые scopes.", 422)
+    data['allowed_scopes'] = scopes
+
+    roles = data.get('allowed_roles', ['student', 'teacher', 'admin'])
+    if not isinstance(roles, list) or not roles or not all(isinstance(role, str) for role in roles):
+        raise LogicException("Нужно выбрать хотя бы одну допустимую роль.", 422, field='allowed_roles')
+    invalid_roles = set(roles) - ROLE_CODES
+    if invalid_roles:
+        raise LogicException(f"Неизвестные роли: {', '.join(sorted(invalid_roles))}.", 422)
+    data['allowed_roles'] = list(dict.fromkeys(roles))
+
+    for field, default in (('is_confidential', True), ('is_active', True)):
+        data[field] = data.get(field, default)
+        if not isinstance(data[field], bool):
+            raise LogicException(f"Поле {field} должно быть boolean.", 422, field=field)
+
+    data['name'] = data['name'].strip()
+    data['description'] = description.strip()
     return data
 
 

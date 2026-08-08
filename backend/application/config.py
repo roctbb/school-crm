@@ -27,6 +27,21 @@ class Config:
     RATELIMIT_STORAGE_URI = os.getenv('RATELIMIT_STORAGE_URI', 'redis://localhost:6379/2')
     MASTER_PASSWORD = os.getenv('MASTER_PASSWORD')
     EXTERNAL_URL = os.getenv('EXTERNAL_URL', '')
+    BASE_URL = os.getenv('APP_URL', 'http://localhost:5173')
+    OIDC_ISSUER = os.getenv('OIDC_ISSUER')
+    OIDC_KEY_PATH = os.getenv(
+        'OIDC_KEY_PATH',
+        os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'storage', 'oidc_signing_key.pem')),
+    )
+    OIDC_AUTH_CODE_EXPIRES = int(os.getenv('OIDC_AUTH_CODE_EXPIRES', 300))
+    OIDC_ACCESS_TOKEN_EXPIRES = int(os.getenv('OIDC_ACCESS_TOKEN_EXPIRES', 900))
+    OIDC_ID_TOKEN_EXPIRES = int(os.getenv('OIDC_ID_TOKEN_EXPIRES', 900))
+    OIDC_REFRESH_TOKEN_EXPIRES = int(os.getenv('OIDC_REFRESH_TOKEN_EXPIRES', 2592000))
+    OAUTH2_TOKEN_EXPIRES_IN = {
+        'authorization_code': OIDC_ACCESS_TOKEN_EXPIRES,
+        'refresh_token': OIDC_ACCESS_TOKEN_EXPIRES,
+    }
+    OAUTH2_REFRESH_TOKEN_GENERATOR = True
 
 class DevelopmentConfig(Config):
     """Development configuration"""
@@ -57,6 +72,7 @@ class TestingConfig(Config):
     DEBUG = True
     TESTING = True
     RATELIMIT_STORAGE_URI = 'memory://'
+    OIDC_KEY_PATH = os.getenv('TEST_OIDC_KEY_PATH', '/tmp/school_crm_test_oidc_signing_key.pem')
 
 
 # Выбор конфигурации на основе переменной окружения

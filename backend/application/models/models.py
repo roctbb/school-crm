@@ -1,5 +1,7 @@
 from .tables import *
 from datetime import datetime
+import time
+import uuid
 
 
 class User(db.Model):
@@ -11,10 +13,173 @@ class User(db.Model):
     password = db.Column(db.String(256), nullable=True)
     role = db.Column(db.String(100), nullable=False)
     reset_token = db.Column(db.String(100), nullable=True)
+    sso_subject = db.Column(
+        db.String(36), nullable=False, unique=True, default=lambda: str(uuid.uuid4())
+    )
     created_at = db.Column(db.DateTime, nullable=True, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, nullable=True, server_default=db.func.now(), onupdate=db.func.now())
 
     objects = db.relationship('Object', secondary=users_objects, back_populates='owners')
+
+    def get_user_id(self):
+        return str(self.id)
+
+
+class OAuthClient(db.Model):
+    __tablename__ = 'oauth_clients'
+
+    id = db.Column(db.Integer, primary_key=True)
+    client_id = db.Column(db.String(120), nullable=False, unique=True)
+    client_secret_hash = db.Column(db.String(256), nullable=True)
+    name = db.Column(db.String(120), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    redirect_uris = db.Column(db.JSON, nullable=False, server_default=db.text("'[]'::json"))
+    post_logout_redirect_uris = db.Column(
+        db.JSON, nullable=False, server_default=db.text("'[]'::json")
+    )
+    allowed_scopes = db.Column(
+        db.JSON, nullable=False,
+        server_default=db.text("'[\"openid\", \"profile\", \"email\", \"roles\"]'::json"),
+    )
+    allowed_roles = db.Column(
+        db.JSON, nullable=False,
+        server_default=db.text("'[\"student\", \"teacher\", \"admin\"]'::json"),
+    )
+    is_confidential = db.Column(db.Boolean, nullable=False, server_default=db.true())
+    is_active = db.Column(db.Boolean, nullable=False, server_default=db.true())
+    created_at = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
+    updated_at = db.Column(
+        db.DateTime, nullable=False, server_default=db.func.now(), onupdate=db.func.now()
+    )
+    creator_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
+
+    creator = db.relationship('User', foreign_keys=[creator_id], lazy='joined')
+    authorization_codes = db.relationship(
+        'OAuthAuthorizationCode', cascade='all, delete-orphan', back_populates='client'
+    )
+    tokens = db.relationship('OAuthToken', cascade='all, delete-orphan', back_populates='client')
+
+    def get_client_id(self):
+        return self.client_id
+
+    def get_default_redirect_uri(self):
+        return (self.redirect_uris or [None])[0]
+
+    def get_allowed_scope(self, scope):
+        requested = (scope or '').split()
+        allowed = set(self.allowed_scopes or [])
+        return ' '.join(item for item in requested if item in allowed)
+
+    def check_redirect_uri(self, redirect_uri):
+        return redirect_uri in (self.redirect_uris or [])
+
+    def check_client_secret(self, client_secret):
+        if not self.is_confidential or not self.client_secret_hash or not client_secret:
+            return False
+        from application.infrastructure import bcrypt
+        return bcrypt.check_password_hash(self.client_secret_hash, client_secret)
+
+    def check_endpoint_auth_method(self, method, endpoint):
+        if self.is_confidential:
+            return method in {'client_secret_basic', 'client_secret_post'}
+        return method == 'none'
+
+    def check_response_type(self, response_type):
+        return response_type == 'code'
+
+    def check_grant_type(self, grant_type):
+        return grant_type in {'authorization_code', 'refresh_token'}
+
+
+class OAuthAuthorizationCode(db.Model):
+    __tablename__ = 'oauth_authorization_codes'
+
+    id = db.Column(db.Integer, primary_key=True)
+    code_hash = db.Column(db.String(64), nullable=False, unique=True)
+    client_id = db.Column(
+        db.String(120), db.ForeignKey('oauth_clients.client_id', ondelete='CASCADE'), nullable=False
+    )
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    redirect_uri = db.Column(db.Text, nullable=False)
+    scope = db.Column(db.Text, nullable=False)
+    nonce = db.Column(db.String(255), nullable=False)
+    code_challenge = db.Column(db.String(128), nullable=False)
+    code_challenge_method = db.Column(db.String(10), nullable=False, server_default='S256')
+    auth_time = db.Column(db.Integer, nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
+    expires_at = db.Column(db.DateTime, nullable=False)
+
+    client = db.relationship('OAuthClient', back_populates='authorization_codes')
+    user = db.relationship('User', foreign_keys=[user_id], lazy='joined')
+
+    def get_redirect_uri(self):
+        return self.redirect_uri
+
+    def get_scope(self):
+        return self.scope
+
+    def get_nonce(self):
+        return self.nonce
+
+    def get_auth_time(self):
+        return self.auth_time
+
+    def get_acr(self):
+        return None
+
+    def get_amr(self):
+        return ['pwd']
+
+
+class OAuthToken(db.Model):
+    __tablename__ = 'oauth_tokens'
+
+    id = db.Column(db.Integer, primary_key=True)
+    client_id = db.Column(
+        db.String(120), db.ForeignKey('oauth_clients.client_id', ondelete='CASCADE'), nullable=False
+    )
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    access_token_hash = db.Column(db.String(64), nullable=False, unique=True)
+    refresh_token_hash = db.Column(db.String(64), nullable=True, unique=True)
+    token_type = db.Column(db.String(40), nullable=False, server_default='Bearer')
+    scope = db.Column(db.Text, nullable=False)
+    issued_at = db.Column(db.Integer, nullable=False)
+    expires_in = db.Column(db.Integer, nullable=False)
+    refresh_expires_at = db.Column(db.Integer, nullable=True)
+    access_token_revoked_at = db.Column(db.Integer, nullable=False, server_default='0')
+    refresh_token_revoked_at = db.Column(db.Integer, nullable=False, server_default='0')
+
+    client = db.relationship('OAuthClient', back_populates='tokens')
+    user = db.relationship('User', foreign_keys=[user_id], lazy='joined')
+
+    def check_client(self, client):
+        return self.client_id == client.client_id
+
+    def get_scope(self):
+        return self.scope
+
+    def get_expires_in(self):
+        return max(0, self.issued_at + self.expires_in - int(time.time()))
+
+    def is_expired(self):
+        return self.issued_at + self.expires_in <= int(time.time())
+
+    def is_revoked(self):
+        return bool(self.access_token_revoked_at)
+
+    def is_refresh_token_active(self):
+        return bool(
+            self.refresh_token_hash
+            and not self.refresh_token_revoked_at
+            and self.refresh_expires_at
+            and self.refresh_expires_at > int(time.time())
+        )
+
+    def get_user(self):
+        return self.user
+
+    def get_client(self):
+        return self.client
 
 
 class ObjectType(db.Model):

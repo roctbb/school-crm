@@ -64,7 +64,12 @@ export default {
             try {
                 const token = await login(this.email, this.password);
                 await useMainStore().setToken(token);
-                this.$router.push("/");
+                const redirect = typeof this.$route.query.redirect === 'string'
+                    && this.$route.query.redirect.startsWith('/')
+                    && !this.$route.query.redirect.startsWith('//')
+                    ? this.$route.query.redirect
+                    : '/';
+                this.$router.push(redirect);
                 this.error = "";
             } catch (error) {
                 this.error = error.message || "Не удалось соединиться с сервером.";

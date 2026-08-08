@@ -14,6 +14,24 @@ def present_user(user):
     }
 
 
+def present_oauth_client(client):
+    return {
+        'id': client.id,
+        'client_id': client.client_id,
+        'name': client.name,
+        'description': client.description or '',
+        'redirect_uris': client.redirect_uris or [],
+        'post_logout_redirect_uris': client.post_logout_redirect_uris or [],
+        'allowed_scopes': client.allowed_scopes or [],
+        'allowed_roles': client.allowed_roles or [],
+        'is_confidential': client.is_confidential,
+        'is_active': client.is_active,
+        'created_at': client.created_at.isoformat(),
+        'updated_at': client.updated_at.isoformat(),
+        'creator': present_user(client.creator) if client.creator else None,
+    }
+
+
 def present_object_type(object_type, user):
     return {
         'id': object_type.id,

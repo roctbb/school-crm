@@ -10,6 +10,8 @@ from application.models import *
 from application.config import get_config
 from application.helpers.exceptions import LogicException
 from application.blueprints import api_blueprint
+from application.blueprints.oidc_blueprint import oidc_public_blueprint
+from application.oidc import init_oidc
 from flask_cors import CORS
 
 
@@ -18,6 +20,8 @@ def create_app(config_name=None):
 
     # Загрузка конфигурации из config.py
     app.config.from_object(get_config(config_name))
+    if not app.config.get('OIDC_ISSUER'):
+        app.config['OIDC_ISSUER'] = app.config['BASE_URL'].rstrip('/')
 
     if app.config['DEBUG_QUERIES']:
         import logging
@@ -32,11 +36,13 @@ def create_app(config_name=None):
     # Инициализация базы данных и инструментов миграции
     db.init_app(app)
     Migrate(app, db)
+    init_oidc(app)
 
     # Настройка CORS
     CORS(app)
 
     app.register_blueprint(api_blueprint)
+    app.register_blueprint(oidc_public_blueprint)
     mail.init_app(app)
 
     celery.conf.update(app.config)

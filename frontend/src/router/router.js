@@ -46,6 +46,23 @@ const routes = [
         meta: {requiresAuth: true, requiresAdmin: true}
     },
     {
+        path: '/admin/oauth-clients',
+        name: 'OAuthClientsAdmin',
+        component: () => import('@/views/Admin/OAuthClientsAdminView.vue'),
+        meta: {requiresAuth: true, requiresAdmin: true}
+    },
+    {
+        path: '/oauth/authorize',
+        name: 'OAuthAuthorize',
+        component: () => import('@/views/Auth/OAuthAuthorizeView.vue'),
+        meta: {requiresAuth: true}
+    },
+    {
+        path: '/oauth/logout',
+        name: 'OAuthLogout',
+        component: () => import('@/views/Auth/OAuthLogoutView.vue')
+    },
+    {
         path: '/:object_type',
         name: 'ObjectType',
         component: () => import('@/views/Objects/ObjectsView.vue'),
@@ -180,12 +197,17 @@ router.beforeEach(async (to, from, next) => {
     console.log("Router auth check: ", has_auth ? "OK" : "FAIL");
     if (to.meta.requiresAuth && !has_auth) {
         console.log("Redirecting to login")
-        next({name: 'Login'});
+        next({name: 'Login', query: {redirect: to.fullPath}});
     } else if (to.meta.requiresAdmin && useMainStore().profile?.role !== 'admin') {
         next({name: 'Objects'});
     } else if (to.meta.withoutAuth && has_auth) {
         console.log("Redirecting to main")
-        next({name: 'Objects'});
+        const redirect = typeof to.query.redirect === 'string'
+            && to.query.redirect.startsWith('/')
+            && !to.query.redirect.startsWith('//')
+            ? to.query.redirect
+            : null;
+        next(redirect || {name: 'Objects'});
     } else {
         next();
     }

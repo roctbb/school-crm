@@ -39,6 +39,18 @@
                         class="nav-item"
                     >
                         <router-link
+                            to="/admin/oauth-clients"
+                            class="nav-link"
+                            active-class="active"
+                        >
+                            Внешний вход
+                        </router-link>
+                    </li>
+                    <li
+                        v-if="hasAdminAccess()"
+                        class="nav-item"
+                    >
+                        <router-link
                             to="/admin/object-types"
                             class="nav-link"
                             active-class="active"

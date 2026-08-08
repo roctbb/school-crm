@@ -16,3 +16,4 @@ celery
 redis
 flask_mail
 Flask-Limiter[redis]
+Authlib==1.7.2
