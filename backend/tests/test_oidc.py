@@ -153,6 +153,13 @@ def test_token_endpoint_trusts_https_from_the_nearest_proxy(client):
     assert response.get_json()['error'] == 'invalid_client'
 
 
+def test_userinfo_returns_standard_bearer_error(client):
+    response = client.get('/api/oauth/userinfo')
+    assert response.status_code == 401
+    assert response.get_json()['error'] == 'missing_authorization'
+    assert response.headers['WWW-Authenticate'].lower().startswith('bearer ')
+
+
 def test_admin_manages_clients_and_secret_is_only_returned_once(client):
     created, admin = _create_registered_client(client)
     secret = created.pop('client_secret')

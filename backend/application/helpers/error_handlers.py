@@ -16,6 +16,10 @@ def setup_handlers(app):
     # Обработчик стандартных HTTP ошибок (например, 404, 405)
     @app.errorhandler(HTTPException)
     def handle_http_exception(e):
+        # Authlib формирует стандартные OAuth JSON-ответы и WWW-Authenticate
+        # в собственном HTTPException. Не заменяем их общим сообщением CRM.
+        if hasattr(e, 'body') and hasattr(e, 'headers'):
+            return e.get_response()
         if e.code == 404:
             response = {"message": "Маршрут не найден"}
         else:
