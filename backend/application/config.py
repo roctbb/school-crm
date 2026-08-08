@@ -56,6 +56,7 @@ class TestingConfig(Config):
     )
     DEBUG = True
     TESTING = True
+    RATELIMIT_STORAGE_URI = 'memory://'
 
 
 # Выбор конфигурации на основе переменной окружения

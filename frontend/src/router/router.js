@@ -40,6 +40,12 @@ const routes = [
         })
     },
     {
+        path: '/admin/object-types',
+        name: 'ObjectTypesAdmin',
+        component: () => import('@/views/Admin/ObjectTypesAdminView.vue'),
+        meta: {requiresAuth: true, requiresAdmin: true}
+    },
+    {
         path: '/:object_type',
         name: 'ObjectType',
         component: () => import('@/views/Objects/ObjectsView.vue'),
@@ -175,6 +181,8 @@ router.beforeEach(async (to, from, next) => {
     if (to.meta.requiresAuth && !has_auth) {
         console.log("Redirecting to login")
         next({name: 'Login'});
+    } else if (to.meta.requiresAdmin && useMainStore().profile?.role !== 'admin') {
+        next({name: 'Objects'});
     } else if (to.meta.withoutAuth && has_auth) {
         console.log("Redirecting to main")
         next({name: 'Objects'});

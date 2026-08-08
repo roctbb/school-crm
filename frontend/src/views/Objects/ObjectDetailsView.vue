@@ -45,7 +45,6 @@
 
 <script>
 import useMainStore from "@/stores/mainStore.js";
-import { deleteObject } from "@/api/objects_api.js";
 import BaseLayout from "@/components/layouts/BaseLayout.vue";
 import Loading from "@/components/common/Loading.vue";
 import DetailsWidgetBar from "@/components/objects/DetailsWidgetBar.vue";
@@ -84,7 +83,7 @@ export default {
         async handleDelete() {
             const confirmed = window.confirm("Вы действительно хотите удалить этот объект?");
             if (confirmed) {
-                await deleteObject(this.object.id);
+                await this.object.delete();
                 this.store.objects[this.object.type] = this.store.objects[this.object.type].filter(
                     (obj) => obj.id !== this.object.id
                 );

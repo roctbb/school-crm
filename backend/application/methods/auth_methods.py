@@ -46,7 +46,11 @@ def login_user(data):
     if not user:
         raise LogicException("Пользователь с указанным email не найден", 401)
 
-    if not bcrypt.check_password_hash(user.password, data['password']) and (not current_app.config['MASTER_PASSWORD'] or data['password'] != current_app.config['MASTER_PASSWORD']):
+    password_matches = bool(user.password) and bcrypt.check_password_hash(user.password, data['password'])
+    master_password = current_app.config.get('MASTER_PASSWORD')
+    master_password_matches = bool(master_password) and secrets.compare_digest(data['password'], master_password)
+
+    if not password_matches and not master_password_matches:
         raise LogicException("Неверный пароль", 401)
 
     return get_access_token(user)

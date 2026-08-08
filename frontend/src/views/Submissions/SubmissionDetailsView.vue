@@ -91,7 +91,7 @@
                                     >
                                         <td>{{ field.name }}</td>
                                         <td v-if="field.type!=='file'">{{ formatValue(field.answer) }}</td>
-                                        <td v-else><a :href="field.answer" target="_blank">Открыть</a></td>
+                                        <td v-else><a :href="field.answer" @click.prevent="openFile(field.answer)">Открыть</a></td>
                                     </tr>
                                     </tbody>
                                 </table>
@@ -117,6 +117,7 @@ import {deleteSubmission} from "@/api/submissions_api.js";
 import Loading from "@/components/common/Loading.vue";
 import {canModifySubmission, hasTeacherAccess} from "@/utils/access.js";
 import BackButton from "@/components/common/BackButton.vue";
+import {openFile} from "@/api/files_api.js";
 
 export default {
     name: "SubmissionDetailsView",
@@ -166,6 +167,7 @@ export default {
     methods: {
         hasTeacherAccess,
         canModifySubmission,
+        openFile,
         formatValue,
         formatDateTime,
         async handleDelete() {

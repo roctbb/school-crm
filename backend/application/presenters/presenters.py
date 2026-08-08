@@ -29,6 +29,15 @@ def present_object_type(object_type, user):
     }
 
 
+def present_object_type_revision(revision):
+    return {
+        'id': revision.id,
+        'snapshot': revision.snapshot,
+        'editor': present_user(revision.editor) if revision.editor else None,
+        'created_at': revision.created_at.isoformat(),
+    }
+
+
 def present_connected_object(obj):
     return {
         'id': obj.id,

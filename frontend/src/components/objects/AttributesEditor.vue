@@ -62,6 +62,8 @@
                     v-if="attribute.type === 'file'"
                     v-model="localAttributes[attribute.code]"
                     :required="attribute.required"
+                    :history-enabled="Boolean(attribute.keep_history)"
+                    :id="attribute.code"
                 />
 
 
@@ -122,8 +124,6 @@
 
 
 <script>
-import {uploadFile} from "@/api/files_api.js";
-import {API_URL} from "@/api/common.js";
 import VueDatePicker from "@vuepic/vue-datepicker";
 import "@vuepic/vue-datepicker/dist/main.css";
 import {hasTeacherAccess} from "@/utils/access.js";

@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify
 from application.helpers.decorators import *
+from application.helpers.exceptions import LogicException
 from application.validators import validate_form
 from application.presenters.presenters import *
 from application.methods import *
@@ -11,7 +12,7 @@ submissions_blueprint = Blueprint('submissions', __name__, url_prefix='/submissi
 @forms_blueprint.route('', methods=['GET'])
 @requires_user
 def get_forms_endpoint(user):
-    return jsonify([present_form(f) for f in get_forms()]), 200
+    return jsonify([present_form(f) for f in get_forms() if can_get_form_category(user, f.category)]), 200
 
 
 @forms_blueprint.route('/categories', methods=['GET'])
@@ -34,6 +35,8 @@ def create_form_endpoint(validated_data, user, category_id):
 @requires_user
 def get_form_endpoint(user, form_id):
     form = get_form_by_id(form_id)
+    if not can_get_form_category(user, form.category):
+        raise LogicException("Доступ запрещен", 403)
     return jsonify(present_form(form)), 200
 
 

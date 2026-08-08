@@ -156,7 +156,7 @@ def delete_submission(user, submission):
 @transaction
 def approve_submission(user, submission):
     submission.is_approved = True
-    submission.approved_by = user
+    submission.approver_by = user
 
     if all(submission.is_approved for submission in submission.object.submissions if not submission.deleted_at):
         submission.object.has_unapproved_submissions = False

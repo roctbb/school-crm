@@ -80,6 +80,7 @@
 import useMainStore from "@/stores/mainStore.js";
 import AttributePresenter from "@/components/objects/AttributePresenter.vue";
 import { hasAdminAccess, hasTeacherAccess } from "@/utils/access.js";
+import {latestFileUrl, resolveFileUrl} from "@/api/files_api.js";
 
 export default {
     name: "ObjectCard",
@@ -94,13 +95,10 @@ export default {
         return {
             store: useMainStore(),
             showCopied: false,
+            photoUrl: null,
         };
     },
     computed: {
-        // URL фото
-        photoUrl() {
-            return this.object.attributes.photo || null;
-        },
         // Проверяем, может ли объект иметь фото
         canHavePhoto() {
             return this.type?.available_attributes?.some(
@@ -112,9 +110,39 @@ export default {
             return this.store.getObjectTypeByCode(this.object.type);
         },
     },
+    watch: {
+        'object.attributes.photo': {
+            immediate: true,
+            handler(photo) {
+                this.loadPhoto(photo);
+            },
+        },
+    },
+    beforeUnmount() {
+        this.releasePhotoUrl();
+    },
     methods: {
         hasAdminAccess,
         hasTeacherAccess,
+
+        releasePhotoUrl() {
+            if (this.photoUrl?.startsWith('blob:')) {
+                URL.revokeObjectURL(this.photoUrl);
+            }
+            this.photoUrl = null;
+        },
+
+        async loadPhoto(photo) {
+            this.releasePhotoUrl();
+            const currentPhoto = latestFileUrl(photo);
+            if (!currentPhoto) return;
+
+            try {
+                this.photoUrl = await resolveFileUrl(currentPhoto);
+            } catch (error) {
+                console.error("Не удалось загрузить фото объекта", error);
+            }
+        },
 
         copyInviteLink() {
             const invKey = this.object.invitation.key;

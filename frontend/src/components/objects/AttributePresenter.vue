@@ -1,10 +1,11 @@
 <script>
 import {external_url} from "@/utils/helpers.js";
 import {hasTeacherAccess} from "@/utils/access.js";
+import {latestFileUrl, normalizeFileUrls, openFile} from "@/api/files_api.js";
 
 export default {
     name: "AttributePresenter",
-    methods: {external_url},
+    methods: {external_url, openFile, latestFileUrl, normalizeFileUrls},
     props: {
         object: Object,
         type: Object,
@@ -36,7 +37,11 @@ export default {
         <li v-for="attribute in filteredAttributes" :key="attribute.code">
             <b>{{ attribute.name }}: </b>
             <span v-if="attribute.type === 'file'">
-                <a :href="object.attributes[attribute.code]" target="_blank">Скачать</a>
+                <a :href="latestFileUrl(object.attributes[attribute.code])"
+                   @click.prevent="openFile(latestFileUrl(object.attributes[attribute.code]))">Скачать</a>
+                <small v-if="normalizeFileUrls(object.attributes[attribute.code]).length > 1" class="ms-1 text-muted">
+                    (+{{ normalizeFileUrls(object.attributes[attribute.code]).length - 1 }} в истории)
+                </small>
             </span>
             <span v-else-if="attribute.type === 'link'">
                 <a :href="object.attributes[attribute.code]" target="_blank">{{ object.attributes[attribute.code] }}</a>

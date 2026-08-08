@@ -22,7 +22,7 @@ class ObjectType(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    code = db.Column(db.String(100), nullable=False)
+    code = db.Column(db.String(100), nullable=False, unique=True)
 
     available_attributes = db.Column(db.JSON, server_default=db.text("'[]'::json"))
     available_params = db.Column(db.JSON, server_default=db.text("'[]'::json"))
@@ -37,6 +37,25 @@ class ObjectType(db.Model):
         secondary=object_types_form_categories,
         back_populates='object_types', lazy=False
     )
+    revisions = db.relationship(
+        'ObjectTypeRevision', back_populates='object_type', lazy='select',
+        cascade='all, delete-orphan', order_by='desc(ObjectTypeRevision.created_at)'
+    )
+
+
+class ObjectTypeRevision(db.Model):
+    __tablename__ = 'object_type_revisions'
+
+    id = db.Column(db.Integer, primary_key=True)
+    object_type_id = db.Column(
+        db.Integer, db.ForeignKey('object_types.id', ondelete='CASCADE'), nullable=False
+    )
+    editor_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
+    snapshot = db.Column(db.JSON, nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
+
+    object_type = db.relationship('ObjectType', back_populates='revisions')
+    editor = db.relationship('User', foreign_keys=[editor_id], lazy='joined')
 
 
 class Object(db.Model):

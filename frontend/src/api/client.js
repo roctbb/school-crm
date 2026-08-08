@@ -6,7 +6,6 @@ class ApiClient {
     }
 
     setToken(token) {
-        console.log("setting token to ", token);
         this.token = token;
     }
 
@@ -37,7 +36,6 @@ class ApiClient {
             };
         }
 
-        console.log("running request to ", url , " with ", headers, " and ", options);
         const response = await fetch(API_URL + url, {...options, headers});
         await validateResponse(response);
         return response.json();

@@ -115,9 +115,21 @@ class CrmObject extends Model {
 
     async delete() {
         if (this.id) {
-            await deleteObject(this.type, this.id)
-            this.children.forEach(child => child.parents = child.parents.filter(parent => parent.id !== this.id))
-            this.parents.forEach(parent => parent.children = parent.children.filter(child => child.id !== this.id))
+            await deleteObject(this.id)
+
+            for (const childRef of this.children) {
+                const child = this._store.getObject(childRef.type, childRef.id);
+                if (child) {
+                    child.parents = child.parents.filter(parent => parent.id !== this.id);
+                }
+            }
+
+            for (const parentRef of this.parents) {
+                const parent = this._store.getObject(parentRef.type, parentRef.id);
+                if (parent) {
+                    parent.children = parent.children.filter(child => child.id !== this.id);
+                }
+            }
         }
     }
 

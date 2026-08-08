@@ -29,7 +29,7 @@ def get_comment_by_id(comment_id):
 
 
 def get_objects_types():
-    return ObjectType.query.all()
+    return ObjectType.query.order_by(ObjectType.id).all()
 
 
 def get_object_type_by_code(type_code):
@@ -44,7 +44,7 @@ def get_object_type_by_code(type_code):
 @transaction
 def approve_object(user, object):
     object.is_approved = True
-    object.approved_by = user
+    object.approver_by = user
 
     return object
 

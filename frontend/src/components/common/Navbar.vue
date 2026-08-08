@@ -39,6 +39,18 @@
                         class="nav-item"
                     >
                         <router-link
+                            to="/admin/object-types"
+                            class="nav-link"
+                            active-class="active"
+                        >
+                            Типы сущностей
+                        </router-link>
+                    </li>
+                    <li
+                        v-if="hasAdminAccess()"
+                        class="nav-item"
+                    >
+                        <router-link
                             to="/forms"
                             class="nav-link"
                             active-class="active"

@@ -4,20 +4,39 @@
             type="file"
             :id="id"
             class="form-control"
-            :required="required"
+            :required="required && fileUrls.length === 0"
             @change="onFileChange"
         />
 
+        <div v-if="historyEnabled && fileUrls.length" class="form-check mt-2">
+            <input
+                :id="`${id || 'file'}-append-history`"
+                v-model="appendToHistory"
+                class="form-check-input"
+                type="checkbox"
+            />
+            <label :for="`${id || 'file'}-append-history`" class="form-check-label">
+                Добавить к истории вместо замены
+            </label>
+        </div>
+
         <!-- Если URL к файлу уже есть (и ничего не загружается) -->
-        <div v-if="fileUrl && !isUploading" class="mt-2">
+        <div v-if="currentFileUrl && !isUploading" class="mt-2">
             <a
-                :href="fileUrl"
-                target="_blank"
+                :href="currentFileUrl"
+                @click.prevent="handleOpenFile(currentFileUrl)"
                 rel="noopener noreferrer"
                 class="text-primary"
             >
-                Открыть файл
+                Открыть текущий файл
             </a>
+
+            <details v-if="historyEnabled && fileUrls.length > 1" class="mt-1">
+                <summary class="small text-muted">Предыдущие файлы: {{ fileUrls.length - 1 }}</summary>
+                <div v-for="(url, index) in previousFileUrls" :key="url" class="small">
+                    <a :href="url" @click.prevent="handleOpenFile(url)">Версия {{ index + 1 }}</a>
+                </div>
+            </details>
         </div>
 
         <!-- Показать индикатор процесса загрузки -->
@@ -28,7 +47,7 @@
 </template>
 
 <script>
-import {uploadFile} from "@/api/files_api.js";
+import {latestFileUrl, normalizeFileUrls, openFile, uploadFile} from "@/api/files_api.js";
 
 export default {
     name: "FileUploadField",
@@ -36,7 +55,7 @@ export default {
         /* v-model со значением URL или Base64 (проще всего),
            куда будет сохраняться загруженный файл */
         modelValue: {
-            type: String,
+            type: [String, Array],
             default: "",
         },
         id: {
@@ -47,35 +66,44 @@ export default {
             type: Boolean,
             default: false,
         },
+        historyEnabled: {
+            type: Boolean,
+            default: false,
+        },
     },
     data() {
         return {
-            fileUrl: this.modelValue, // текущее значение, которое видит компонент
             isUploading: false,
+            appendToHistory: false,
         };
     },
-    watch: {
-        // Если извне меняется значение (например, сброс),
-        // подхватываем и у себя
-        modelValue(newVal) {
-            this.fileUrl = newVal;
+    computed: {
+        fileUrls() {
+            return normalizeFileUrls(this.modelValue);
+        },
+        currentFileUrl() {
+            return latestFileUrl(this.modelValue);
+        },
+        previousFileUrls() {
+            return this.fileUrls.slice(0, -1).reverse();
         },
     },
     methods: {
+        async handleOpenFile(url) {
+            await openFile(url);
+        },
         async onFileChange(e) {
             const file = e.target.files[0];
             if (!file) return;
 
-            // Пример: эмулируем "загрузку" на сервер
             this.isUploading = true;
             try {
-                // Здесь можно сделать реальную отправку на сервер (через formData, axios и т.п.)
-                // Либо просто преобразовать в Base64, если нужно хранить в базе
-                // Примерно так:
                 const path = await uploadFile(file);
                 this.isUploading = false;
-                this.fileUrl = path
-                this.$emit("update:modelValue", path);
+                const nextValue = this.historyEnabled
+                    ? (this.appendToHistory ? [...this.fileUrls, path] : [path])
+                    : path;
+                this.$emit("update:modelValue", nextValue);
             } catch (error) {
                 console.error("Ошибка загрузки файла", error);
                 this.isUploading = false;

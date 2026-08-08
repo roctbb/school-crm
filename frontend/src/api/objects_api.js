@@ -6,6 +6,32 @@ export async function fetchObjectTypes() {
     });
 }
 
+export async function createObjectType(data) {
+    return await api_client.fetch('/objects/types', {
+        method: 'POST',
+        body: JSON.stringify(data),
+    });
+}
+
+export async function updateObjectType(objectTypeId, data) {
+    return await api_client.fetch(`/objects/types/${objectTypeId}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+    });
+}
+
+export async function fetchObjectTypeUsage(objectTypeId) {
+    return await api_client.fetch(`/objects/types/${objectTypeId}/usage`, {
+        method: 'GET',
+    });
+}
+
+export async function fetchObjectTypeRevisions(objectTypeId) {
+    return await api_client.fetch(`/objects/types/${objectTypeId}/revisions`, {
+        method: 'GET',
+    });
+}
+
 export async function fetchObjectsByType(objectTypeCode) {
     return await api_client.fetch(`/objects/${objectTypeCode}`, {
         method: "GET",

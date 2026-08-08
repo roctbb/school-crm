@@ -24,7 +24,7 @@ def test_object_types_success(client, db_session, test_user, auth_headers):
     db_session.commit()
 
     # Отправляем запрос
-    response = client.get('/api/objects/', headers=auth_headers)
+    response = client.get('/api/objects/types', headers=auth_headers)
     assert response.status_code == 200
 
     # Проверяем, что данные корректно представлены
@@ -36,7 +36,7 @@ def test_object_types_unauthorized(client):
     """
     Тест получения типов объектов без авторизации.
     """
-    response = client.get('/api/objects/')
+    response = client.get('/api/objects/types')
     assert response.status_code == 401
 
 
@@ -44,6 +44,6 @@ def test_object_types_no_data(client, auth_headers):
     """
     Тест обработки ситуации, когда нет доступных типов объектов.
     """
-    response = client.get('/api/objects/', headers=auth_headers)
+    response = client.get('/api/objects/types', headers=auth_headers)
     assert response.status_code == 200
     assert response.json == []

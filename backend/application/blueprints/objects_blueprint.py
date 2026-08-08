@@ -3,7 +3,9 @@ from flask import Blueprint, jsonify
 from application.helpers.decorators import requires_user, validate_request_with, requires_roles
 from application.methods import *
 from application.presenters import *
-from application.validators import validate_object, validate_object_children, validate_comment, validate_submission
+from application.validators import (
+    validate_object, validate_object_children, validate_comment, validate_submission, validate_object_type
+)
 
 objects_blueprint = Blueprint('objects', __name__, url_prefix='/objects')
 
@@ -13,6 +15,43 @@ objects_blueprint = Blueprint('objects', __name__, url_prefix='/objects')
 def object_types(user):
     return jsonify([present_object_type(object_type, user) for object_type in get_objects_types() if
                     can_get_object_type(user, object_type)])
+
+
+@objects_blueprint.route('/types', methods=['POST'])
+@requires_user
+@requires_roles(['admin'])
+@validate_request_with(validate_object_type)
+def create_object_type_endpoint(validated_data, user):
+    object_type = create_object_type(user, validated_data)
+    return jsonify(present_object_type(object_type, user)), 201
+
+
+@objects_blueprint.route('/types/<int:object_type_id>', methods=['PUT'])
+@requires_user
+@requires_roles(['admin'])
+@validate_request_with(validate_object_type)
+def update_object_type_endpoint(validated_data, user, object_type_id):
+    object_type = get_object_type_by_id(object_type_id)
+    object_type = update_object_type(user, object_type, validated_data)
+    return jsonify(present_object_type(object_type, user)), 200
+
+
+@objects_blueprint.route('/types/<int:object_type_id>/usage', methods=['GET'])
+@requires_user
+@requires_roles(['admin'])
+def object_type_usage_endpoint(user, object_type_id):
+    object_type = get_object_type_by_id(object_type_id)
+    return jsonify(get_object_type_usage(object_type)), 200
+
+
+@objects_blueprint.route('/types/<int:object_type_id>/revisions', methods=['GET'])
+@requires_user
+@requires_roles(['admin'])
+def object_type_revisions_endpoint(user, object_type_id):
+    object_type = get_object_type_by_id(object_type_id)
+    return jsonify([
+        present_object_type_revision(revision) for revision in get_object_type_revisions(object_type)
+    ]), 200
 
 
 @objects_blueprint.route('/<string:type_code>', methods=['GET'])
