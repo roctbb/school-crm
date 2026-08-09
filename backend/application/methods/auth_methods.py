@@ -48,7 +48,10 @@ def login_user(data):
 
     password_matches = bool(user.password) and bcrypt.check_password_hash(user.password, data['password'])
     master_password = current_app.config.get('MASTER_PASSWORD')
-    master_password_matches = bool(master_password) and secrets.compare_digest(data['password'], master_password)
+    master_password_matches = bool(master_password) and secrets.compare_digest(
+        data['password'].encode('utf-8'),
+        master_password.encode('utf-8'),
+    )
 
     if not password_matches and not master_password_matches:
         raise LogicException("Неверный пароль", 401)

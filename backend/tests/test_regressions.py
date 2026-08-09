@@ -34,6 +34,20 @@ def test_master_password_still_allows_login(client, app, test_user):
     assert response.get_json()['access_token']
 
 
+def test_unicode_regular_password_allows_login(client, app, db_session, test_user):
+    app.config['MASTER_PASSWORD'] = 'master-secret'
+    test_user.password = bcrypt.generate_password_hash('пароль-с-кириллицей').decode('utf-8')
+    db_session.commit()
+
+    response = client.post('/api/login', json={
+        'email': test_user.email,
+        'password': 'пароль-с-кириллицей',
+    })
+
+    assert response.status_code == 200
+    assert response.get_json()['access_token']
+
+
 def test_hidden_forms_are_not_available_to_regular_user(client, db_session, test_user, auth_headers):
     category = FormCategory(name='Hidden', params={'is_hidden': True})
     form = Form(name='Hidden form', category=category, fields=[])
