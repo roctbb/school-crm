@@ -21,9 +21,11 @@
                     </p>
 
                     <div class="border rounded p-3 mb-3">
-                        <div><strong>{{ authorization.user.name }}</strong></div>
-                        <div class="text-muted">{{ authorization.user.email }}</div>
-                        <div class="small text-muted">Роль: {{ authorization.user.role }}</div>
+                        <div><strong>{{ authorization.identity.name }}</strong></div>
+                        <div class="text-muted">{{ authorization.identity.email }}</div>
+                        <div class="small text-muted">
+                            Объект: {{ authorization.identity.type }} · Роль доступа: {{ authorization.identity.role }}
+                        </div>
                     </div>
 
                     <h6>Приложение получит:</h6>
@@ -66,9 +68,10 @@ export default {
             actionError: null,
             scopeLabels: {
                 openid: 'идентификатор аккаунта',
-                profile: 'имя и профиль',
+                profile: 'имя и тип привязанного объекта CRM',
                 email: 'адрес электронной почты',
                 roles: 'роль в CRM',
+                avatar: 'фотография профиля',
                 offline_access: 'долговременный доступ с обновлением сессии',
             },
         };

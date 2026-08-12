@@ -44,6 +44,8 @@ services:
       FLASK_ENV: production
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_BACKEND: redis://redis:6379/1
+      # Внешний reverse proxy на хосте + nginx этого compose-проекта.
+      TRUSTED_PROXY_COUNT: ${TRUSTED_PROXY_COUNT:-2}
     volumes:
       - backend_storage:/app/storage
     depends_on:
@@ -72,6 +74,25 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  telegram-bot:
+    build: ./backend
+    container_name: crm_telegram_bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/postgres
+      FLASK_ENV: production
+    command: python bot.py
+    depends_on:
+      db:
+        condition: service_healthy
     logging:
       driver: "json-file"
       options:

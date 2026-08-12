@@ -1,5 +1,7 @@
+import os
+
 from authlib.integrations.flask_oauth2 import current_token
-from flask import Blueprint, current_app, jsonify, request
+from flask import Blueprint, current_app, jsonify, make_response, request, send_from_directory
 
 from application.helpers.decorators import requires_roles, requires_user, validate_request_with
 from application.helpers.exceptions import LogicException
@@ -11,14 +13,17 @@ from application.methods import (
     deny_oauth_request,
     get_oauth_client,
     get_oauth_clients,
+    get_user_avatar_file,
     rotate_oauth_client_secret,
     update_oauth_client,
     validate_authorization_request,
     validate_logout_request,
 )
+from application.constants import UPLOAD_FOLDER
 from application.oidc import (
     authorization_server,
     get_oidc_issuer,
+    get_oidc_identity,
     get_public_jwks,
     oidc_user_info,
     require_oauth,
@@ -49,10 +54,11 @@ def openid_configuration():
         'token_endpoint_auth_methods_supported': [
             'client_secret_basic', 'client_secret_post', 'none',
         ],
-        'scopes_supported': ['openid', 'profile', 'email', 'roles', 'offline_access'],
+        'scopes_supported': ['openid', 'profile', 'email', 'roles', 'avatar', 'offline_access'],
         'claims_supported': [
             'iss', 'sub', 'aud', 'exp', 'iat', 'auth_time', 'nonce',
-            'name', 'preferred_username', 'email', 'email_verified', 'role', 'roles',
+            'name', 'preferred_username', 'email', 'email_verified', 'role', 'roles', 'picture',
+            'object_id', 'object_type', 'crm_object',
         ],
         'code_challenge_methods_supported': ['S256'],
     })
@@ -83,12 +89,29 @@ def oidc_userinfo():
     return jsonify(dict(oidc_user_info(current_token.user, current_token.scope)))
 
 
+@oidc_blueprint.route('/avatar', methods=['GET'])
+@require_oauth('avatar')
+def oidc_avatar():
+    uploaded_file = get_user_avatar_file(current_token.user)
+    if not uploaded_file:
+        raise LogicException('Аватар не найден.', 404)
+    response = make_response(send_from_directory(
+        os.path.join(UPLOAD_FOLDER, f'folder_{uploaded_file.id}'),
+        uploaded_file.stored_filename,
+        as_attachment=False,
+    ))
+    response.headers['Cache-Control'] = 'private, max-age=300'
+    response.headers['Vary'] = 'Authorization'
+    return response
+
+
 @oidc_blueprint.route('/authorize/request', methods=['GET'])
 @requires_user
 @limiter.limit('240 per minute')
 def oidc_authorization_request(user):
     validated = validate_authorization_request(request.args, user)
     client = validated['client']
+    identity = get_oidc_identity(user)
     return jsonify({
         'client': {
             'client_id': client.client_id,
@@ -96,8 +119,10 @@ def oidc_authorization_request(user):
             'description': client.description or '',
         },
         'scopes': validated['scopes'],
-        'user': {
-            'name': user.name,
+        'identity': {
+            'id': identity.id,
+            'name': identity.name,
+            'type': identity.type.code,
             'email': user.email,
             'role': user.role,
         },

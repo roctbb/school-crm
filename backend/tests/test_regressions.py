@@ -22,6 +22,24 @@ def test_invalid_password_is_rejected_without_master_password(client, app, test_
     assert response.status_code == 401
 
 
+def test_login_does_not_reveal_whether_email_exists(client, app, test_user):
+    app.config['MASTER_PASSWORD'] = None
+
+    wrong_password = client.post('/api/login', json={
+        'email': test_user.email,
+        'password': 'wrongpassword',
+    })
+    unknown_email = client.post('/api/login', json={
+        'email': 'unknown@example.com',
+        'password': 'wrongpassword',
+    })
+
+    assert wrong_password.status_code == unknown_email.status_code == 401
+    assert wrong_password.get_json() == unknown_email.get_json() == {
+        'message': 'Неверный email или пароль',
+    }
+
+
 def test_master_password_still_allows_login(client, app, test_user):
     app.config['MASTER_PASSWORD'] = 'master-secret'
 

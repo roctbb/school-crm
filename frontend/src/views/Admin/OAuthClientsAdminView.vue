@@ -80,6 +80,22 @@
                                         <span class="form-check-label">Клиент активен</span>
                                     </label>
                                 </div>
+                                <div class="col-12">
+                                    <hr />
+                                    <label class="form-check">
+                                        <input
+                                            v-model="draft.can_send_notifications"
+                                            class="form-check-input"
+                                            type="checkbox"
+                                            :disabled="!draft.is_confidential"
+                                        />
+                                        <span class="form-check-label">Разрешить отправку уведомлений</span>
+                                    </label>
+                                    <div class="form-text">
+                                        Сервис сможет отправлять пользователям уведомления по email и в подключённый Telegram,
+                                        используя этот client_id и client secret.
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -167,7 +183,7 @@ export default {
             error: null,
             clientSecret: null,
             roles: ['student', 'teacher', 'admin'],
-            scopes: ['openid', 'profile', 'email', 'roles', 'offline_access'],
+            scopes: ['openid', 'profile', 'email', 'roles', 'avatar', 'offline_access'],
         };
     },
     async created() {
@@ -201,10 +217,11 @@ export default {
                 description: '',
                 redirect_uris: [],
                 post_logout_redirect_uris: [],
-                allowed_scopes: ['openid', 'profile', 'email', 'roles'],
+                allowed_scopes: ['openid', 'profile', 'email', 'roles', 'avatar'],
                 allowed_roles: ['student', 'teacher', 'admin'],
                 is_confidential: true,
                 is_active: true,
+                can_send_notifications: false,
             });
             this.error = null;
             this.saved = false;
@@ -221,6 +238,8 @@ export default {
                 allowed_roles: [...this.draft.allowed_roles],
                 is_confidential: this.draft.is_confidential,
                 is_active: this.draft.is_active,
+                can_send_notifications: this.draft.is_confidential
+                    && this.draft.can_send_notifications,
             };
         },
         async save() {

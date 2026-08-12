@@ -92,6 +92,13 @@ def query_client(client_id):
     return OAuthClient.query.filter_by(client_id=client_id, is_active=True).first()
 
 
+def get_oidc_identity(user):
+    identity = user.identity_object
+    if not identity or identity.deleted_at:
+        return None
+    return identity
+
+
 def save_token(token, request):
     issued_at = int(time.time())
     refresh_token = token.get('refresh_token')
@@ -149,7 +156,8 @@ class OIDCAuthorizationCodeGrant(AuthorizationCodeGrant):
         db.session.commit()
 
     def authenticate_user(self, authorization_code):
-        return authorization_code.user
+        user = authorization_code.user
+        return user if user and get_oidc_identity(user) else None
 
     @hooked
     def create_token_response(self):
@@ -186,6 +194,7 @@ class OIDCRefreshTokenGrant(RefreshTokenGrant):
             token
             and token.is_refresh_token_active()
             and token.client.is_active
+            and get_oidc_identity(token.user)
             and token.user.role in (token.client.allowed_roles or [])
         ) else None
 
@@ -201,11 +210,22 @@ class OIDCRefreshTokenGrant(RefreshTokenGrant):
 
 def oidc_user_info(user, scope):
     scopes = set((scope or '').split())
-    info = UserInfo(sub=user.sso_subject)
+    identity = get_oidc_identity(user)
+    if not identity:
+        raise ValueError('The account has no CRM identity object')
+
+    info = UserInfo(sub=identity.sso_subject)
     if 'profile' in scopes:
         info.update({
-            'name': user.name,
-            'preferred_username': user.email,
+            'name': identity.name,
+            'preferred_username': identity.name,
+            'object_id': identity.id,
+            'object_type': identity.type.code,
+            'crm_object': {
+                'id': identity.id,
+                'type': identity.type.code,
+                'name': identity.name,
+            },
         })
     if 'email' in scopes:
         info.update({
@@ -217,6 +237,11 @@ def oidc_user_info(user, scope):
             'role': user.role,
             'roles': [user.role],
         })
+    if 'avatar' in scopes:
+        from application.methods.files_methods import get_user_avatar_file
+
+        if get_user_avatar_file(user):
+            info['picture'] = f'{get_oidc_issuer()}/api/oauth/avatar'
     return info
 
 
@@ -258,6 +283,7 @@ class OAuthBearerTokenValidator(BearerTokenValidator):
         if (
             not token
             or not token.client.is_active
+            or not get_oidc_identity(token.user)
             or token.user.role not in (token.client.allowed_roles or [])
         ):
             return None

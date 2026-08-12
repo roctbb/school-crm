@@ -1,7 +1,6 @@
 import os
 import re
-import uuid
-from datetime import datetime
+from urllib.parse import urlsplit
 from werkzeug.utils import secure_filename
 from application import db
 from application.constants import ALLOWED_EXTENSIONS, UPLOAD_FOLDER
@@ -58,6 +57,41 @@ def can_get_uploaded_file(user, uploaded_file):
             return True
 
     return False
+
+
+def get_user_avatar_file(user):
+    """Return the current photo of the CRM object used as the OIDC identity."""
+    obj = user.identity_object
+    if not obj or obj.deleted_at:
+        return None
+    photo_definition = next((
+        attribute for attribute in (obj.type.available_attributes or [])
+        if attribute.get('code') == 'photo'
+        and attribute.get('type') == 'file'
+        and not attribute.get('is_secret')
+        and not attribute.get('is_hidden')
+    ), None)
+    if not photo_definition:
+        return None
+
+    value = (obj.attributes or {}).get('photo')
+    candidates = value if isinstance(value, list) else [value]
+    for candidate in reversed(candidates):
+        if not isinstance(candidate, str):
+            continue
+        path = urlsplit(candidate).path
+        match = re.fullmatch(r'(?:/api)?/files/(folder_[1-9]\d*)/(.+)', path)
+        if not match:
+            continue
+        try:
+            uploaded_file = get_uploaded_file(match.group(1), match.group(2))
+            if os.path.isfile(os.path.join(
+                UPLOAD_FOLDER, match.group(1), uploaded_file.stored_filename
+            )):
+                return uploaded_file
+        except LogicException:
+            continue
+    return None
 
 
 @transaction

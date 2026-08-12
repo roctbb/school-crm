@@ -10,11 +10,11 @@ from application.helpers.decorators import transaction
 from application.helpers.exceptions import LogicException
 from application.infrastructure import bcrypt, db
 from application.models import OAuthAuthorizationCode, OAuthClient, OAuthConsent, OAuthToken
-from application.oidc import get_client_id_from_id_token_hint, token_digest, utcnow
+from application.oidc import get_client_id_from_id_token_hint, get_oidc_identity, token_digest, utcnow
 
 
 PKCE_PATTERN = re.compile(r'^[A-Za-z0-9._~-]{43,128}$')
-SUPPORTED_SCOPES = {'openid', 'profile', 'email', 'roles', 'offline_access'}
+SUPPORTED_SCOPES = {'openid', 'profile', 'email', 'roles', 'avatar', 'offline_access'}
 
 
 def get_oauth_clients():
@@ -54,6 +54,7 @@ def create_oauth_client(user, data):
         allowed_roles=data['allowed_roles'],
         is_confidential=data['is_confidential'],
         is_active=data['is_active'],
+        can_send_notifications=data['can_send_notifications'],
         creator_id=user.id,
     )
     db.session.add(client)
@@ -91,6 +92,7 @@ def update_oauth_client(client, data):
     client.allowed_roles = data['allowed_roles']
     client.is_confidential = data['is_confidential']
     client.is_active = data['is_active']
+    client.can_send_notifications = data['can_send_notifications']
 
     OAuthAuthorizationCode.query.filter_by(client_id=client.client_id).delete()
     if revoke_consents:
@@ -120,6 +122,11 @@ def rotate_oauth_client_secret(client):
 
 
 def validate_authorization_request(data, user):
+    if not get_oidc_identity(user):
+        raise LogicException(
+            'Аккаунт не привязан к объекту ученика, учителя или родителя.', 403
+        )
+
     client_id = data.get('client_id')
     client = get_oauth_client(client_id)
 

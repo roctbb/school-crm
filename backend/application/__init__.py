@@ -18,12 +18,16 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 def create_app(config_name=None):
     app = Flask(__name__)
-    # Backend доступен только через наш nginx. Доверяем одному ближайшему proxy
-    # при определении внешней HTTPS-схемы для OAuth/OIDC transport checks.
-    app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1)
 
     # Загрузка конфигурации из config.py
     app.config.from_object(get_config(config_name))
+    # Backend доступен только через доверенные reverse proxy. Помимо внешней
+    # HTTPS-схемы восстанавливаем адрес клиента для аварийных IP-лимитов.
+    app.wsgi_app = ProxyFix(
+        app.wsgi_app,
+        x_for=app.config['TRUSTED_PROXY_COUNT'],
+        x_proto=1,
+    )
     if not app.config.get('OIDC_ISSUER'):
         app.config['OIDC_ISSUER'] = app.config['BASE_URL'].rstrip('/')
 

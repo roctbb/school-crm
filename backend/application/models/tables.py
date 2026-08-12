@@ -6,6 +6,17 @@ users_objects = db.Table(
     db.Column('user_id', db.Integer, db.ForeignKey('users.id', ondelete="CASCADE"), primary_key=True)
 )
 
+user_identity_objects = db.Table(
+    'user_identity_objects',
+    db.Column(
+        'user_id', db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), primary_key=True
+    ),
+    db.Column(
+        'object_id', db.Integer, db.ForeignKey('objects.id', ondelete='CASCADE'),
+        nullable=False, unique=True,
+    ),
+)
+
 objects_children = db.Table(
     'objects_children',  # Имя таблицы
     db.Column('parent_id', db.Integer, db.ForeignKey('objects.id', ondelete="CASCADE"), primary_key=True),

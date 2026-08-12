@@ -9,6 +9,8 @@ from joserfc.jwk import RSAKey
 
 from application.infrastructure import bcrypt, db
 from application.models import OAuthAuthorizationCode, OAuthClient, OAuthConsent, OAuthToken, User
+from application.models import Object, ObjectType, UploadedFile
+from application.constants import UPLOAD_FOLDER
 from application.oidc import token_digest
 from .fixtures import *
 
@@ -29,7 +31,14 @@ def _create_user(role='student', email='student@example.test'):
         password=bcrypt.generate_password_hash('password123').decode('utf-8'),
         role=role,
     )
-    db.session.add(user)
+    type_code = f'{role}s'
+    object_type = ObjectType.query.filter_by(code=type_code).first()
+    if not object_type:
+        object_type = ObjectType(name=type_code.title(), code=type_code)
+    identity = Object(name=f'{role.title()} CRM Object', type=object_type)
+    identity.owners.append(user)
+    user.identity_object = identity
+    db.session.add_all([user, object_type, identity])
     db.session.commit()
     return user
 
@@ -41,7 +50,7 @@ def _client_payload(**overrides):
         'description': 'OIDC integration test',
         'redirect_uris': [REDIRECT_URI],
         'post_logout_redirect_uris': [LOGOUT_URI],
-        'allowed_scopes': ['openid', 'profile', 'email', 'roles', 'offline_access'],
+        'allowed_scopes': ['openid', 'profile', 'email', 'roles', 'avatar', 'offline_access'],
         'allowed_roles': ['student', 'teacher', 'admin'],
         'is_confidential': True,
         'is_active': True,
@@ -126,6 +135,8 @@ def test_discovery_and_jwks(client):
     assert metadata['issuer'] == 'http://localhost:5173'
     assert metadata['authorization_endpoint'].endswith('/oauth/authorize')
     assert metadata['code_challenge_methods_supported'] == ['S256']
+    assert 'avatar' in metadata['scopes_supported']
+    assert 'picture' in metadata['claims_supported']
 
     jwks_response = client.get('/api/oauth/jwks')
     assert jwks_response.status_code == 200
@@ -215,7 +226,15 @@ def test_authorization_code_pkce_userinfo_refresh_and_revocation(client):
     claims = id_token.claims
     assert claims['iss'] == 'http://localhost:5173'
     assert claims['aud'] == [CLIENT_ID]
-    assert claims['sub'] == user.sso_subject
+    assert claims['sub'] == user.identity_object.sso_subject
+    assert claims['name'] == user.identity_object.name
+    assert claims['object_id'] == user.identity_object.id
+    assert claims['object_type'] == 'students'
+    assert claims['crm_object'] == {
+        'id': user.identity_object.id,
+        'type': 'students',
+        'name': user.identity_object.name,
+    }
     assert claims['nonce'] == params['nonce']
     assert claims['email'] == user.email
     assert claims['roles'] == ['student']
@@ -233,7 +252,8 @@ def test_authorization_code_pkce_userinfo_refresh_and_revocation(client):
         headers={'Authorization': f"Bearer {token['access_token']}"},
     )
     assert userinfo.status_code == 200
-    assert userinfo.get_json()['sub'] == user.sso_subject
+    assert userinfo.get_json()['sub'] == user.identity_object.sso_subject
+    assert userinfo.get_json()['crm_object']['id'] == user.identity_object.id
 
     replay = _exchange_code(client, code, verifier, secret)
     assert replay.status_code == 400
@@ -409,3 +429,65 @@ def test_logout_only_allows_registered_redirect(client):
         'post_logout_redirect_uri': 'https://evil.example.test/',
     })
     assert invalid.status_code == 400
+
+
+def test_avatar_scope_returns_picture_claim_and_protected_image(client):
+    registered, _admin = _create_registered_client(client)
+    secret = registered['client_secret']
+    user = _create_user()
+    obj = user.identity_object
+    obj.type.available_attributes = [{'name': 'Photo', 'code': 'photo', 'type': 'file'}]
+    uploaded_file = UploadedFile(
+        user_id=user.id,
+        original_filename='avatar.jpg',
+        stored_filename='avatar.jpg',
+    )
+    db.session.add(uploaded_file)
+    db.session.flush()
+    obj.name = 'Student Object'
+    obj.attributes = {'photo': f'/api/files/folder_{uploaded_file.id}/avatar.jpg'}
+    db.session.commit()
+
+    import os
+    os.makedirs(os.path.join(UPLOAD_FOLDER, f'folder_{uploaded_file.id}'), exist_ok=True)
+    avatar_path = os.path.join(UPLOAD_FOLDER, f'folder_{uploaded_file.id}', 'avatar.jpg')
+    try:
+        with open(avatar_path, 'wb') as avatar:
+            avatar.write(b'fake-jpeg')
+
+        verifier, params = _authorization_params(
+            scope='openid profile avatar', nonce=secrets.token_urlsafe(32)
+        )
+        code = _authorize(client, user, params)
+        token_response = _exchange_code(client, code, verifier, secret)
+        assert token_response.status_code == 200, token_response.get_json()
+        token = token_response.get_json()
+
+        public_key = RSAKey.import_key(client.get('/api/oauth/jwks').get_json()['keys'][0])
+        claims = jwt.decode(token['id_token'], public_key, algorithms=['RS256']).claims
+        assert claims['picture'] == 'http://localhost:5173/api/oauth/avatar'
+
+        avatar_response = client.get(
+            '/api/oauth/avatar',
+            headers={'Authorization': f"Bearer {token['access_token']}"},
+        )
+        assert avatar_response.status_code == 200
+        assert avatar_response.data == b'fake-jpeg'
+    finally:
+        if os.path.exists(avatar_path):
+            os.remove(avatar_path)
+
+
+def test_oidc_rejects_account_without_identity_object(client):
+    _create_registered_client(client)
+    user = User(name='Unlinked', email='unlinked@example.test', role='student')
+    db.session.add(user)
+    db.session.commit()
+    _verifier, params = _authorization_params()
+
+    response = client.get(
+        '/api/oauth/authorize/request', query_string=params, headers=_auth_header(user)
+    )
+
+    assert response.status_code == 403
+    assert 'не привязан к объекту' in response.get_json()['message']

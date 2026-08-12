@@ -35,6 +35,7 @@ def register_user(data):
 
     if invite.object:
         invite.object.owners.append(new_user)
+        new_user.identity_object = invite.object
 
     return new_user
 
@@ -44,7 +45,7 @@ def get_access_token(user):
 def login_user(data):
     user = User.query.filter_by(email=data['email'].lower()).first()
     if not user:
-        raise LogicException("Пользователь с указанным email не найден", 401)
+        raise LogicException("Неверный email или пароль", 401)
 
     password_matches = bool(user.password) and bcrypt.check_password_hash(user.password, data['password'])
     master_password = current_app.config.get('MASTER_PASSWORD')
@@ -54,7 +55,7 @@ def login_user(data):
     )
 
     if not password_matches and not master_password_matches:
-        raise LogicException("Неверный пароль", 401)
+        raise LogicException("Неверный email или пароль", 401)
 
     return get_access_token(user)
 

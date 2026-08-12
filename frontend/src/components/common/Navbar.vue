@@ -122,6 +122,15 @@
                             <li><hr class="dropdown-divider" /></li>
                         </template>
                         <li>
+                            <router-link
+                                :to="{name: 'NotificationSettings'}"
+                                class="dropdown-item"
+                                active-class="active"
+                            >
+                                <i class="bi bi-bell me-2"></i>Уведомления
+                            </router-link>
+                        </li>
+                        <li>
                             <button
                                 class="dropdown-item"
                                 type="button"

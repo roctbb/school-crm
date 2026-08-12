@@ -24,7 +24,7 @@ FORM_FIELD_TYPES = {
 }
 CODE_PATTERN = re.compile(r'^[a-z][a-z0-9_-]{1,99}$')
 OAUTH_CLIENT_ID_PATTERN = re.compile(r'^[a-z][a-z0-9._-]{2,119}$')
-OAUTH_SCOPES = {'openid', 'profile', 'email', 'roles', 'offline_access'}
+OAUTH_SCOPES = {'openid', 'profile', 'email', 'roles', 'avatar', 'offline_access'}
 
 
 def validate_object(data):
@@ -103,6 +103,18 @@ def validate_oauth_client(data):
         data[field] = data.get(field, default)
         if not isinstance(data[field], bool):
             raise LogicException(f"Поле {field} должно быть boolean.", 422, field=field)
+
+    data['can_send_notifications'] = data.get('can_send_notifications', False)
+    if not isinstance(data['can_send_notifications'], bool):
+        raise LogicException(
+            'Поле can_send_notifications должно быть boolean.', 422,
+            field='can_send_notifications',
+        )
+    if data['can_send_notifications'] and not data['is_confidential']:
+        raise LogicException(
+            'Отправлять уведомления может только конфиденциальный клиент.', 422,
+            field='can_send_notifications',
+        )
 
     data['name'] = data['name'].strip()
     data['description'] = description.strip()

@@ -2,6 +2,11 @@
 
 CRM работает как OpenID Provider. Внутренние сервисы — LMS, внутренняя валюта, турнирная таблица и другие — подключаются к ней как обычные OpenID Connect-клиенты.
 
+OIDC-личность соответствует привязанному объекту CRM — ученику, учителю или в
+перспективе родителю. Запись `User` используется только как учётная запись для входа
+и прав доступа. Поэтому один и тот же объект сохраняет внешнюю идентичность при
+изменении имени или email учётной записи.
+
 Используется стандартный Authorization Code Flow:
 
 - обязательный PKCE `S256`, в том числе для серверных клиентов;
@@ -51,15 +56,31 @@ http://localhost:5000/auth/crm/callback
 
 | Scope | Что сервис получает |
 | --- | --- |
-| `openid` | Стабильный идентификатор пользователя `sub`; обязателен |
-| `profile` | `name`, `preferred_username` |
+| `openid` | Стабильный идентификатор привязанного объекта CRM `sub`; обязателен |
+| `profile` | `name`, `preferred_username`, `object_id`, `object_type`, `crm_object` |
 | `email` | `email`, `email_verified` |
 | `roles` | `role` и `roles` |
+| `avatar` | Стандартный claim `picture` со ссылкой на фотографию объекта |
 | `offline_access` | Refresh token для долгой сессии |
 
-Используйте `sub` как внешний идентификатор пользователя. Не связывайте аккаунты по email: почта может измениться, а `sub` остаётся прежним.
+Используйте `sub` как внешний идентификатор ученика/учителя/родителя. Не связывайте
+профили по `object_id` или email: числовой ID локален для установки, почта может
+измениться, а `sub` остаётся прежним. `object_type` содержит код типа объекта,
+например `students` или `teachers`; `crm_object` содержит безопасный минимум
+`id`, `type`, `name` без произвольных атрибутов CRM.
 
-Текущие значения ролей: `student`, `teacher`, `admin`. Роль из токена удобна для первичного входа, но для критичных операций лучше периодически получать свежие данные через `userinfo`: роль пользователя в CRM может измениться.
+Claim `picture` появляется, только если у объекта идентичности есть видимый файловый
+атрибут `photo`. Это защищённый URL: скачивайте изображение с тем же заголовком
+`Authorization: Bearer ACCESS_TOKEN`. Access token должен содержать scope `avatar`.
+
+Текущие значения ролей доступа учётной записи: `student`, `teacher`, `admin`. Тип
+доменной личности берите из `object_type`, а не из роли. Для критичных операций лучше
+периодически получать свежие данные через `userinfo`: роль и привязка могут измениться.
+
+Аккаунт без явно привязанного объекта не может завершить OIDC-вход. При регистрации
+привязка создаётся из объектного инвайта. Миграция сохраняет прежний `sub` для
+однозначных связей, восстановленных по использованным инвайтам либо по единственному
+объекту-владению с подходящим типом (`student` → `students`, `teacher` → `teachers`).
 
 ## Запоминание согласия
 
@@ -138,7 +159,7 @@ crm = oauth.register(
     client_secret=os.environ["CRM_OIDC_CLIENT_SECRET"],
     server_metadata_url=f"{issuer}/.well-known/openid-configuration",
     client_kwargs={
-        "scope": "openid profile email roles offline_access",
+        "scope": "openid profile email roles avatar offline_access",
         "code_challenge_method": "S256",
     },
 )
@@ -161,7 +182,7 @@ def crm_callback():
     # authorize_access_token проверяет state, подпись id_token, issuer,
     # audience, сроки действия и nonce по discovery/JWKS CRM.
     session["crm_token"] = dict(token)
-    session["user"] = dict(token["userinfo"])
+    session["identity"] = dict(token["userinfo"])
     return redirect(url_for("profile"))
 
 
@@ -206,9 +227,9 @@ def load_fresh_userinfo(token):
 @app.get("/profile")
 @login_required
 def profile():
-    user = load_fresh_userinfo(current_token())
-    session["user"] = user
-    return jsonify(user)
+    identity = load_fresh_userinfo(current_token())
+    session["identity"] = identity
+    return jsonify(identity)
 
 
 @app.get("/logout")
@@ -248,12 +269,13 @@ https://lms.example.ru/auth/crm/logout/callback
 
 ## Что сохранять в базе сервиса
 
-Минимальная локальная запись пользователя обычно выглядит так:
+Минимальная локальная запись доменной личности обычно выглядит так:
 
 ```text
 oidc_issuer       https://lk.silaeder.ru
 oidc_subject      0aa1f478-...-...
 name              Иван Иванов
+object_type       students
 email             user@example.ru
 role              student
 last_login_at     ...

@@ -25,6 +25,27 @@ class Config:
     CELERY_BACKEND = os.getenv('CELERY_BACKEND', "redis://localhost:6379/1")
     CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', "redis://localhost:6379/0")
     RATELIMIT_STORAGE_URI = os.getenv('RATELIMIT_STORAGE_URI', 'redis://localhost:6379/2')
+    TRUSTED_PROXY_COUNT = int(os.getenv('TRUSTED_PROXY_COUNT', 1))
+    AUTH_LOGIN_IP_RATE_LIMIT = os.getenv('AUTH_LOGIN_IP_RATE_LIMIT', '2000 per hour')
+    AUTH_LOGIN_EMAIL_RATE_LIMIT = os.getenv(
+        'AUTH_LOGIN_EMAIL_RATE_LIMIT', '10 per minute; 50 per hour'
+    )
+    AUTH_SIGNUP_IP_RATE_LIMIT = os.getenv('AUTH_SIGNUP_IP_RATE_LIMIT', '1000 per hour')
+    AUTH_SIGNUP_INVITE_RATE_LIMIT = os.getenv(
+        'AUTH_SIGNUP_INVITE_RATE_LIMIT', '20 per hour'
+    )
+    AUTH_PASSWORD_EMAIL_IP_RATE_LIMIT = os.getenv(
+        'AUTH_PASSWORD_EMAIL_IP_RATE_LIMIT', '500 per hour'
+    )
+    AUTH_PASSWORD_EMAIL_RATE_LIMIT = os.getenv(
+        'AUTH_PASSWORD_EMAIL_RATE_LIMIT', '3 per hour'
+    )
+    AUTH_PASSWORD_RESET_IP_RATE_LIMIT = os.getenv(
+        'AUTH_PASSWORD_RESET_IP_RATE_LIMIT', '500 per hour'
+    )
+    AUTH_PASSWORD_RESET_TOKEN_RATE_LIMIT = os.getenv(
+        'AUTH_PASSWORD_RESET_TOKEN_RATE_LIMIT', '10 per hour'
+    )
     MASTER_PASSWORD = os.getenv('MASTER_PASSWORD')
     EXTERNAL_URL = os.getenv('EXTERNAL_URL', '')
     BASE_URL = os.getenv('APP_URL', 'http://localhost:5173')
@@ -42,6 +63,11 @@ class Config:
         'refresh_token': OIDC_ACCESS_TOKEN_EXPIRES,
     }
     OAUTH2_REFRESH_TOKEN_GENERATOR = True
+    TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
+    TELEGRAM_BOT_USERNAME = os.getenv('TELEGRAM_BOT_USERNAME', '').lstrip('@')
+    TELEGRAM_PROXY_URL = os.getenv('TELEGRAM_PROXY_URL')
+    TELEGRAM_LINK_TOKEN_EXPIRES = int(os.getenv('TELEGRAM_LINK_TOKEN_EXPIRES', 600))
+    TELEGRAM_POLL_TIMEOUT = int(os.getenv('TELEGRAM_POLL_TIMEOUT', 30))
 
 class DevelopmentConfig(Config):
     """Development configuration"""
@@ -73,6 +99,7 @@ class TestingConfig(Config):
     TESTING = True
     RATELIMIT_STORAGE_URI = 'memory://'
     OIDC_KEY_PATH = os.getenv('TEST_OIDC_KEY_PATH', '/tmp/school_crm_test_oidc_signing_key.pem')
+    TELEGRAM_BOT_USERNAME = os.getenv('TEST_TELEGRAM_BOT_USERNAME', 'school_crm_test_bot')
 
 
 # Выбор конфигурации на основе переменной окружения

@@ -6,3 +6,4 @@ from .forms_methods import *
 from .invitations_methods import *
 from .object_types_methods import *
 from .oidc_methods import *
+from .notification_methods import *

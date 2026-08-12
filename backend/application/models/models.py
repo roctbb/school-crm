@@ -13,13 +13,23 @@ class User(db.Model):
     password = db.Column(db.String(256), nullable=True)
     role = db.Column(db.String(100), nullable=False)
     reset_token = db.Column(db.String(100), nullable=True)
-    sso_subject = db.Column(
-        db.String(36), nullable=False, unique=True, default=lambda: str(uuid.uuid4())
-    )
     created_at = db.Column(db.DateTime, nullable=True, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, nullable=True, server_default=db.func.now(), onupdate=db.func.now())
 
     objects = db.relationship('Object', secondary=users_objects, back_populates='owners')
+    identity_object = db.relationship(
+        'Object', secondary=user_identity_objects, back_populates='identity_user',
+        uselist=False, lazy='select'
+    )
+    telegram_connection = db.relationship(
+        'TelegramConnection', cascade='all, delete-orphan', back_populates='user', uselist=False
+    )
+    telegram_link_tokens = db.relationship(
+        'TelegramLinkToken', cascade='all, delete-orphan', back_populates='user'
+    )
+    notifications = db.relationship(
+        'Notification', cascade='all, delete-orphan', back_populates='user'
+    )
 
     def get_user_id(self):
         return str(self.id)
@@ -47,6 +57,7 @@ class OAuthClient(db.Model):
     )
     is_confidential = db.Column(db.Boolean, nullable=False, server_default=db.true())
     is_active = db.Column(db.Boolean, nullable=False, server_default=db.true())
+    can_send_notifications = db.Column(db.Boolean, nullable=False, server_default=db.false())
     created_at = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
     updated_at = db.Column(
         db.DateTime, nullable=False, server_default=db.func.now(), onupdate=db.func.now()
@@ -90,6 +101,62 @@ class OAuthClient(db.Model):
 
     def check_grant_type(self, grant_type):
         return grant_type in {'authorization_code', 'refresh_token'}
+
+
+class TelegramConnection(db.Model):
+    __tablename__ = 'telegram_connections'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(
+        db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False, unique=True
+    )
+    chat_id = db.Column(db.BigInteger, nullable=False, unique=True)
+    username = db.Column(db.String(64), nullable=True)
+    first_name = db.Column(db.String(255), nullable=True)
+    linked_at = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
+
+    user = db.relationship('User', back_populates='telegram_connection')
+
+
+class TelegramLinkToken(db.Model):
+    __tablename__ = 'telegram_link_tokens'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    token_hash = db.Column(db.String(64), nullable=False, unique=True)
+    created_at = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
+    expires_at = db.Column(db.DateTime, nullable=False)
+
+    user = db.relationship('User', back_populates='telegram_link_tokens')
+
+
+class Notification(db.Model):
+    __tablename__ = 'notifications'
+    __table_args__ = (
+        db.UniqueConstraint(
+            'source_client_id', 'idempotency_key', name='uq_notifications_client_idempotency'
+        ),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    source_client_id = db.Column(
+        db.String(120), db.ForeignKey('oauth_clients.client_id', ondelete='SET NULL'), nullable=True
+    )
+    source_name = db.Column(db.String(120), nullable=False)
+    idempotency_key = db.Column(db.String(128), nullable=True)
+    payload_hash = db.Column(db.String(64), nullable=False)
+    title = db.Column(db.String(200), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    url = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
+    email_sent_at = db.Column(db.DateTime, nullable=True)
+    telegram_sent_at = db.Column(db.DateTime, nullable=True)
+    email_error = db.Column(db.Text, nullable=True)
+    telegram_error = db.Column(db.Text, nullable=True)
+
+    user = db.relationship('User', back_populates='notifications')
+    source_client = db.relationship('OAuthClient', foreign_keys=[source_client_id], lazy='joined')
 
 
 class OAuthConsent(db.Model):
@@ -249,6 +316,9 @@ class Object(db.Model):
     __tablename__ = 'objects'
 
     id = db.Column(db.Integer, primary_key=True)
+    sso_subject = db.Column(
+        db.String(36), nullable=False, unique=True, default=lambda: str(uuid.uuid4())
+    )
     name = db.Column(db.String(1024), nullable=False)
     params = db.Column(db.JSON, server_default=db.text("'{}'::json"))
     attributes = db.Column(db.JSON, server_default=db.text("'{}'::json"))
@@ -279,6 +349,10 @@ class Object(db.Model):
 
     type = db.relationship('ObjectType', lazy='joined')
     owners = db.relationship('User', secondary=users_objects, back_populates='objects', lazy='select')
+    identity_user = db.relationship(
+        'User', secondary=user_identity_objects, back_populates='identity_object',
+        uselist=False, lazy='select'
+    )
 
     # Исправленное отношение с Submission
     submissions = db.relationship('Submission', back_populates='object', lazy='dynamic')

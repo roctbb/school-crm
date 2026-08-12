@@ -1,4 +1,5 @@
 from .fixtures import *
+from application.models import Object, ObjectType
 
 
 # Тесты регистрации
@@ -20,6 +21,26 @@ def test_signup_success(client, test_invite):
     # Проверяем, что инвайт помечен как использованный
     invite = Invitation.query.filter_by(key="valid-invite-code").first()
     assert invite.used_at is not None
+
+
+def test_signup_uses_invited_object_as_oidc_identity(client, db_session):
+    object_type = ObjectType(name='Ученики', code='students')
+    obj = Object(name='Иван Иванов', type=object_type)
+    invitation = Invitation(key='object-invite', role='student', object=obj)
+    db_session.add_all([object_type, obj, invitation])
+    db_session.commit()
+
+    response = client.post('/api/signup', json={
+        'name': 'Login Name',
+        'email': 'identity@example.test',
+        'password': 'securepassword',
+        'invite': invitation.key,
+    })
+
+    assert response.status_code == 201
+    user = User.query.filter_by(email='identity@example.test').one()
+    assert user.identity_object.id == obj.id
+    assert user in obj.owners
 
 
 def test_signup_used_invite(client, used_invite):

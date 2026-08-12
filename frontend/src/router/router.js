@@ -59,6 +59,12 @@ const routes = [
         meta: {requiresAuth: true, requiresAdmin: true}
     },
     {
+        path: '/settings/notifications',
+        name: 'NotificationSettings',
+        component: () => import('@/views/Settings/NotificationSettingsView.vue'),
+        meta: {requiresAuth: true}
+    },
+    {
         path: '/oauth/authorize',
         name: 'OAuthAuthorize',
         component: () => import('@/views/Auth/OAuthAuthorizeView.vue'),
