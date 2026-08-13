@@ -9,7 +9,7 @@
             <div
                 v-for="(objects, group) in groupedData"
                 :key="group"
-                class="group-section mb-5"
+                class="group-section surface-card mb-3 p-3"
             >
                 <h5 class="group-heading fw-bold d-flex align-items-center pb-2 mb-3 border-bottom">
                     <!-- Заголовок группы -->
@@ -104,7 +104,7 @@ export default {
 
 <style scoped>
 .group-section {
-    background: transparent;
+    min-width: 0;
 }
 
 .group-heading {

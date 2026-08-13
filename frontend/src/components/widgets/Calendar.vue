@@ -196,7 +196,8 @@ export default {
 
 <style scoped>
 .calendar-widget {
-    margin-top: 1rem;
+    overflow: hidden;
+    background: var(--silaeder-surface);
 }
 
 /* Чтобы название события не растягивало ячейку,

@@ -1,16 +1,23 @@
 <template>
     <BaseLayout>
         <div class="object-details-page" v-if="object">
-            <!-- Заголовок с фото, названием и действиями -->
-            <ObjectHeader
-                :object="object"
-                :object_type="object_type"
-                @delete="handleDelete"
-                @approve="handleApprove"
-                @restore="handleRestore"
-            />
+            <section class="object-summary surface-card">
+                <!-- Заголовок с фото, названием и действиями -->
+                <ObjectHeader
+                    :object="object"
+                    :object_type="object_type"
+                    @delete="handleDelete"
+                    @approve="handleApprove"
+                    @restore="handleRestore"
+                />
 
-            <DetailsWidgetBar class="details-widget-stack" :object="object" :type="object_type" />
+                <DetailsWidgetBar
+                    class="object-summary-widgets"
+                    :object="object"
+                    :type="object_type"
+                    embedded
+                />
+            </section>
 
             <div class="row g-4 align-items-start object-details-layout">
                 <div class="col-lg-8 detail-content-column">
@@ -164,15 +171,19 @@ export default {
     min-width: 0;
 }
 
-.details-widget-stack {
-    display: grid;
-    gap: var(--silaeder-section-gap);
+.object-summary {
     margin-bottom: var(--silaeder-section-gap);
+    overflow: hidden;
 }
 
 .detail-content-column {
     display: grid;
     gap: var(--silaeder-section-gap);
+}
+
+.object-details-layout {
+    --bs-gutter-x: var(--silaeder-section-gap);
+    --bs-gutter-y: var(--silaeder-section-gap);
 }
 
 @media (max-width: 991.98px) {

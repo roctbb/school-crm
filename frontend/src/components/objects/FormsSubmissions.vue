@@ -1,17 +1,17 @@
 <template>
   <div class="forms-submissions-stack">
-    <div
+    <template
       v-for="form_category in object_type.form_categories"
       :key="form_category.id"
-      class="form-category-section"
     >
-      <div
+      <section
         v-if="
           submissionsInCategory(form_category).length ||
           (canFillInCategory(form_category) && canModifyObject(object))
         "
+        class="form-category-section surface-card p-3 p-sm-4"
       >
-        <div class="d-flex flex-wrap align-items-center mb-3 section-heading">
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-4 section-heading">
           <h5 class="pb-0 mb-0 me-3">
             {{ form_category.name }}
             <span
@@ -29,12 +29,13 @@
           </h5>
           
           <!-- Tabs for show_off_grouping if present -->
-          <div v-if="hasShowOffGrouping(form_category)" class="group-tabs ms-sm-auto mt-2 mt-sm-0">
+          <div v-if="hasShowOffGrouping(form_category)" class="group-tabs ms-sm-auto">
             <ul class="nav nav-tabs flex-nowrap">
               <li class="nav-item" v-for="(group, index) in getGroupingValues(form_category)" :key="index">
                 <button 
                   class="nav-link" 
                   :class="{ active: isActiveGroup(form_category, group) }"
+                  :aria-pressed="isActiveGroup(form_category, group)"
                   @click="setActiveGroup(form_category.id, group)"
                 >
                   {{ group }}
@@ -52,9 +53,9 @@
             filterSubmissionsByActiveGroup(submissionsInCategory(form_category), form_category)
           )"
           :key="formId"
-          class="mb-1"
+          class="submission-group"
         >
-          <div class="row g-3">
+          <div class="row g-4">
             <div
               class="col-md-6 col-lg-4 col-xl-3 d-flex align-items-stretch"
               v-for="submission in submissionsGroup"
@@ -65,42 +66,44 @@
           </div>
         </div>
         <div
-          class="btn-group"
+          class="category-actions"
           v-if="canFillInCategory(form_category) && canModifyObject(object)"
         >
-          <button
-            class="btn btn-sm btn-outline-primary dropdown-toggle"
-            type="button"
-            data-bs-toggle="dropdown"
-            aria-expanded="false"
-          >
-            Добавить
-          </button>
-          <ul class="dropdown-menu">
-            <li
-              v-for="form in store.getFormCategory(form_category.id).forms"
-              :key="form.id"
+          <div class="btn-group">
+            <button
+              class="btn btn-sm btn-outline-primary dropdown-toggle"
+              type="button"
+              data-bs-toggle="dropdown"
+              aria-expanded="false"
             >
-              <a
-                class="dropdown-item"
-                href="#"
-                @click.prevent="goToCreateSubmission(form.id)"
+              Добавить
+            </button>
+            <ul class="dropdown-menu">
+              <li
+                v-for="form in store.getFormCategory(form_category.id).forms"
+                :key="form.id"
               >
-                {{ form.name }}
-              </a>
-            </li>
-          </ul>
+                <a
+                  class="dropdown-item"
+                  href="#"
+                  @click.prevent="goToCreateSubmission(form.id)"
+                >
+                  {{ form.name }}
+                </a>
+              </li>
+            </ul>
+          </div>
         </div>
-      </div>
-    </div>
+      </section>
+    </template>
     <!-- Внешние категории -->
     <div
       v-for="(category_name, i) in externalCategories"
       :key="i"
-      class="form-category-section"
+      class="form-category-section surface-card p-3 p-sm-4"
     >
-      <h5 class="pb-2">{{ category_name }}</h5>
-      <div class="row g-3">
+      <h5 class="mb-4">{{ category_name }}</h5>
+      <div class="row g-4">
         <div
           class="col-md-6 col-lg-4 col-xl-3 d-flex align-items-stretch"
           v-for="submission in object._submissions.filter(
@@ -118,7 +121,7 @@
 <script>
 import useMainStore from "@/stores/mainStore.js";
 import SubmissionCard from "@/components/submissions/SubmissionCard.vue";
-import {currentAcademicYearGroup} from "@/utils/academicYear.js";
+import {currentAcademicYearGroup, sortAcademicYearGroups} from "@/utils/academicYear.js";
 import {
   canFillInCategory,
   canModifyObject
@@ -210,7 +213,7 @@ export default {
         values.add("Все");
       }
       
-      return Array.from(values);
+      return sortAcademicYearGroups(Array.from(values));
     },
     selectedGroup(category) {
       const groups = this.getGroupingValues(category);
@@ -288,13 +291,26 @@ export default {
   white-space: nowrap;
 }
 
+.group-tabs .nav-link.active {
+  color: var(--silaeder-primary-dark);
+  border-color: #bfd2dc #bfd2dc var(--silaeder-primary);
+  background: var(--silaeder-primary-soft);
+  box-shadow: inset 0 -2px 0 var(--silaeder-primary);
+}
+
 .forms-submissions-stack {
   display: grid;
   gap: var(--silaeder-section-gap);
 }
 
-.form-category-section:empty {
-  display: none;
+.submission-group + .submission-group {
+  margin-top: 1.5rem;
+}
+
+.category-actions {
+  padding-top: 1rem;
+  margin-top: 1.5rem;
+  border-top: 1px solid var(--silaeder-border);
 }
 
 .section-heading h5,

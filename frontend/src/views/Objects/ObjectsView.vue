@@ -223,7 +223,12 @@ import CreateObjectArea from "@/components/objects/CreateObjectArea.vue";
 import PaginationControls from "@/components/common/PaginationControls.vue";
 
 import {canCreateByType, hasTeacherAccess} from "@/utils/access.js";
-import {buildGroupingOptions, groupingKey} from "@/utils/objectGrouping.js";
+import {
+    buildGroupingOptions,
+    compareGroupedObjects,
+    compareGroupingKeys,
+    groupingKey,
+} from "@/utils/objectGrouping.js";
 
 const NO_GROUPING_QUERY_VALUE = "__none__";
 
@@ -362,10 +367,10 @@ export default {
                 }
             });
             Object.keys(groups).forEach((groupKey) => {
-                groups[groupKey].sort((a, b) => a.name.localeCompare(b.name));
+                groups[groupKey].sort((a, b) => compareGroupedObjects(a, b, this.selectedAttribute));
             });
             return Object.fromEntries(
-                Object.entries(groups).sort(([a], [b]) => a.localeCompare(b, undefined, {numeric: true}))
+                Object.entries(groups).sort(([a], [b]) => compareGroupingKeys(a, b, this.selectedAttribute))
             );
         },
         groupedEntries() {

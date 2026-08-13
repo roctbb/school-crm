@@ -1,5 +1,5 @@
 <template>
-  <header class="object-header surface-card d-flex flex-wrap align-items-start">
+  <header class="object-header d-flex flex-wrap align-items-start">
     <!-- Фото слева -->
     <div v-if="photoUrl" class="participant-photo-block">
       <img
@@ -192,7 +192,6 @@ export default {
 .object-header {
   gap: 1.25rem;
   padding: 1.25rem;
-  margin-bottom: var(--silaeder-section-gap);
 }
 
 .participant-photo {

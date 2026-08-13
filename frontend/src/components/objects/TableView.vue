@@ -5,7 +5,7 @@
             <div
                 v-for="(objects, group) in groupedData"
                 :key="group"
-                class="mb-4"
+                class="group-table-section surface-card mb-3 p-3"
             >
                 <h5 class="fw-bold d-flex align-items-center pb-2 mb-0">
                     <span class="me-2">{{ groupingAttribute?.name }}: {{ formatGroupingLabel(group, groupingAttribute) }}</span>
@@ -233,6 +233,10 @@ export default {
 </script>
 
 <style scoped>
+.group-table-section {
+    min-width: 0;
+}
+
 .underline {
     text-decoration: underline dotted;
     text-underline-offset: 0.2rem;

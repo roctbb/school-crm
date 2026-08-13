@@ -24,7 +24,20 @@ export function normalizeAcademicYear(value) {
 
 export function currentAcademicYearGroup(groups = [], referenceDate = new Date()) {
     const currentAcademicYear = getAcademicYear(referenceDate);
-    return groups.find(group => normalizeAcademicYear(group) === currentAcademicYear)
-        ?? groups[groups.length - 1]
-        ?? null;
+    const currentGroup = groups.find(group => normalizeAcademicYear(group) === currentAcademicYear);
+    if (currentGroup) return currentGroup;
+
+    const sortedGroups = sortAcademicYearGroups(groups);
+    return sortedGroups[0] ?? null;
+}
+
+export function sortAcademicYearGroups(groups = []) {
+    const normalizedGroups = groups.map(group => ({group, normalized: normalizeAcademicYear(group)}));
+    if (!normalizedGroups.length || normalizedGroups.some(item => !item.normalized)) {
+        return [...groups];
+    }
+
+    return normalizedGroups
+        .sort((first, second) => second.normalized.localeCompare(first.normalized, undefined, {numeric: true}))
+        .map(item => item.group);
 }

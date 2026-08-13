@@ -69,3 +69,31 @@ export function groupingLabel(groupKey, groupingOption) {
     const monthName = MONTH_NAMES[Number(match[2]) - 1];
     return monthName ? `${monthName} ${match[1]}` : groupKey;
 }
+
+export function compareGroupingKeys(first, second, groupingOption) {
+    if (first === EMPTY_GROUP_LABEL) return second === EMPTY_GROUP_LABEL ? 0 : 1;
+    if (second === EMPTY_GROUP_LABEL) return -1;
+
+    if (groupingOption?.groupingMode === "month" || groupingOption?.code === "year") {
+        return second.localeCompare(first, undefined, {numeric: true});
+    }
+    return first.localeCompare(second, undefined, {numeric: true});
+}
+
+function comparableDate(value) {
+    if (typeof value !== "string") return "";
+    const crmDate = value.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+    if (crmDate) return `${crmDate[3]}-${crmDate[2]}-${crmDate[1]}`;
+    const isoDate = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return isoDate ? `${isoDate[1]}-${isoDate[2]}-${isoDate[3]}` : "";
+}
+
+export function compareGroupedObjects(first, second, groupingOption) {
+    if (groupingOption?.groupingMode === "month") {
+        const attributeCode = groupingOption.sourceCode || groupingOption.code;
+        const dateDifference = comparableDate(second.attributes[attributeCode])
+            .localeCompare(comparableDate(first.attributes[attributeCode]));
+        if (dateDifference) return dateDifference;
+    }
+    return first.name.localeCompare(second.name);
+}

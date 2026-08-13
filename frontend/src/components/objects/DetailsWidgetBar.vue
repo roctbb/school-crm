@@ -7,6 +7,10 @@ export default {
     props: {
         object: Object,
         type: Object,
+        embedded: {
+            type: Boolean,
+            default: false,
+        },
     },
     computed: {
         widgets() {
@@ -21,11 +25,16 @@ export default {
 </script>
 
 <template>
-    <div v-if="widgets.length" class="details-widget-stack">
+    <div
+        v-if="widgets.length"
+        class="details-widget-stack"
+        :class="{ 'details-widget-stack--embedded': embedded }"
+    >
         <component
             v-for="(widget, index) in widgets"
             :key="index"
             :is="widget"
+            :class="{ 'embedded-detail-widget': embedded }"
             :object="object"
             :type="type"
         />
@@ -33,5 +42,25 @@ export default {
 </template>
 
 <style scoped>
+.details-widget-stack {
+    display: grid;
+    gap: var(--silaeder-section-gap);
+}
+
+.details-widget-stack--embedded {
+    gap: 0;
+    border-top: 1px solid var(--silaeder-border);
+}
+
+.details-widget-stack--embedded :deep(.embedded-detail-widget) {
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.details-widget-stack--embedded :deep(.embedded-detail-widget + .embedded-detail-widget) {
+    border-top: 1px solid var(--silaeder-border);
+}
 
 </style>

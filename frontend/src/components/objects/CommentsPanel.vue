@@ -126,6 +126,12 @@ export default {
 .comments-panel {
     position: sticky;
     top: 5rem;
+    overflow: hidden;
+    background: var(--silaeder-surface);
+}
+
+.comments-panel .form-control {
+    background: #fff;
 }
 
 @media (max-width: 991.98px) {

@@ -1,6 +1,6 @@
 <template>
   <div class="connected-types-stack">
-    <section v-for="type in connectedTypes" :key="type.code" class="detail-section">
+    <section v-for="type in connectedTypes" :key="type.code" class="detail-section surface-card p-3 p-sm-4">
       <div v-if="findRelativesByType(type).length">
         <h5 class="section-heading d-flex justify-content-between align-items-center">
           <span>
@@ -102,7 +102,11 @@ export default {
   display: none;
 }
 
+.connected-types-stack:empty {
+  display: none;
+}
+
 .section-heading {
-  margin-bottom: 0.75rem;
+  margin-bottom: 1rem;
 }
 </style>
