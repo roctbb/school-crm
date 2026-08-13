@@ -5,9 +5,9 @@
             <div
                 v-for="(objects, group) in groupedData"
                 :key="group"
-                class="group-table-section surface-card mb-3 p-3"
+                class="group-table-section mb-4"
             >
-                <h5 class="fw-bold d-flex align-items-center pb-2 mb-0">
+                <h5 class="fw-bold d-flex align-items-center mb-3">
                     <span class="me-2">{{ groupingAttribute?.name }}: {{ formatGroupingLabel(group, groupingAttribute) }}</span>
                     <span class="badge bg-secondary rounded-pill py-1 px-2"
                           style="font-size: 0.75rem;">{{ groupCounts[group] || objects.length }}</span>

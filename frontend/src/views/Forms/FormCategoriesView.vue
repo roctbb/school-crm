@@ -39,7 +39,7 @@
                     class="category-block"
                 >
                     <!-- Заголовок категории + кнопка Добавить -->
-                    <div class="d-flex justify-content-between align-items-center gap-3 pb-2 border-bottom">
+                    <div class="category-heading d-flex justify-content-between align-items-center gap-3 pb-2 border-bottom">
                         <h5 class="fw-bold mb-0">{{ category.name }}</h5>
                         <button
                             class="btn btn-sm btn-outline-primary"
@@ -138,10 +138,16 @@ export default {
 <style scoped>
 .category-block {
     margin-bottom: 2rem;
-    padding: 1rem;
-    border: 1px solid var(--silaeder-border);
-    border-radius: 0.75rem;
-    background: #fff;
-    box-shadow: var(--silaeder-shadow-sm);
+}
+
+@media (max-width: 575.98px) {
+    .category-heading {
+        align-items: stretch !important;
+        flex-direction: column;
+    }
+
+    .category-heading .btn {
+        width: 100%;
+    }
 }
 </style>

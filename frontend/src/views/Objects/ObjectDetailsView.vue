@@ -20,7 +20,12 @@
             </section>
 
             <div class="row g-4 align-items-start object-details-layout">
-                <div class="col-lg-8 detail-content-column">
+                <!-- На узких экранах комментарии идут сразу после сводки, а не после всех форм. -->
+                <div class="col-lg-4 order-lg-2" v-if="object.comments.length || canCommentObject(object)">
+                    <CommentsPanel :object="object" />
+                </div>
+
+                <div class="col-lg-8 order-lg-1 detail-content-column">
                     <!-- Блок связанных объектов -->
                     <ConnectedTypes
                         :object="object"
@@ -37,10 +42,6 @@
                         :object_type="object_type"
                         @create-submission="goToCreateSubmission"
                     />
-                </div>
-                <!-- Панель комментариев -->
-                <div class="col-lg-4" v-if="object.comments.length || canCommentObject(object)">
-                    <CommentsPanel :object="object" />
                 </div>
             </div>
 
@@ -115,6 +116,16 @@ export default {
             this.connectedTypes = [];
             let { object_type, object_id } = this.$route.params;
             object_id = parseInt(object_id);
+
+            // Показываем уже загруженный объект сразу, не заменяя страницу спиннером
+            // на время фонового обновления связанных данных.
+            const cachedType = this.store.getObjectTypeByCode(object_type);
+            const cachedObject = this.store.objects[object_type]?.find(item => item.id === object_id);
+            if (cachedType && cachedObject) {
+                this.object_type = cachedType;
+                this.object = cachedObject;
+            }
+
             await this.store.loadObjects();
             this.object_type = this.store.getObjectTypeByCode(object_type);
             this.object = this.store.getObject(object_type, object_id);

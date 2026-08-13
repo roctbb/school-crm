@@ -32,6 +32,15 @@
                                 </div>
                             </div>
 
+                            <div class="progress-legend d-sm-none" aria-label="Состав баллов текущего уровня">
+                                <span class="progress-legend-item progress-legend-item--approved">
+                                    <span class="legend-dot"></span>{{ chunkApproved }} подтверждено
+                                </span>
+                                <span class="progress-legend-item progress-legend-item--pending">
+                                    <span class="legend-dot"></span>{{ chunkUnapproved }} ожидает
+                                </span>
+                            </div>
+
                             <!-- Текстовое описание -->
                             <small class="text-muted">
                                 Всего баллов: {{ totalPoints }}
@@ -215,5 +224,31 @@ export default {
         overflow: hidden;
         font-size: 0;
     }
+}
+
+.progress-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.75rem;
+    margin-top: 0.55rem;
+    color: var(--silaeder-muted);
+    font-size: 0.75rem;
+}
+
+.progress-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.legend-dot {
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 50%;
+    background: var(--bs-success);
+}
+
+.progress-legend-item--pending .legend-dot {
+    background: var(--silaeder-warning);
 }
 </style>

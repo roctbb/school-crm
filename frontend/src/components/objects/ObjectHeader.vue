@@ -1,11 +1,12 @@
 <template>
   <header class="object-header d-flex flex-wrap align-items-start">
     <!-- Фото слева -->
-    <div v-if="photoUrl" class="participant-photo-block">
+    <div v-if="photoUrl && !photoFailed" class="participant-photo-block">
       <img
         :src="photoUrl"
         alt="Object Photo"
         class="participant-photo rounded-3"
+        @error="photoFailed = true"
       />
       <button
         v-if="previousPhotos.length"
@@ -117,6 +118,7 @@ export default {
   data() {
     return {
       photoUrl: null,
+      photoFailed: false,
       previousPhotos: [],
       showPhotoHistory: false,
       photoLoadId: 0
@@ -144,6 +146,7 @@ export default {
         if (url?.startsWith('blob:')) URL.revokeObjectURL(url);
       });
       this.photoUrl = null;
+      this.photoFailed = false;
       this.previousPhotos = [];
     },
     async loadPhoto(photo) {
@@ -169,6 +172,7 @@ export default {
 
       if (!resolved.length) return;
       this.photoUrl = resolved[resolved.length - 1].resolved;
+      this.photoFailed = false;
       this.previousPhotos = resolved.slice(0, -1).reverse();
     },
     handleDelete() {

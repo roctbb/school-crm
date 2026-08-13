@@ -23,8 +23,8 @@
         <!-- Если выбрана вкладка "portfolio" -->
         <div v-if="activeTab === 'portfolio'" class="tab-content">
             <div class="mt-3">
-                <loading v-if="isLoading"/>
-                <div v-else>
+                <loading v-if="isLoading && !hasVisibleResults" compact/>
+                <div v-else :class="{ 'results-updating': isLoading }">
                     <CardView
                         :objects="paginatedObjects"
                         size="big"
@@ -129,6 +129,9 @@
                         v-else
                         class="bi bi-list"
                     ></i>
+                    <span class="d-none d-xxl-inline ms-1">
+                        {{ isTableView ? 'Карточки' : 'Таблица' }}
+                    </span>
                 </button>
 
                 <!-- Кнопка для преподавателей: фильтр неподтверждённых (иконки) -->
@@ -152,6 +155,9 @@
                         class="bi bi-exclamation-circle"
                         title="Только неподтверждённые"
                     ></i>
+                    <span class="d-none d-xxl-inline ms-1">
+                        {{ onlyUnconfirmed ? 'Все записи' : 'Неподтверждённые' }}
+                    </span>
 
                     <!-- Сам кружочек -->
                     <span
@@ -174,8 +180,8 @@
 
             <!-- Содержимое вкладки -->
             <div class="objects-results">
-                <loading v-if="isLoading"/>
-                <div v-else>
+                <loading v-if="isLoading && !hasVisibleResults" compact/>
+                <div v-else :class="{ 'results-updating': isLoading }">
                     <TableView
                         v-if="isTableView"
                         :data="paginatedSortedObjects"
@@ -438,6 +444,13 @@ export default {
         hasActiveFilters() {
             return Boolean(this.searchQuery || this.selectedAttribute.code || this.onlyUnconfirmed);
         },
+        hasVisibleResults() {
+            return Boolean(
+                this.paginatedObjects.length ||
+                this.paginatedSortedObjects.length ||
+                Object.keys(this.paginatedGroupedObjects || {}).length
+            );
+        },
     },
 
     async created() {
@@ -640,6 +653,12 @@ export default {
 
 .objects-results {
     margin-top: 0;
+    min-height: 8rem;
+}
+
+.results-updating {
+    pointer-events: none;
+    opacity: 0.6;
 }
 
 /* Анимация плавного появления и исчезновения контента */
@@ -662,6 +681,10 @@ export default {
 
     .objects-toolbar {
         padding: 0.65rem;
+    }
+
+    .objects-tabs-bar {
+        flex-wrap: nowrap !important;
     }
 }
 </style>

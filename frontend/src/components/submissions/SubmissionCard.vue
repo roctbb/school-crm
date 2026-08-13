@@ -25,7 +25,14 @@
         <!-- Кнопка Подробнее -->
         <div class="card-footer mt-auto bg-white border-0">
             <router-link
-                :to="{ name: 'SubmissionDetails', params: { submissionId: submission.id, objectId: object.id }}"
+                :to="{
+                    name: 'SubmissionDetails',
+                    params: {
+                        object_type: object.type,
+                        object_id: object.id,
+                        submissionId: submission.id
+                    }
+                }"
                 class="btn btn-sm btn-outline-primary"
             >
                 Подробнее

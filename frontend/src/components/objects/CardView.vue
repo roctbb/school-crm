@@ -9,9 +9,9 @@
             <div
                 v-for="(objects, group) in groupedData"
                 :key="group"
-                class="group-section surface-card mb-3 p-3"
+                class="group-section mb-4"
             >
-                <h5 class="group-heading fw-bold d-flex align-items-center pb-2 mb-3 border-bottom">
+                <h5 class="group-heading fw-bold d-flex align-items-center mb-3">
                     <!-- Заголовок группы -->
                     <span class="me-2">
                       {{ groupingAttribute?.name }}: {{ formatGroupingLabel(group, groupingAttribute) }}
@@ -25,15 +25,11 @@
                     </span>
                 </h5>
 
-                <div class="row g-3">
+                <div class="object-card-grid">
                     <div
                         v-for="object in objects"
                         :key="object.id"
                         class="d-flex align-items-stretch"
-                        :class="{
-                          'col-md-3 col-lg-3 col-xl-2': size === 'big',
-                          'col-md-6 col-lg-4 col-xl-3': size !== 'big'
-                        }"
                     >
                         <ObjectCard :object="object"/>
                     </div>
@@ -42,15 +38,11 @@
         </div>
 
         <!-- Если нет групп, но есть объекты -->
-        <div v-else-if="objects.length" class="row g-3">
+        <div v-else-if="objects.length" class="object-card-grid">
             <div
                 v-for="object in objects"
                 :key="object.id"
                 class="d-flex align-items-stretch"
-                :class="{
-                  'col-md-3 col-lg-3 col-xl-2': size === 'big',
-                  'col-md-6 col-lg-4 col-xl-3': size !== 'big'
-                }"
             >
                 <ObjectCard :object="object"/>
             </div>
@@ -107,7 +99,16 @@ export default {
     min-width: 0;
 }
 
-.group-heading {
-    border-color: var(--silaeder-border) !important;
+.object-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(13.25rem, 1fr));
+    gap: 1rem;
 }
+
+@media (max-width: 575.98px) {
+    .object-card-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
 </style>

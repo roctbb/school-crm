@@ -43,6 +43,7 @@
                         rows="3"
                         v-model="newComment"
                         placeholder="Напишите свой комментарий..."
+                        aria-label="Новый комментарий"
                     />
                 </div>
                 <button class="btn btn-primary btn-sm" type="submit" :disabled="!newComment.trim()">Отправить</button>

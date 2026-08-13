@@ -47,11 +47,18 @@
 
                         <div v-if="usage" class="card mb-3">
                             <div class="card-body py-2 d-flex flex-wrap gap-3">
-                                <span><b>{{ usage.object_count }}</b> активных объектов</span>
-                                <span><b>{{ usage.revision_count }}</b> ревизий</span>
-                                <span v-if="orphanEntries.length" class="text-warning">
-                                    Осиротевшие поля:
+                                <span><b>{{ usage.object_count }}</b> {{ pluralize(usage.object_count, ['активный объект', 'активных объекта', 'активных объектов']) }}</span>
+                                <span><b>{{ usage.revision_count }}</b> {{ pluralize(usage.revision_count, ['ревизия', 'ревизии', 'ревизий']) }}</span>
+                                <span v-if="orphanEntries.length" class="orphan-warning" role="status">
+                                    <i class="bi bi-exclamation-triangle me-1"></i>
+                                    <strong>Поля вне текущей схемы:</strong>
                                     {{ orphanEntries.map(([code, count]) => `${code} (${count})`).join(', ') }}
+                                    <span class="d-block small text-muted mt-1">
+                                        Данные сохранены в объектах, но эти поля больше не описаны в редакторе типа.
+                                    </span>
+                                    <router-link :to="`/${draft.code}`" class="btn btn-sm btn-light mt-2">
+                                        Проверить объекты
+                                    </router-link>
                                 </span>
                             </div>
                         </div>
@@ -87,22 +94,54 @@
                             <div class="card-body">
                                 <draggable v-model="draft.available_attributes" item-key="_editorKey" handle=".drag-handle">
                                     <template #item="{element: attribute, index}">
-                                        <div class="border rounded p-3 mb-3 attribute-card">
-                                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                                <span class="drag-handle text-muted" title="Перетащить">
-                                                    <i class="bi bi-grip-vertical"></i> Поле {{ index + 1 }}
+                                        <div class="border rounded mb-3 attribute-card" :class="{ 'attribute-card--expanded': isAttributeExpanded(attribute) }">
+                                            <div class="attribute-summary d-flex align-items-center gap-2">
+                                                <span class="drag-handle text-muted" title="Перетащить поле">
+                                                    <i class="bi bi-grip-vertical"></i>
                                                 </span>
                                                 <button
-                                                    class="btn btn-sm btn-outline-danger"
+                                                    class="attribute-summary-button flex-grow-1"
                                                     type="button"
-                                                    :disabled="attributeUsage(attribute.code) > 0"
-                                                    :title="attributeUsage(attribute.code) ? 'Поле используется в данных' : 'Удалить поле'"
+                                                    :aria-expanded="isAttributeExpanded(attribute)"
+                                                    @click="toggleAttribute(attribute)"
+                                                >
+                                                    <span class="attribute-name">{{ attribute.name || `Поле ${index + 1}` }}</span>
+                                                    <code v-if="attribute.code">{{ attribute.code }}</code>
+                                                    <span class="badge text-bg-light">{{ attributeTypeLabel(attribute.type) }}</span>
+                                                    <small v-if="attributeUsage(attribute.code)" class="text-muted">
+                                                        Используется: {{ attributeUsage(attribute.code) }}
+                                                    </small>
+                                                </button>
+                                                <button
+                                                    class="btn btn-sm btn-light icon-button"
+                                                    type="button"
+                                                    :aria-label="isAttributeExpanded(attribute) ? `Свернуть ${attribute.name || `поле ${index + 1}`}` : `Редактировать ${attribute.name || `поле ${index + 1}`}`"
+                                                    @click="toggleAttribute(attribute)"
+                                                >
+                                                    <i :class="isAttributeExpanded(attribute) ? 'bi bi-chevron-up' : 'bi bi-pencil'"></i>
+                                                </button>
+                                                <span
+                                                    v-if="attributeUsage(attribute.code) > 0"
+                                                    class="disabled-action-hint"
+                                                    tabindex="0"
+                                                    :aria-label="`Нельзя удалить поле: оно используется в ${attributeUsage(attribute.code)} ${pluralize(attributeUsage(attribute.code), ['объекте', 'объектах', 'объектах'])}`"
+                                                    title="Нельзя удалить: поле используется в данных"
+                                                >
+                                                    <i class="bi bi-lock"></i>
+                                                </span>
+                                                <button
+                                                    v-else
+                                                    class="btn btn-sm btn-outline-danger icon-button"
+                                                    type="button"
+                                                    :aria-label="`Удалить ${attribute.name || `поле ${index + 1}`}`"
+                                                    title="Удалить поле"
                                                     @click="removeAttribute(index)"
                                                 >
                                                     <i class="bi bi-trash"></i>
                                                 </button>
                                             </div>
 
+                                            <div v-show="isAttributeExpanded(attribute)" class="attribute-editor-body">
                                             <div class="row g-2">
                                                 <div class="col-md-5">
                                                     <label class="form-label form-label-sm">Название</label>
@@ -151,9 +190,7 @@
                                                     <input v-model="attribute.keep_history" class="form-check-input" type="checkbox" />
                                                     <span class="form-check-label">Хранить историю</span>
                                                 </label>
-                                                <small v-if="attributeUsage(attribute.code)" class="text-muted align-self-center">
-                                                    Используется: {{ attributeUsage(attribute.code) }}
-                                                </small>
+                                            </div>
                                             </div>
                                         </div>
                                     </template>
@@ -321,6 +358,7 @@ export default {
             error: null,
             initialSnapshot: '',
             listSearch: '',
+            expandedAttributeKey: null,
             attributeTypes: [
                 {value: 'string', label: 'Строка'},
                 {value: 'text', label: 'Текст'},
@@ -415,6 +453,7 @@ export default {
             this.initialSnapshot = JSON.stringify(this.payload());
             this.error = null;
             this.saved = false;
+            this.expandedAttributeKey = null;
             [this.usage, this.revisions] = await Promise.all([
                 fetchObjectTypeUsage(type.id),
                 fetchObjectTypeRevisions(type.id),
@@ -437,7 +476,7 @@ export default {
             this.initialSnapshot = JSON.stringify(this.payload());
         },
         addAttribute() {
-            this.draft.available_attributes.push({
+            const attribute = {
                 name: '',
                 code: '',
                 type: 'string',
@@ -454,7 +493,9 @@ export default {
                 is_secret: false,
                 keep_history: false,
                 _editorKey: `new-${Date.now()}-${Math.random()}`,
-            });
+            };
+            this.draft.available_attributes.push(attribute);
+            this.expandedAttributeKey = attribute._editorKey;
         },
         removeAttribute(index) {
             this.draft.available_attributes.splice(index, 1);
@@ -462,6 +503,23 @@ export default {
         },
         attributeUsage(code) {
             return this.usage?.attribute_usage?.[code] || 0;
+        },
+        isAttributeExpanded(attribute) {
+            return this.expandedAttributeKey === attribute._editorKey;
+        },
+        toggleAttribute(attribute) {
+            this.expandedAttributeKey = this.isAttributeExpanded(attribute) ? null : attribute._editorKey;
+        },
+        attributeTypeLabel(value) {
+            return this.attributeTypes.find(type => type.value === value)?.label || value;
+        },
+        pluralize(value, forms) {
+            const number = Math.abs(Number(value)) % 100;
+            const lastDigit = number % 10;
+            if (number > 10 && number < 20) return forms[2];
+            if (lastDigit > 1 && lastDigit < 5) return forms[1];
+            if (lastDigit === 1) return forms[0];
+            return forms[2];
         },
         payload() {
             const attributes = this.draft.available_attributes.map(attribute => {
@@ -547,6 +605,56 @@ export default {
     background: var(--silaeder-surface);
 }
 
+.attribute-summary {
+    min-height: 3.25rem;
+    padding: 0.55rem 0.65rem;
+}
+
+.attribute-summary-button {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.75rem;
+    padding: 0;
+    color: inherit;
+    text-align: left;
+    border: 0;
+    background: transparent;
+}
+
+.attribute-name {
+    min-width: 8rem;
+    font-weight: 600;
+}
+
+.attribute-editor-body {
+    padding: 0.85rem 1rem 1rem;
+    border-top: 1px solid var(--silaeder-border);
+}
+
+.disabled-action-hint {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    color: var(--silaeder-muted);
+    border: 1px solid var(--silaeder-border);
+    border-radius: 0.4rem;
+    background: var(--silaeder-surface-subtle);
+    cursor: help;
+}
+
+.orphan-warning {
+    flex-basis: 100%;
+    padding: 0.55rem 0.7rem;
+    color: #685718;
+    border: 1px solid #eadb9a;
+    border-radius: 0.5rem;
+    background: #fff9df;
+}
+
 .drag-handle {
     cursor: grab;
     user-select: none;
@@ -555,5 +663,20 @@ export default {
 .form-label-sm {
     font-size: 0.85rem;
     margin-bottom: 0.2rem;
+}
+
+@media (max-width: 575.98px) {
+    .attribute-summary {
+        align-items: flex-start !important;
+    }
+
+    .attribute-summary-button {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .attribute-name {
+        min-width: 0;
+    }
 }
 </style>

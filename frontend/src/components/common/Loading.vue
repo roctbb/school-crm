@@ -2,10 +2,11 @@
   <div
     v-if="isVisible"
     class="loading-state"
+    :class="{ 'loading-state--compact': compact }"
     role="status"
     aria-live="polite"
   >
-    <div class="spinner-border text-primary" aria-hidden="true"></div>
+    <div class="spinner-border text-primary" :class="{ 'spinner-border-sm': compact }" aria-hidden="true"></div>
     <p class="mb-0 text-muted">{{ message || 'Загрузка…' }}</p>
   </div>
 </template>
@@ -22,6 +23,10 @@ export default {
       type: String,
       default: "", // Сообщение, показываемое под спиннером (например: "Загрузка")
     },
+    compact: {
+      type: Boolean,
+      default: false,
+    },
   },
 };
 </script>
@@ -33,10 +38,19 @@ export default {
   align-items: center;
   justify-content: center;
   width: 100%;
-  min-height: 10rem;
+  min-height: 6rem;
   gap: 0.8rem;
-  padding: 2rem;
+  padding: 1.5rem;
   border-radius: 0.75rem;
-  background: rgba(255, 255, 255, 0.55);
+  background: transparent;
+}
+
+.loading-state--compact {
+  min-height: 0;
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  padding: 0.4rem 0;
+  font-size: 0.875rem;
 }
 </style>

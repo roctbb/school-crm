@@ -1,6 +1,6 @@
 <template>
     <div class="card form-card h-100 w-100">
-        <div class="card-body">
+        <div class="card-body d-flex flex-column">
             <!-- Шапка карточки: название формы и кнопка удаления -->
             <div class="d-flex align-items-center">
                 <h5 class="card-title flex-grow-1 mb-0">
@@ -8,17 +8,17 @@
                 </h5>
                 <button
                     type="button"
-                    class="btn btn-sm text-secondary border-0 position-absolute icon-button delete-button"
+                    class="btn btn-sm btn-outline-danger position-absolute icon-button delete-button"
                     @click.stop="deleteForm"
                     aria-label="Удалить форму"
                     title="Удалить форму"
                 >
-                    <i class="bi bi-x-lg"></i>
+                    <i class="bi bi-trash"></i>
                 </button>
 
             </div>
 
-            <div class="mt-3">
+            <div class="mt-auto pt-3">
                 <button
                     type="button"
                     class="my-1 btn btn-sm btn-outline-primary"
@@ -73,11 +73,20 @@ export default {
 
 <style scoped>
 .form-card {
-    min-height: 9.5rem;
+    min-height: 8.5rem;
 }
 
 .delete-button {
     top: 0.45rem;
     right: 0.45rem;
+    min-width: 2rem;
+    min-height: 2rem;
+    padding: 0.25rem;
+    border-color: transparent;
+}
+
+.card-title {
+    padding-right: 2.25rem;
+    overflow-wrap: anywhere;
 }
 </style>

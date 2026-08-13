@@ -329,7 +329,8 @@ label:has(+ textarea[required])::after {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 2rem;
+    min-width: 2.25rem;
+    min-height: 2.25rem;
 }
 
 .auth-page {
@@ -402,6 +403,11 @@ label:has(+ textarea[required])::after {
         bottom: 0;
         margin-inline: -0.25rem;
         border-radius: 0.65rem 0.65rem 0 0;
+    }
+
+    .icon-button {
+        min-width: 2.75rem;
+        min-height: 2.75rem;
     }
 }
 

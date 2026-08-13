@@ -49,7 +49,6 @@ export default {
 
 .details-widget-stack--embedded {
     gap: 0;
-    border-top: 1px solid var(--silaeder-border);
 }
 
 .details-widget-stack--embedded :deep(.embedded-detail-widget) {
@@ -59,8 +58,8 @@ export default {
     box-shadow: none;
 }
 
-.details-widget-stack--embedded :deep(.embedded-detail-widget + .embedded-detail-widget) {
-    border-top: 1px solid var(--silaeder-border);
+.details-widget-stack--embedded :deep(.embedded-detail-widget .card-body) {
+    padding-top: 0.5rem !important;
 }
 
 </style>

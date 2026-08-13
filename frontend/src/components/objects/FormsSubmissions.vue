@@ -9,7 +9,7 @@
           submissionsInCategory(form_category).length ||
           (canFillInCategory(form_category) && canModifyObject(object))
         "
-        class="form-category-section surface-card p-3 p-sm-4"
+        class="form-category-section"
       >
         <div class="d-flex flex-wrap align-items-center gap-2 mb-4 section-heading">
           <h5 class="pb-0 mb-0 me-3">
@@ -27,6 +27,34 @@
               Скрытый раздел <i class="ms-1 bi bi-eye-slash"></i>
             </span>
           </h5>
+
+          <div
+            class="btn-group category-create-action"
+            v-if="canFillInCategory(form_category) && canModifyObject(object)"
+          >
+            <button
+              class="btn btn-sm btn-outline-primary dropdown-toggle"
+              type="button"
+              data-bs-toggle="dropdown"
+              aria-expanded="false"
+            >
+              <i class="bi bi-plus-lg me-1"></i>Добавить
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li
+                v-for="form in store.getFormCategory(form_category.id).forms"
+                :key="form.id"
+              >
+                <button
+                  class="dropdown-item"
+                  type="button"
+                  @click="goToCreateSubmission(form.id)"
+                >
+                  {{ form.name }}
+                </button>
+              </li>
+            </ul>
+          </div>
           
           <!-- Tabs for show_off_grouping if present -->
           <div v-if="hasShowOffGrouping(form_category)" class="group-tabs ms-sm-auto">
@@ -55,43 +83,14 @@
           :key="formId"
           class="submission-group"
         >
-          <div class="row g-4">
+          <div class="submission-card-grid">
             <div
-              class="col-md-6 col-lg-4 col-xl-3 d-flex align-items-stretch"
+              class="d-flex align-items-stretch"
               v-for="submission in submissionsGroup"
               :key="submission.id"
             >
               <SubmissionCard :submission="submission" :object="object" />
             </div>
-          </div>
-        </div>
-        <div
-          class="category-actions"
-          v-if="canFillInCategory(form_category) && canModifyObject(object)"
-        >
-          <div class="btn-group">
-            <button
-              class="btn btn-sm btn-outline-primary dropdown-toggle"
-              type="button"
-              data-bs-toggle="dropdown"
-              aria-expanded="false"
-            >
-              Добавить
-            </button>
-            <ul class="dropdown-menu">
-              <li
-                v-for="form in store.getFormCategory(form_category.id).forms"
-                :key="form.id"
-              >
-                <a
-                  class="dropdown-item"
-                  href="#"
-                  @click.prevent="goToCreateSubmission(form.id)"
-                >
-                  {{ form.name }}
-                </a>
-              </li>
-            </ul>
           </div>
         </div>
       </section>
@@ -100,12 +99,12 @@
     <div
       v-for="(category_name, i) in externalCategories"
       :key="i"
-      class="form-category-section surface-card p-3 p-sm-4"
+      class="form-category-section"
     >
       <h5 class="mb-4">{{ category_name }}</h5>
-      <div class="row g-4">
+      <div class="submission-card-grid">
         <div
-          class="col-md-6 col-lg-4 col-xl-3 d-flex align-items-stretch"
+          class="d-flex align-items-stretch"
           v-for="submission in object._submissions.filter(
             s => s.form.category === category_name
           )"
@@ -300,21 +299,50 @@ export default {
 
 .forms-submissions-stack {
   display: grid;
-  gap: var(--silaeder-section-gap);
+  gap: 2.25rem;
 }
 
 .submission-group + .submission-group {
   margin-top: 1.5rem;
 }
 
-.category-actions {
-  padding-top: 1rem;
-  margin-top: 1.5rem;
-  border-top: 1px solid var(--silaeder-border);
-}
-
 .section-heading h5,
 .form-category-section > h5 {
   line-height: 1.35;
+}
+
+.category-create-action {
+  order: 3;
+}
+
+.submission-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(13.25rem, 1fr));
+  gap: 1.25rem;
+}
+
+@media (max-width: 575.98px) {
+  .section-heading {
+    align-items: stretch !important;
+  }
+
+  .section-heading > h5,
+  .category-create-action,
+  .category-create-action > button {
+    width: 100%;
+  }
+
+  .category-create-action {
+    order: 2;
+  }
+
+  .group-tabs {
+    order: 3;
+    width: 100%;
+  }
+
+  .submission-card-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 </style>

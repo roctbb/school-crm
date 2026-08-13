@@ -2,23 +2,34 @@
     <section class="calendar-widget surface-card p-3 my-3">
         <!-- Шапка с кнопками переключения месяцев -->
         <div class="row justify-content-center">
-            <div class="col-12 d-flex justify-content-between align-items-center mb-3">
-                <button class="btn btn-outline-secondary btn-sm" @click="prevMonth">
+            <div class="col-12 calendar-header mb-3">
+                <button class="btn btn-outline-secondary btn-sm icon-button" type="button" aria-label="Предыдущий месяц" @click="prevMonth">
                     <i class="bi bi-chevron-left"></i>
                 </button>
 
-                <span class="fw-bold">
+                <span class="fw-bold text-capitalize">
           {{ monthYearLabel }}
         </span>
 
-                <button class="btn btn-outline-secondary btn-sm" @click="nextMonth">
+                <div class="calendar-header-actions d-flex align-items-center justify-content-end gap-2">
+                <button
+                    class="btn btn-sm btn-link text-secondary text-decoration-none calendar-toggle"
+                    type="button"
+                    :aria-expanded="expanded"
+                    @click="expanded = !expanded"
+                >
+                    <i :class="expanded ? 'bi bi-chevron-up' : 'bi bi-chevron-down'" class="me-1"></i>
+                    {{ expanded ? 'Свернуть' : 'Показать календарь' }}
+                </button>
+                <button class="btn btn-outline-secondary btn-sm icon-button" type="button" aria-label="Следующий месяц" @click="nextMonth">
                     <i class="bi bi-chevron-right"></i>
                 </button>
+                </div>
             </div>
         </div>
 
         <!-- Таблица календаря -->
-        <div class="row justify-content-center">
+        <div v-if="expanded" class="row justify-content-center">
             <div class="col-12 table-responsive">
                 <table class="table table-bordered text-center align-middle mb-0">
                     <thead class="table-light">
@@ -83,6 +94,7 @@ export default {
             currentMonth: currentDate.getMonth(),
             currentYear: currentDate.getFullYear(),
             weekDays: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"],
+            expanded: false,
         };
     },
 
@@ -198,6 +210,49 @@ export default {
 .calendar-widget {
     overflow: hidden;
     background: var(--silaeder-surface);
+}
+
+.calendar-toggle {
+    font-size: 0.875rem;
+}
+
+.calendar-header {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.calendar-header > .icon-button:first-child {
+    justify-self: start;
+}
+
+.calendar-header-actions {
+    justify-self: end;
+}
+
+@media (max-width: 575.98px) {
+    .calendar-header {
+        grid-template-columns: auto 1fr auto;
+    }
+
+    .calendar-header > .fw-bold {
+        text-align: center;
+    }
+
+    .calendar-toggle {
+        width: 2.75rem;
+        min-height: 2.75rem;
+        padding: 0;
+        overflow: hidden;
+        white-space: nowrap;
+        text-indent: -999rem;
+    }
+
+    .calendar-toggle i {
+        margin: 0 !important;
+        text-indent: 0;
+    }
 }
 
 /* Чтобы название события не растягивало ячейку,

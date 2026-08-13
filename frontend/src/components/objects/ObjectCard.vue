@@ -2,16 +2,17 @@
     <div class="card flex-fill hover-card h-100">
         <!-- Шапка с картинкой (или плейсхолдером) -->
         <div class="card-img-container" v-if="canHavePhoto">
-            <template v-if="photoUrl">
-                <a :href="photoUrl" target="_blank" rel="noopener noreferrer">
+            <template v-if="photoUrl && !photoFailed">
+                <router-link :to="`/${type.code}/${object.id}`" :aria-label="`Открыть ${object.name}`">
                     <img
                         :src="photoUrl"
                         alt="Фото объекта"
                         class="card-img-top object-card-img"
                         loading="lazy"
                         decoding="async"
+                        @error="photoFailed = true"
                     />
-                </a>
+                </router-link>
             </template>
             <template v-else>
                 <div class="image-placeholder d-flex flex-column align-items-center justify-content-center">
@@ -61,6 +62,18 @@
                 Подробнее
             </router-link>
 
+            <a
+                v-if="photoUrl && !photoFailed"
+                :href="photoUrl"
+                class="btn btn-sm btn-light icon-button ms-2"
+                target="_blank"
+                rel="noopener noreferrer"
+                :aria-label="`Открыть фото ${object.name}`"
+                title="Открыть фото"
+            >
+                <i class="bi bi-image"></i>
+            </a>
+
             <button
                 v-if="object.invitation && hasAdminAccess()"
                 class="btn btn-sm btn-light icon-button ms-2"
@@ -104,6 +117,7 @@ export default {
             showCopied: false,
             copyError: "",
             photoUrl: null,
+            photoFailed: false,
             photoLoadId: 0,
         };
     },
@@ -140,6 +154,7 @@ export default {
                 URL.revokeObjectURL(this.photoUrl);
             }
             this.photoUrl = null;
+            this.photoFailed = false;
         },
 
         async loadPhoto(photo) {
@@ -155,6 +170,7 @@ export default {
                     return;
                 }
                 this.photoUrl = resolvedUrl;
+                this.photoFailed = false;
             } catch (error) {
                 console.error("Не удалось загрузить фото объекта", error);
             }
@@ -210,6 +226,14 @@ export default {
     object-fit: cover;
     width: 100%;
     height: 180px;
+}
+
+.card-body {
+    min-width: 0;
+}
+
+.card-title {
+    overflow-wrap: anywhere;
 }
 
 /* Плейсхолдер, если нет изображения */
