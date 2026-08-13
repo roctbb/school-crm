@@ -1,5 +1,5 @@
 <template>
-  <div class="object-header d-flex flex-wrap align-items-start gap-3 mb-4">
+  <header class="object-header surface-card d-flex flex-wrap align-items-start">
     <!-- Фото слева -->
     <div v-if="photoUrl" class="participant-photo-block">
       <img
@@ -86,7 +86,7 @@
         </ul>
       </div>
     </div>
-  </div>
+  </header>
 </template>
 
 <script>
@@ -189,6 +189,12 @@ export default {
   max-width: 190px;
 }
 
+.object-header {
+  gap: 1.25rem;
+  padding: 1.25rem;
+  margin-bottom: var(--silaeder-section-gap);
+}
+
 .participant-photo {
   display: block;
   width: 150px;
@@ -215,7 +221,8 @@ export default {
 
 @media (max-width: 575.98px) {
   .object-header {
-    gap: 1rem !important;
+    gap: 1rem;
+    padding: 1rem;
   }
 
   .participant-photo-block,
@@ -235,6 +242,11 @@ export default {
 
   .object-heading h2 {
     font-size: 1.5rem;
+    overflow-wrap: anywhere;
+  }
+
+  .object-heading li {
+    overflow-wrap: anywhere;
   }
 
   .object-actions {

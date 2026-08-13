@@ -1,8 +1,8 @@
 <template>
-  <div>
-    <div v-for="type in connectedTypes" :key="type.code" class="mb-4">
+  <div class="connected-types-stack">
+    <section v-for="type in connectedTypes" :key="type.code" class="detail-section">
       <div v-if="findRelativesByType(type).length">
-        <h5 class="pb-2 d-flex justify-content-between align-items-center">
+        <h5 class="section-heading d-flex justify-content-between align-items-center">
           <span>
             {{ type.name }}
             <span
@@ -35,7 +35,7 @@
           :objectType="type"
         />
       </div>
-    </div>
+    </section>
   </div>
 </template>
 
@@ -91,3 +91,18 @@ export default {
   }
 };
 </script>
+
+<style scoped>
+.connected-types-stack {
+  display: grid;
+  gap: var(--silaeder-section-gap);
+}
+
+.detail-section:empty {
+  display: none;
+}
+
+.section-heading {
+  margin-bottom: 0.75rem;
+}
+</style>

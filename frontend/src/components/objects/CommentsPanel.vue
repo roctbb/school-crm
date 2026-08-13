@@ -1,6 +1,11 @@
 <template>
-    <div class="comments-panel mb-3">
-        <h5>Комментарии <i v-if="commentsHidden" class="ms-1 bi bi-eye-slash"></i></h5>
+    <section class="comments-panel card">
+        <div class="card-header py-3">
+            <h5 class="mb-0">
+                Комментарии <i v-if="commentsHidden" class="ms-1 bi bi-eye-slash"></i>
+            </h5>
+        </div>
+        <div class="card-body">
         <!-- Список комментариев -->
         <div v-for="comment in sortedComments" :key="comment.id" class="mb-3">
             <!-- Шапка: автор, время и иконка удаления -->
@@ -25,11 +30,11 @@
             </div>
             <!-- Текст комментария -->
             <div>{{ comment.text }}</div>
-            <hr/>
+            <hr class="my-3"/>
         </div>
 
         <!-- Форма добавления нового комментария -->
-        <div class="mt-3" v-if="canCommentObject(object)">
+        <div :class="sortedComments.length ? 'mt-3' : ''" v-if="canCommentObject(object)">
             <div v-if="error" class="alert alert-danger py-2 small">{{ error }}</div>
             <form @submit.prevent="postComment">
                 <div class="mb-3">
@@ -43,7 +48,8 @@
                 <button class="btn btn-primary btn-sm" type="submit" :disabled="!newComment.trim()">Отправить</button>
             </form>
         </div>
-    </div>
+        </div>
+    </section>
 </template>
 
 <script>
@@ -118,7 +124,13 @@ export default {
 
 <style scoped>
 .comments-panel {
-    border-left: 1px solid #ccc;
-    padding-left: 1rem;
+    position: sticky;
+    top: 5rem;
+}
+
+@media (max-width: 991.98px) {
+    .comments-panel {
+        position: static;
+    }
 }
 </style>

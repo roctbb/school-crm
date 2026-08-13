@@ -29,7 +29,7 @@ export default {
 </script>
 
 <template>
-    <section v-if="birthdaysToday.length > 0" class="birthdays-widget my-3">
+    <section v-if="birthdaysToday.length > 0" class="birthdays-widget surface-card my-3">
         <div class="birthdays-icon" aria-hidden="true">
             <i class="bi bi-gift"></i>
         </div>
@@ -55,8 +55,7 @@ export default {
     display: flex;
     align-items: flex-start;
     gap: 0.75rem;
-    padding: 0.35rem 0 1rem;
-    border-bottom: 1px solid var(--silaeder-border);
+    padding: 1rem 1.1rem;
 }
 
 .birthdays-icon {

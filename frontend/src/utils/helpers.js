@@ -1,4 +1,5 @@
 import useMainStore from "@/stores/mainStore.js";
+import {getAcademicYear} from "@/utils/academicYear.js";
 
 let empty = function (obj) {
     return !obj || Object.keys(obj).length === 0
@@ -64,27 +65,6 @@ function fillPatientData(text, patient) {
 function capitalize(str) {
     if (!str) return ''; // Если строка пустая или не передана, вернуть пустую строку
     return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
-function getAcademicYear() {
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth() + 1; // Месяцы в JS считаются с 0, поэтому прибавляем 1
-
-    let startYear, endYear;
-
-    if (currentMonth >= 9) {
-        // С сентября по декабрь включительно используем текущий год и следующий
-        startYear = currentYear % 100;
-        endYear = (currentYear + 1) % 100;
-    } else {
-        // С января по август используем предыдущий год и текущий
-        startYear = (currentYear - 1) % 100;
-        endYear = currentYear % 100;
-    }
-
-    // Преобразуем в формат "24/25" с ведущим нулём при необходимости
-    return `${String(startYear).padStart(2, '0')}/${String(endYear).padStart(2, '0')}`;
 }
 
 const formatValue = function (value) {

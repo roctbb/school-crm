@@ -60,15 +60,16 @@ export default {
 
 <style scoped>
 ul {
+    display: grid;
+    gap: 0.3rem;
     list-style-type: none;
     padding: 0 !important;
     margin: 0;
 }
 
 li {
-    margin: 0;
     padding: 0;
-    margin-bottom: 2px;
+    line-height: 1.4;
     font-size: 0.9rem;
 }
 </style>

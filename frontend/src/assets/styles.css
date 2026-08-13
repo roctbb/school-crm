@@ -12,6 +12,7 @@
     --silaeder-muted: #667781;
     --silaeder-shadow-sm: 0 0.125rem 0.5rem rgba(38, 52, 61, 0.07);
     --silaeder-shadow: 0 0.4rem 1.4rem rgba(38, 52, 61, 0.10);
+    --silaeder-section-gap: 1.5rem;
 }
 
 html,
@@ -118,6 +119,18 @@ label:has(+ textarea[required])::after {
 
 .card-header {
     font-weight: 600;
+    background: var(--silaeder-surface);
+}
+
+.surface-card {
+    border: 1px solid var(--silaeder-border);
+    border-radius: 0.75rem;
+    background: var(--silaeder-surface);
+    box-shadow: var(--silaeder-shadow-sm);
+}
+
+.form-control[readonly] {
+    background-color: var(--silaeder-surface-subtle);
 }
 
 .card,

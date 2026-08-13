@@ -629,13 +629,8 @@ export default {
 }
 
 .objects-toolbar {
-    padding: 0.75rem 0;
+    padding: 0.75rem;
     margin-bottom: 1.25rem;
-    border: 0;
-    border-bottom: 1px solid var(--silaeder-border);
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
 }
 
 .objects-results {
@@ -661,7 +656,7 @@ export default {
     }
 
     .objects-toolbar {
-        padding-block: 0.65rem;
+        padding: 0.65rem;
     }
 }
 </style>

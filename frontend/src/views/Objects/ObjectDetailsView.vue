@@ -10,10 +10,10 @@
                 @restore="handleRestore"
             />
 
-            <DetailsWidgetBar :object="object" :type="object_type" />
+            <DetailsWidgetBar class="details-widget-stack" :object="object" :type="object_type" />
 
-            <div class="row g-4">
-                <div class="col-md-8">
+            <div class="row g-4 align-items-start object-details-layout">
+                <div class="col-lg-8 detail-content-column">
                     <!-- Блок связанных объектов -->
                     <ConnectedTypes
                         :object="object"
@@ -32,12 +32,12 @@
                     />
                 </div>
                 <!-- Панель комментариев -->
-                <div class="col-md-4" v-if="object.comments.length || canCommentObject(object)">
+                <div class="col-lg-4" v-if="object.comments.length || canCommentObject(object)">
                     <CommentsPanel :object="object" />
                 </div>
             </div>
 
-            <BackButton class="mt-2" />
+            <BackButton class="mt-4" />
         </div>
         <Loading v-else />
     </BaseLayout>
@@ -162,5 +162,22 @@ export default {
 <style scoped>
 .object-details-page {
     min-width: 0;
+}
+
+.details-widget-stack {
+    display: grid;
+    gap: var(--silaeder-section-gap);
+    margin-bottom: var(--silaeder-section-gap);
+}
+
+.detail-content-column {
+    display: grid;
+    gap: var(--silaeder-section-gap);
+}
+
+@media (max-width: 991.98px) {
+    .object-details-layout {
+        --bs-gutter-y: var(--silaeder-section-gap);
+    }
 }
 </style>

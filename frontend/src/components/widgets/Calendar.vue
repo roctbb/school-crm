@@ -1,5 +1,5 @@
 <template>
-    <div class="calendar-widget container">
+    <section class="calendar-widget surface-card p-3 my-3">
         <!-- Шапка с кнопками переключения месяцев -->
         <div class="row justify-content-center">
             <div class="col-12 d-flex justify-content-between align-items-center mb-3">
@@ -64,7 +64,7 @@
                 </table>
             </div>
         </div>
-    </div>
+    </section>
 </template>
 
 <script>

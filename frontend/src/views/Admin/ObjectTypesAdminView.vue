@@ -522,10 +522,29 @@ export default {
 <style scoped>
 .type-list {
     top: 4.75rem;
+    overflow: hidden;
+    border: 1px solid var(--silaeder-border);
+    border-radius: 0.75rem;
+    background: var(--silaeder-surface);
+    box-shadow: var(--silaeder-shadow-sm);
+}
+
+.type-list > .list-group-item {
+    border-inline: 0;
+}
+
+.type-list > .list-group-item:first-child {
+    border-top: 0;
+}
+
+.type-list > .list-group-item:last-child {
+    border-bottom: 0;
 }
 
 .attribute-card {
-    background: var(--silaeder-surface-subtle);
+    border-color: var(--silaeder-border) !important;
+    border-radius: 0.65rem !important;
+    background: var(--silaeder-surface);
 }
 
 .drag-handle {

@@ -21,12 +21,15 @@ export default {
 </script>
 
 <template>
-    <component
-        v-for="(widget, index) in widgets"
-        :key="index"
-        :is="widget"
-        :object="object" :type="type"
-    />
+    <div v-if="widgets.length" class="details-widget-stack">
+        <component
+            v-for="(widget, index) in widgets"
+            :key="index"
+            :is="widget"
+            :object="object"
+            :type="type"
+        />
+    </div>
 </template>
 
 <style scoped>

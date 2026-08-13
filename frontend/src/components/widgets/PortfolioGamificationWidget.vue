@@ -1,8 +1,6 @@
 <template>
-    <div class="row my-3">
-        <div class="col-12 col-md-12 col-lg-8">
-            <div class="card">
-                <div class="card-body p-3">
+    <section class="card portfolio-progress-card">
+        <div class="card-body p-3 p-sm-4">
                     <!-- Горизонтальный контейнер -->
                     <div class="d-flex align-items-center">
                         <!-- Кружок с уровнем, цвет зависит от уровня -->
@@ -42,10 +40,8 @@
                             </small>
                         </div>
                     </div>
-                </div>
-            </div>
         </div>
-    </div>
+    </section>
 </template>
 
 <script>
@@ -202,5 +198,22 @@ export default {
 </script>
 
 <style scoped>
-/* При необходимости переопределяйте стили, здесь для примера используется Bootstrap */
+.portfolio-progress-card {
+    margin: 0;
+}
+
+@media (max-width: 575.98px) {
+    .portfolio-progress-card .card-body > .d-flex {
+        align-items: center !important;
+    }
+
+    .portfolio-progress-card .progress {
+        height: 1rem !important;
+    }
+
+    .portfolio-progress-card .progress-bar {
+        overflow: hidden;
+        font-size: 0;
+    }
+}
 </style>

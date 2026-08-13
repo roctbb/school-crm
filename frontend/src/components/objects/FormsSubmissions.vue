@@ -1,9 +1,9 @@
 <template>
-  <div>
+  <div class="forms-submissions-stack">
     <div
       v-for="form_category in object_type.form_categories"
       :key="form_category.id"
-      class="mb-4"
+      class="form-category-section"
     >
       <div
         v-if="
@@ -11,7 +11,7 @@
           (canFillInCategory(form_category) && canModifyObject(object))
         "
       >
-        <div class="d-flex flex-wrap align-items-center mb-3">
+        <div class="d-flex flex-wrap align-items-center mb-3 section-heading">
           <h5 class="pb-0 mb-0 me-3">
             {{ form_category.name }}
             <span
@@ -34,7 +34,7 @@
               <li class="nav-item" v-for="(group, index) in getGroupingValues(form_category)" :key="index">
                 <button 
                   class="nav-link" 
-                  :class="{ active: isActiveGroup(form_category.id, group) }"
+                  :class="{ active: isActiveGroup(form_category, group) }"
                   @click="setActiveGroup(form_category.id, group)"
                 >
                   {{ group }}
@@ -97,7 +97,7 @@
     <div
       v-for="(category_name, i) in externalCategories"
       :key="i"
-      class="mb-2"
+      class="form-category-section"
     >
       <h5 class="pb-2">{{ category_name }}</h5>
       <div class="row g-3">
@@ -118,6 +118,7 @@
 <script>
 import useMainStore from "@/stores/mainStore.js";
 import SubmissionCard from "@/components/submissions/SubmissionCard.vue";
+import {currentAcademicYearGroup} from "@/utils/academicYear.js";
 import {
   canFillInCategory,
   canModifyObject
@@ -211,17 +212,17 @@ export default {
       
       return Array.from(values);
     },
-    // Check if a group is active for a category
-    isActiveGroup(categoryId, group) {
-      if (!this.activeGroups[categoryId]) {
-        // If no active group is set, the last group is active by default
-        const category = this.object_type.form_categories.find(c => c.id === categoryId);
-        if (category) {
-          const groups = this.getGroupingValues(category);
-          return groups.indexOf(group) === groups.length - 1;
-        }
+    selectedGroup(category) {
+      const groups = this.getGroupingValues(category);
+      const manuallySelectedGroup = this.activeGroups[category.id];
+      if (groups.includes(manuallySelectedGroup)) {
+        return manuallySelectedGroup;
       }
-      return this.activeGroups[categoryId] === group;
+      return currentAcademicYearGroup(groups);
+    },
+    // Check if a group is active for a category
+    isActiveGroup(category, group) {
+      return this.selectedGroup(category) === group;
     },
     // Set the active group for a category
     setActiveGroup(categoryId, group) {
@@ -234,25 +235,8 @@ export default {
       }
       
       const groupingFields = category.params.show_off_grouping;
-      const activeGroup = this.activeGroups[category.id];
-      
-      // If no active group is set, use the last group
-      if (!activeGroup) {
-        const groups = this.getGroupingValues(category);
-        if (groups.length > 0) {
-          const lastGroup = groups[groups.length - 1];
-          this.activeGroups[category.id] = lastGroup;
-          
-          // If the last group is "Все" (All), return all submissions
-          if (lastGroup === "Все") {
-            return submissions;
-          }
-          
-          // Otherwise filter by the last group
-          return this.filterSubmissionsByGroup(submissions, groupingFields, lastGroup);
-        }
-        return submissions;
-      }
+      const activeGroup = this.selectedGroup(category);
+      if (!activeGroup) return submissions;
       
       // If active group is "Все" (All), return all submissions
       if (activeGroup === "Все") {
@@ -302,5 +286,19 @@ export default {
 
 .group-tabs .nav-link {
   white-space: nowrap;
+}
+
+.forms-submissions-stack {
+  display: grid;
+  gap: var(--silaeder-section-gap);
+}
+
+.form-category-section:empty {
+  display: none;
+}
+
+.section-heading h5,
+.form-category-section > h5 {
+  line-height: 1.35;
 }
 </style>
