@@ -86,7 +86,7 @@
         >
           <div class="submission-card-grid">
             <div
-              class="d-flex align-items-stretch"
+              class="submission-card-cell"
               v-for="submission in submissionsGroup"
               :key="submission.id"
             >
@@ -109,7 +109,7 @@
       <h5 class="mb-4">{{ category_name }}</h5>
       <div class="submission-card-grid">
         <div
-          class="d-flex align-items-stretch"
+          class="submission-card-cell"
           v-for="submission in object._submissions.filter(
             s => s.form.category === category_name
           )"
@@ -384,9 +384,14 @@ export default {
 
 .submission-card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(15rem, 18rem));
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  align-items: start;
   justify-content: start;
   gap: 1rem;
+}
+
+.submission-card-cell {
+  min-width: 0;
 }
 
 @media (max-width: 575.98px) {

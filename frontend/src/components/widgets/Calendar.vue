@@ -60,15 +60,18 @@
                             >
                                 {{ dayObj.date.getDate() }}
                             </div>
-                            <div
-                                v-for="ev in dayObj.events"
-                                :key="ev.id"
-                                class="d-block small text-truncate event-item"
-                                @click="goToEvent(ev.id)"
+                            <button
+                                v-for="item in dayObj.events"
+                                :key="item.key"
+                                class="event-item"
+                                :class="`event-item--${item.kind}`"
+                                type="button"
+                                :title="item.title"
+                                @click="goToCalendarItem(item)"
                             >
-                                <i class="bi bi-calendar3 me-1"></i>
-                                {{ ev.name }}
-                            </div>
+                                <i :class="item.kind === 'birthday' ? 'bi bi-gift' : 'bi bi-calendar3'" aria-hidden="true"></i>
+                                <span class="text-truncate">{{ item.name }}</span>
+                            </button>
                         </td>
                     </tr>
                     </tbody>
@@ -101,6 +104,9 @@ export default {
     computed: {
         allEvents() {
             return this.store.getObjectsByType("events");
+        },
+        allStudents() {
+            return this.store.getObjectsByType("students");
         },
         monthYearLabel() {
             const date = new Date(this.currentYear, this.currentMonth);
@@ -159,7 +165,40 @@ export default {
             if (!date) {
                 return [];
             }
-            return this.allEvents.filter((ev) => this.isEventOnDate(ev, date));
+
+            const events = this.allEvents
+                .filter((event) => this.isEventOnDate(event, date))
+                .map((event) => ({
+                    key: `event-${event.id}`,
+                    kind: "event",
+                    id: event.id,
+                    name: event.name,
+                    title: event.name,
+                }));
+
+            const birthdays = this.allStudents
+                .filter((student) => this.isBirthdayOnDate(student, date))
+                .sort((left, right) => left.name.localeCompare(right.name, "ru"))
+                .map((student) => ({
+                    key: `birthday-${student.id}`,
+                    kind: "birthday",
+                    id: student.id,
+                    name: student.name,
+                    title: `День рождения: ${student.name}`,
+                }));
+
+            return [...birthdays, ...events];
+        },
+
+        isBirthdayOnDate(student, date) {
+            const birthday = student?.attributes?.birthday;
+            if (!birthday) return false;
+
+            const birthdayDate = parseDate(birthday);
+            if (!birthdayDate || Number.isNaN(birthdayDate.getTime())) return false;
+
+            return birthdayDate.getDate() === date.getDate()
+                && birthdayDate.getMonth() === date.getMonth();
         },
 
         isEventOnDate(event, date) {
@@ -181,8 +220,9 @@ export default {
             return date >= startDate && date <= endDate;
         },
 
-        goToEvent(eventId) {
-            this.router.push(`/events/${eventId}`);
+        goToCalendarItem(item) {
+            const targetType = item.kind === "birthday" ? "students" : "events";
+            this.router.push(`/${targetType}/${item.id}`);
         },
 
         nextMonth() {
@@ -258,12 +298,43 @@ export default {
 /* Чтобы название события не растягивало ячейку,
    задаём максимальную ширину и обрезаем текст многоточием. */
 .event-item {
-    display: inline-block;      /* или block/inline-block по вкусу */
-    max-width: 100px;           /* подберите нужную ширину */
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    width: 100%;
+    margin-top: 0.2rem;
+    padding: 0.15rem 0.3rem;
+    color: var(--silaeder-primary-dark);
+    font-size: 0.75rem;
+    line-height: 1.25;
+    text-align: left;
+    border: 0;
+    border-radius: 0.35rem;
+    background: var(--silaeder-primary-soft);
     cursor: pointer;
+}
+
+.event-item:hover {
+    filter: brightness(0.97);
+}
+
+.event-item:focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 0.15rem rgb(57 118 152 / 22%);
+}
+
+.event-item i {
+    flex: 0 0 auto;
+}
+
+.event-item span {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.event-item--birthday {
+    color: #236647;
+    background: #e7f4ed;
 }
 
 .fw-bold {

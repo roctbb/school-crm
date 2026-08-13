@@ -15,6 +15,10 @@ class Form extends Model {
             this.params = {}; // Инициализация параметров по умолчанию
         }
 
+        if (!this.card_format) {
+            this.card_format = "default";
+        }
+
         if (!this.fields) {
             this.fields = []; // Инициализация параметров по умолчанию
         }

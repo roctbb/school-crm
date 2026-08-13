@@ -253,6 +253,11 @@ def validate_object_type(data):
 def validate_form(data):
     should_have(data, 'name', min_length=1, max_length=100)
 
+    card_format = data.get('card_format', 'default')
+    if card_format not in {'default', 'session_results'}:
+        raise LogicException("Неизвестный формат карточки формы.", 422, field='card_format')
+    data['card_format'] = card_format
+
     # Ensure "available_params" and "fields" are JSON lists
     if not isinstance(data.get('available_params', []), list):
         raise LogicException("Поле available_params должно быть списком.", 422)

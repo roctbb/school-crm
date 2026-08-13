@@ -1,5 +1,5 @@
 <template>
-    <article class="card submission-card flex-fill">
+    <article class="card submission-card">
         <div class="card-body flex-grow-1">
             <div class="submission-card-heading">
                 <h5 class="card-title mb-0">{{ form.name }}</h5>
@@ -21,7 +21,13 @@
                 class="badge mt-2"
             >Не подтверждено</span>
 
+            <SessionResultsCard
+                v-if="cardFormat === 'session_results'"
+                :attributes="submission.showoff_attributes"
+                :hidden-attributes="hiddenAttributes"
+            />
             <ShowoffPresenter
+                v-else
                 class="submission-attributes"
                 :attributes="submission.showoff_attributes"
                 :hidden-attributes="hiddenAttributes"
@@ -48,11 +54,12 @@
 import useMainStore from "@/stores/mainStore.js";
 import {formatDateTime} from "@/utils/helpers.js";
 import ShowoffPresenter from "@/components/submissions/ShowoffPresenter.vue";
+import SessionResultsCard from "@/components/submissions/SessionResultsCard.vue";
 import {hasTeacherAccess} from "@/utils/access.js";
 
 export default {
     name: "SubmissionCard",
-    components: {ShowoffPresenter},
+    components: {SessionResultsCard, ShowoffPresenter},
     methods: {
         hasTeacherAccess, formatDateTime,
         async handleApprove() {
@@ -85,12 +92,17 @@ export default {
     created() {
         this.form = this.submission.form;
     },
+    computed: {
+        cardFormat() {
+            return this.submission._form?.card_format || this.submission.form?.card_format || 'default';
+        },
+    },
 };
 </script>
 
 <style scoped>
 .submission-card {
-    min-height: 10rem;
+    width: 100%;
     border-radius: 0.75rem;
     cursor: pointer;
     transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;

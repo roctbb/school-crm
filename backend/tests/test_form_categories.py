@@ -134,3 +134,41 @@ def test_form_category_rejects_invalid_common_field(client, category_admin_heade
 
     assert response.status_code == 422
     assert response.get_json()['field'] == 'common_fields'
+
+
+def test_admin_creates_form_with_card_format(
+        client, db_session, category_admin, category_admin_headers):
+    category = FormCategory(name='Успеваемость', creator_id=category_admin.id)
+    db_session.add(category)
+    db_session.commit()
+
+    response = client.post(
+        f'/api/forms/categories/{category.id}',
+        headers=category_admin_headers,
+        json={
+            'name': 'Результаты сессии',
+            'card_format': 'session_results',
+            'fields': [],
+            'available_params': [],
+        },
+    )
+
+    assert response.status_code == 201
+    assert response.get_json()['card_format'] == 'session_results'
+    assert db_session.get(Form, response.get_json()['id']).card_format == 'session_results'
+
+
+def test_form_rejects_unknown_card_format(
+        client, db_session, category_admin, category_admin_headers):
+    category = FormCategory(name='Успеваемость', creator_id=category_admin.id)
+    db_session.add(category)
+    db_session.commit()
+
+    response = client.post(
+        f'/api/forms/categories/{category.id}',
+        headers=category_admin_headers,
+        json={'name': 'Тест', 'card_format': 'unknown', 'fields': []},
+    )
+
+    assert response.status_code == 422
+    assert response.get_json()['field'] == 'card_format'

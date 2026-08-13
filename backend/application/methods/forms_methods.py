@@ -88,6 +88,7 @@ def delete_form_category(user, category):
 def create_form(user, category, data):
     new_form = Form(
         name=data["name"],
+        card_format=data.get("card_format", "default"),
         available_params=data.get("available_params", []),
         fields=data.get("fields", []),
         creator_id=user.id,
@@ -100,6 +101,7 @@ def create_form(user, category, data):
 @transaction
 def update_form(form, data):
     form.name = data.get("name", form.name)
+    form.card_format = data.get("card_format", form.card_format)
     form.available_params = data.get("available_params", form.available_params)
     form.fields = data.get("fields", form.fields)
     return form

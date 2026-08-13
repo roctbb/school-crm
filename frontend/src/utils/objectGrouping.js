@@ -1,4 +1,5 @@
 export const MONTH_GROUPING_PREFIX = "month:";
+export const YEAR_GROUPING_PREFIX = "year:";
 export const EMPTY_GROUP_LABEL = "Без группы";
 
 const MONTH_NAMES = [
@@ -59,10 +60,16 @@ export function groupingKey(value, groupingOption) {
     if (groupingOption?.groupingMode === "month") {
         return dateMonthKey(value) || EMPTY_GROUP_LABEL;
     }
+    if (groupingOption?.code === "year") {
+        return `${YEAR_GROUPING_PREFIX}${value}`;
+    }
     return String(value);
 }
 
 export function groupingLabel(groupKey, groupingOption) {
+    if (groupingOption?.code === "year" && groupKey.startsWith(YEAR_GROUPING_PREFIX)) {
+        return groupKey.slice(YEAR_GROUPING_PREFIX.length);
+    }
     if (groupingOption?.groupingMode !== "month" || groupKey === EMPTY_GROUP_LABEL) return groupKey;
     const match = groupKey.match(/^(\d{4})-(\d{2})$/);
     if (!match) return groupKey;

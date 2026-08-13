@@ -152,6 +152,7 @@ def present_form(form):
     return {
         'id': form.id,
         'name': form.name,
+        'card_format': form.card_format,
         'category_id': form.category_id,
         'available_params': form.available_params,
         'fields': form.fields,
@@ -174,7 +175,8 @@ def present_submission(submission, object=None):
             'name': submission.form_name,
             'category': submission.form_category_name,
             'is_external': submission.is_external,
-            'id': submission.form_id
+            'id': submission.form_id,
+            'card_format': submission.form.card_format if submission.form else 'default',
         },
         'creator': present_user(submission.created_by) if submission.created_by else None,
         'deleter': present_user(submission.deleted_by) if submission.deleted_by else None,

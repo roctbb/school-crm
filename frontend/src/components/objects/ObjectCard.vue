@@ -25,7 +25,7 @@
         <!-- Основное содержимое карточки -->
         <div class="card-body flex-grow-1 pb-2">
             <h5 class="card-title mb-2">
-                <router-link :to="`/${type.code}/${object.id}`" class="card-title-link stretched-link-scope">
+                <router-link :to="`/${type.code}/${object.id}`" class="card-title-link stretched-link">
                     {{ object.name }}
                 </router-link>
                 <i
@@ -54,18 +54,11 @@
         </div>
 
         <!-- Нижняя часть карточки -->
-        <div class="card-footer bg-white border-0">
-            <router-link
-                :to="`/${type.code}/${object.id}`"
-                class="btn btn-sm btn-outline-primary"
-            >
-                Подробнее
-            </router-link>
-
+        <div v-if="hasFooterActions" class="card-footer bg-white border-0">
             <a
                 v-if="photoUrl && !photoFailed"
                 :href="photoUrl"
-                class="btn btn-sm btn-light icon-button ms-2"
+                class="btn btn-sm btn-light icon-button"
                 target="_blank"
                 rel="noopener noreferrer"
                 :aria-label="`Открыть фото ${object.name}`"
@@ -76,7 +69,8 @@
 
             <button
                 v-if="object.invitation && hasAdminAccess()"
-                class="btn btn-sm btn-light icon-button ms-2"
+                class="btn btn-sm btn-light icon-button"
+                :class="{ 'ms-2': photoUrl && !photoFailed }"
                 aria-label="Скопировать ссылку-приглашение"
                 title="Скопировать приглашение"
                 @click="copyInviteLink"
@@ -131,6 +125,14 @@ export default {
         // Тип объекта из store
         type() {
             return this.store.getObjectTypeByCode(this.object.type);
+        },
+        hasFooterActions() {
+            return Boolean(
+                (this.photoUrl && !this.photoFailed) ||
+                (this.object.invitation && hasAdminAccess()) ||
+                this.showCopied ||
+                this.copyError
+            );
         },
     },
     watch: {
@@ -208,7 +210,13 @@ export default {
 
 .hover-card {
     overflow: hidden;
+    cursor: pointer;
     transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+}
+
+.hover-card:focus-within {
+    border-color: var(--silaeder-primary);
+    box-shadow: 0 0 0 0.2rem rgb(57 118 152 / 18%);
 }
 
 .card-title-link {

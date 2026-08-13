@@ -23,6 +23,17 @@
                     </div>
 
                     <div class="mb-4">
+                        <label class="form-label" for="card-format">Отображение на странице объекта</label>
+                        <select id="card-format" v-model="form.card_format" class="form-select">
+                            <option value="default">Обычная карточка</option>
+                            <option value="session_results">Результаты сессии</option>
+                        </select>
+                        <div class="form-text">
+                            Сессионная карточка показывает предметы как компактную ведомость и рассчитывает средний балл.
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
                         <h5>Поля формы</h5>
                         <FormFieldsEditor v-model="form.fields" />
                     </div>
@@ -111,7 +122,11 @@ export default {
     },
     methods: {
         formSnapshot() {
-            return JSON.stringify({name: this.form?.name || '', fields: this.form?.fields || []});
+            return JSON.stringify({
+                name: this.form?.name || '',
+                card_format: this.form?.card_format || 'default',
+                fields: this.form?.fields || [],
+            });
         },
         async handleSave() {
             try {

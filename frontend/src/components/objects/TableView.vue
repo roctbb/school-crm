@@ -14,9 +14,9 @@
                 </h5>
 
 
-                <div class="table-responsive">
-                <table class="table table-sm table-hover align-middle">
-                    <thead class="table-light">
+                <div class="table-responsive object-table-surface">
+                <table class="table table-hover align-middle object-table">
+                    <thead>
                     <tr>
                         <!-- Колонка "Имя" -->
                         <th class="table-sortable" tabindex="0" @click="onSort('name')" @keydown.enter="onSort('name')">
@@ -83,9 +83,9 @@
         </div>
 
         <!-- Если обычный массив объектов (не сгруппировано) -->
-        <div v-else-if="data.length" class="table-responsive">
-            <table class="table table-sm table-hover align-middle">
-                <thead class="table-light">
+        <div v-else-if="data.length" class="table-responsive object-table-surface">
+            <table class="table table-hover align-middle object-table">
+                <thead>
                 <tr>
                     <th class="table-sortable" tabindex="0" @click="onSort('name')" @keydown.enter="onSort('name')">
                         <span class="underline">Имя</span>
@@ -238,7 +238,84 @@ export default {
 }
 
 .underline {
-    text-decoration: underline dotted;
-    text-underline-offset: 0.2rem;
+    text-decoration: none;
+}
+
+.object-table-surface {
+    overflow-y: hidden;
+    border: 1px solid var(--silaeder-border);
+    border-radius: 0.75rem;
+    background: var(--silaeder-surface);
+    box-shadow: var(--silaeder-shadow-sm);
+}
+
+.object-table {
+    --bs-table-bg: transparent;
+    --bs-table-border-color: var(--silaeder-border);
+    --bs-table-hover-bg: var(--silaeder-primary-soft);
+    min-width: 34rem;
+    margin-bottom: 0;
+}
+
+.object-table thead th {
+    padding: 0.7rem 0.9rem;
+    color: var(--silaeder-muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: 0.015em;
+    white-space: nowrap;
+    border-bottom-width: 1px;
+    background: #f8fafb;
+}
+
+.object-table tbody td {
+    padding: 0.75rem 0.9rem;
+    color: var(--silaeder-text);
+    line-height: 1.35;
+    vertical-align: middle;
+}
+
+.object-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.object-table tbody tr {
+    transition: background-color 140ms ease;
+}
+
+.object-table tbody tr.table-warning > * {
+    --bs-table-bg-state: #fff7da;
+}
+
+.object-table a:not(.btn) {
+    color: var(--silaeder-primary-dark);
+}
+
+.table-sortable {
+    cursor: pointer;
+    transition: color 140ms ease, background-color 140ms ease;
+}
+
+.table-sortable:hover {
+    color: var(--silaeder-primary-dark);
+    background: var(--silaeder-primary-soft);
+}
+
+.table-sortable:focus-visible {
+    outline: 0;
+    box-shadow: inset 0 0 0 2px rgb(57 118 152 / 22%);
+}
+
+@media (max-width: 575.98px) {
+    .object-table {
+        min-width: 30rem;
+    }
+
+    .object-table thead th,
+    .object-table tbody td {
+        padding-right: 0.75rem;
+        padding-left: 0.75rem;
+    }
 }
 </style>

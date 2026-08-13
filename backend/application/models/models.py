@@ -399,6 +399,7 @@ class Form(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
+    card_format = db.Column(db.String(32), nullable=False, server_default='default')
     available_params = db.Column(db.JSON, server_default=db.text("'[]'::json"))
     fields = db.Column(db.JSON, server_default=db.text("'[]'::json"))
     created_at = db.Column(db.DateTime, nullable=True, server_default=db.func.now())
