@@ -1,11 +1,67 @@
 @import "bootstrap/scss/functions";
 
-// Brand palette must be defined before Bootstrap builds $theme-colors and
-// component variables. Defining it after variables/maps leaves components in
-// Bootstrap's default blue.
+// Silaeder brand palette. These values must be declared before Bootstrap
+// builds its component variables and theme maps.
 $primary: #397698;
 $warning: #EACF72;
 $danger: #C92325;
+$success: #2f7d5b;
+$info: #4d89a8;
+$secondary: #667781;
+
+// Bootstrap-native visual system: calm surfaces, slightly softer controls and
+// one shared focus treatment across every component.
+$body-bg: #f4f7f9;
+$body-color: #26343d;
+$border-color: #dbe3e8;
+$border-color-translucent: rgba(38, 52, 61, 0.12);
+$font-family-sans-serif: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+$headings-font-weight: 650;
+$headings-color: #22313a;
+$link-color: $primary;
+$link-hover-color: #28556e;
+$link-decoration: none;
+$link-hover-decoration: underline;
+
+$border-radius: .5rem;
+$border-radius-sm: .4rem;
+$border-radius-lg: .75rem;
+$box-shadow-sm: 0 .125rem .5rem rgba(38, 52, 61, .07);
+$box-shadow: 0 .4rem 1.4rem rgba(38, 52, 61, .10);
+
+$card-border-color: $border-color;
+$card-border-radius: $border-radius-lg;
+$card-cap-bg: #f8fafb;
+$card-cap-color: #334650;
+$card-box-shadow: $box-shadow-sm;
+
+$input-border-color: #cbd7dd;
+$input-focus-border-color: rgba($primary, .68);
+$input-focus-box-shadow: 0 0 0 .22rem rgba($primary, .16);
+$form-label-font-weight: 500;
+$focus-ring-color: rgba($primary, .22);
+$focus-ring-opacity: 1;
+
+$btn-border-radius: .45rem;
+$btn-border-radius-sm: .4rem;
+$btn-font-weight: 500;
+$btn-focus-box-shadow: 0 0 0 .22rem rgba($primary, .18);
+
+$dropdown-border-color: $border-color;
+$dropdown-border-radius: $border-radius-lg;
+$dropdown-box-shadow: $box-shadow;
+$dropdown-padding-y: .45rem;
+$dropdown-item-padding-y: .48rem;
+
+$list-group-border-color: $border-color;
+$list-group-border-radius: $border-radius-lg;
+$list-group-active-bg: $primary;
+$list-group-active-border-color: $primary;
+
+$nav-tabs-border-color: $border-color;
+$nav-tabs-link-active-color: $primary;
+$nav-tabs-link-active-bg: #fff;
+$nav-tabs-link-active-border-color: $border-color $border-color #fff;
 
 $pagination-color: $primary;
 $pagination-hover-color: #28556e;

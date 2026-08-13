@@ -1,13 +1,13 @@
 <template>
     <BaseLayout>
-        <div class="container mt-3">
             <Loading v-if="isLoading"></Loading>
             <div v-else>
-                <h3 class="mb-4">
-                    {{
-                        isEditMode ? `Редактирование ответа на форму ${form.name} для ${this.object.name}` : `Создание ответа на форму ${form.name} для ${this.object.name}`
-                    }}
-                </h3>
+                <PageHeader
+                    :title="isEditMode ? `Редактирование ответа: ${form.name}` : `Новый ответ: ${form.name}`"
+                    :subtitle="`Объект: ${object.name}`"
+                />
+
+                <div v-if="error" class="alert alert-danger">{{ error }}</div>
 
 
                 <form @submit.prevent="handleSave">
@@ -168,17 +168,19 @@
                     </div>
 
 
-                    <button type="submit" class="btn btn-primary me-1">
-                        Сохранить
-                    </button>
-                    <button type="submit" class="btn btn-light" @click="cancel">
-                        Назад
-                    </button>
+                    <div class="editor-save-bar">
+                        <button type="button" class="btn btn-light" @click="cancel">Назад</button>
+                        <div class="d-flex align-items-center gap-3">
+                            <span v-if="hasUnsavedChanges" class="small text-warning-emphasis d-none d-sm-inline">
+                                Есть несохранённые изменения
+                            </span>
+                            <button type="submit" class="btn btn-primary">Сохранить</button>
+                        </div>
+                    </div>
 
 
                 </form>
             </div>
-        </div>
     </BaseLayout>
 </template>
 
@@ -193,10 +195,13 @@ import ChildrenFilterEditor from "@/components/objects/ChildrenFilterEditor.vue"
 import {getAcademicYear} from "@/utils/helpers.js";
 import {hasTeacherAccess} from "@/utils/access.js";
 import FileUploadField from "@/components/common/FileUploadField.vue";
+import PageHeader from "@/components/common/PageHeader.vue";
+import unsavedChangesMixin from "@/mixins/unsavedChangesMixin.js";
 
 export default {
     name: "ManageSubmissionView",
-    components: {FileUploadField, ChildrenFilterEditor, BaseLayout, Loading, VueDatePicker},
+    components: {FileUploadField, ChildrenFilterEditor, BaseLayout, Loading, PageHeader, VueDatePicker},
+    mixins: [unsavedChangesMixin],
     props: {
         objectId: {
             type: Number,
@@ -224,12 +229,17 @@ export default {
             isLoading: false,
             object_type: {},
             attached_brothers: [],
+            error: '',
+            initialSnapshot: '',
         };
     },
     computed: {
         isEditMode() {
             return !!this.submissionId;
-        }
+        },
+        hasUnsavedChanges() {
+            return Boolean(this.submission && this.initialSnapshot && this.submissionSnapshot() !== this.initialSnapshot);
+        },
     },
     async created() {
         this.isLoading = true;
@@ -251,9 +261,16 @@ export default {
         }
 
         this.isLoading = false;
+        this.initialSnapshot = this.submissionSnapshot();
     },
     methods: {
         hasTeacherAccess,
+        submissionSnapshot() {
+            return JSON.stringify({
+                fields: this.submission?.fields || [],
+                attached: this.attached_brothers,
+            });
+        },
 
 
         // Заполнить submission.answers пустыми значениями, если форму только создали
@@ -276,6 +293,7 @@ export default {
         async handleSave() {
             try {
                 this.isLoading = true;
+                this.error = '';
                 // Метод save() в модели сам определяет, создавать новую запись или обновлять
                 let submission_template = this.submission.copy()
                 await this.submission.save(this.objectId, this.formId);
@@ -295,14 +313,17 @@ export default {
                     }
                 }
 
-                // Дополнительные действия, например, переход на другую страницу
+                this.initialSnapshot = this.submissionSnapshot();
                 this.$router.push(`/${this.objectTypeCode}/${this.objectId}`);
+            } catch (error) {
+                this.error = error.message || 'Не удалось сохранить ответ.';
             } finally {
                 this.isLoading = false;
             }
         },
         cancel() {
             this.submission.reset();
+            this.initialSnapshot = this.submissionSnapshot();
             this.$router.back();
         },
 

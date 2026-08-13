@@ -1,9 +1,9 @@
 <template>
-    <div class="authorize-page d-flex justify-content-center align-items-center min-vh-100 p-3">
+    <div class="authorize-page auth-page">
         <div class="card shadow-sm authorize-card">
             <div class="card-body p-4">
                 <div class="text-center mb-4">
-                    <img src="@/assets/logo.png" alt="Силаэдр CRM" class="logo mb-3" />
+                    <img src="@/assets/logo.png" alt="Силаэдр CRM" class="logo auth-logo mb-3" />
                     <h3>Вход через Силаэдр CRM</h3>
                 </div>
 
@@ -111,7 +111,7 @@ export default {
 
 <style scoped>
 .authorize-page {
-    background: #f4f7f9;
+    min-height: 100vh;
 }
 
 .authorize-card {

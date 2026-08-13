@@ -3,9 +3,19 @@
         <!-- Основное содержимое карточки -->
         <div class="card-body flex-grow-1 pb-0">
             <h5 class="card-title">{{ form.name }}</h5>
-            <div :class="{'bg-danger': submission.deleted_at, 'bg-warning': !submission.deleted_at}" class="badge mt-0" v-if="!submission.is_approved"
-                 @click="hasTeacherAccess() && handleApprove()">Не подтверждено
-            </div>
+            <button
+                v-if="!submission.is_approved && hasTeacherAccess()"
+                :class="submission.deleted_at ? 'bg-danger' : 'bg-warning'"
+                class="badge border-0 mt-0"
+                type="button"
+                title="Нажмите, чтобы утвердить"
+                @click="handleApprove()"
+            >Не подтверждено</button>
+            <span
+                v-else-if="!submission.is_approved"
+                :class="submission.deleted_at ? 'bg-danger' : 'bg-warning'"
+                class="badge mt-0"
+            >Не подтверждено</span>
             <p v-if="submission.created_at" class="created-at-text">
                 {{ formatDateTime(submission.created_at) }}
             </p>
@@ -13,10 +23,10 @@
             <ShowoffPresenter :attributes="submission.showoff_attributes"></ShowoffPresenter>
         </div>
         <!-- Кнопка Подробнее -->
-        <div class="mt-auto py-3 ps-3">
+        <div class="card-footer mt-auto bg-white border-0">
             <router-link
                 :to="{ name: 'SubmissionDetails', params: { submissionId: submission.id, objectId: object.id }}"
-                class="btn btn-sm btn-light"
+                class="btn btn-sm btn-outline-primary"
             >
                 Подробнее
             </router-link>
@@ -67,11 +77,11 @@ export default {
 <style scoped>
 /* Стили текста даты создания */
 .created-at-text {
-    font-size: 0.75rem; /* Маленький размер текста */
-    color: #6c757d; /* Серый цвет */
-    margin-top: 5px; /* Отступ сверху от названия */
-    display: flex; /* Используем флекс для выравнивания иконки и текста */
-    align-items: center; /* Выравнивание по центру */
+    font-size: 0.75rem;
+    color: var(--silaeder-muted);
+    margin-top: 5px;
+    display: flex;
+    align-items: center;
 }
 
 .created-at-text i {

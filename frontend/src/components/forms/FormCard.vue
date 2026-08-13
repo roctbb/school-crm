@@ -1,5 +1,5 @@
 <template>
-    <div class="card mb-3" style="width: 18rem;">
+    <div class="card form-card h-100 w-100">
         <div class="card-body">
             <!-- Шапка карточки: название формы и кнопка удаления -->
             <div class="d-flex align-items-center">
@@ -8,9 +8,10 @@
                 </h5>
                 <button
                     type="button"
-                    class="btn btn-light btn-sm text-secondary border-0 position-absolute"
-                    style="top: 5px; right: 5px;"
+                    class="btn btn-sm text-secondary border-0 position-absolute icon-button delete-button"
                     @click.stop="deleteForm"
+                    aria-label="Удалить форму"
+                    title="Удалить форму"
                 >
                     <i class="bi bi-x-lg"></i>
                 </button>
@@ -20,13 +21,13 @@
             <div class="mt-3">
                 <button
                     type="button"
-                    class="my-1 btn btn-sm btn-light"
+                    class="my-1 btn btn-sm btn-outline-primary"
                     @click="editForm"
                 >
                     Редактировать
                 </button>
                 <router-link
-                    :to="`/forms/${this.form.id}/submissions`" class="my-1 btn btn-sm btn-light"
+                    :to="`/forms/${this.form.id}/submissions`" class="my-1 btn btn-sm btn-light ms-1"
                 >
                     Ответы
                 </router-link>
@@ -71,6 +72,12 @@ export default {
 </script>
 
 <style scoped>
-/* Пример простых стилей: */
+.form-card {
+    min-height: 9.5rem;
+}
 
+.delete-button {
+    top: 0.45rem;
+    right: 0.45rem;
+}
 </style>

@@ -1,10 +1,14 @@
 <template>
     <BaseLayout>
         <div v-if="object">
-            <h3 class="my-3">
-                {{ capitalize(object_type.name) }}:
-                {{ isEditMode ? object.name : "добавление записи" }}
-            </h3>
+            <div class="page-header">
+                <div>
+                    <h2>{{ isEditMode ? object.name : `Новая запись: ${capitalize(object_type.name)}` }}</h2>
+                    <p>{{ isEditMode ? `Редактирование записи типа «${object_type.name}»` : 'Заполните основные данные и связи.' }}</p>
+                </div>
+            </div>
+
+            <div v-if="error" class="alert alert-danger">{{ error }}</div>
 
             <div
                 v-if="object_type.params.edit_description"
@@ -48,16 +52,19 @@
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-success">
-                    <i class="bi bi-save me-1"></i> Сохранить
-                </button>
-                <button
-                    type="button"
-                    class="btn btn-light ms-2"
-                    @click="resetChanges"
-                >
-                    Назад
-                </button>
+                <div class="editor-save-bar">
+                    <button type="button" class="btn btn-light" @click="resetChanges">
+                        Назад
+                    </button>
+                    <div class="d-flex align-items-center gap-3">
+                        <span v-if="hasUnsavedChanges" class="small text-warning-emphasis d-none d-sm-inline">
+                            Есть несохранённые изменения
+                        </span>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save me-1"></i> Сохранить
+                        </button>
+                    </div>
+                </div>
             </form>
         </div>
         <Loading v-else/>
@@ -73,8 +80,10 @@ import {capitalize} from "@/utils/helpers.js";
 import Loading from "@/components/common/Loading.vue";
 import AttributesEditor from "@/components/objects/AttributesEditor.vue";
 import ChildrenFilterEditor from "@/components/objects/ChildrenFilterEditor.vue";
+import unsavedChangesMixin from "@/mixins/unsavedChangesMixin.js";
 
 export default {
+    mixins: [unsavedChangesMixin],
     components: {
         ChildrenFilterEditor,
         AttributesEditor,
@@ -95,6 +104,9 @@ export default {
         isEditMode() {
             return !!this.objectId; // Режим редактирования, если задан objectId
         },
+        hasUnsavedChanges() {
+            return Boolean(this.object && this.initialSnapshot && this.objectSnapshot() !== this.initialSnapshot);
+        },
     },
     data() {
         return {
@@ -103,6 +115,7 @@ export default {
             object_type: null,
             error: null,
             childrenOptions: [], // Группированные варианты детей по типам
+            initialSnapshot: "",
         };
     },
     async created() {
@@ -131,9 +144,17 @@ export default {
                 this.store.getObjectTypeByCode(code)
             ).filter(Boolean);
         }
+        this.initialSnapshot = this.objectSnapshot();
     },
     methods: {
         capitalize,
+        objectSnapshot() {
+            return JSON.stringify({
+                name: this.object?.name || "",
+                attributes: this.object?.attributes || {},
+                children: this.object?.children || [],
+            });
+        },
         // При обновлении детей для конкретной группы
         updateGroupChildren({groupCode, childrenItems}) {
             // Удаляем из объекта всех детей данной группы
@@ -155,6 +176,7 @@ export default {
                     this.store.objects[this.object.type].push(this.object);
                 }
 
+                this.initialSnapshot = this.objectSnapshot();
                 this.$router.back();
             } catch (error) {
                 console.error("Ошибка сохранения объекта:", error);

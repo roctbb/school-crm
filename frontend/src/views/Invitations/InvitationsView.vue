@@ -1,11 +1,15 @@
 <template>
     <BaseLayout>
-        <div class="container py-4">
+        <PageHeader
+            title="Инвайты"
+            subtitle="Приглашения для регистрации и привязки пользователей к объектам CRM."
+        />
+
             <div class="row justify-content-center">
-                <div class="col-md-10">
+                <div class="col-xl-11">
                     <div class="card mb-3">
                         <div class="card-header d-flex justify-content-between align-items-center gap-3">
-                            <h3 class="m-0">Список инвайтов</h3>
+                            <h5 class="m-0">Активные инвайты</h5>
                             <button
                                 class="btn btn-sm btn-outline-danger"
                                 type="button"
@@ -28,8 +32,8 @@
                             <div v-if="isLoading" class="text-center my-3">
                                 <Loading/>
                             </div>
-                            <div v-else>
-                                <table class="table table-bordered table-striped">
+                            <div v-else-if="invitations.length" class="table-responsive">
+                                <table class="table table-striped align-middle">
                                     <thead>
                                     <tr>
                                         <th>ID</th>
@@ -61,7 +65,7 @@
                                         <td>{{ formatDateTime(new Date(inv.created_at)) }}</td>
                                         <td class="text-end">
                                             <button
-                                                class="btn btn-sm btn-outline-danger"
+                                                class="btn btn-sm btn-outline-danger icon-button"
                                                 type="button"
                                                 :disabled="deletingInvitationId === inv.id || isDeletingAll"
                                                 title="Удалить инвайт"
@@ -77,19 +81,22 @@
                                             </button>
                                         </td>
                                     </tr>
-                                    <tr v-if="!invitations.length">
-                                        <td colspan="6" class="text-center text-muted py-4">Активных инвайтов нет.</td>
-                                    </tr>
                                     </tbody>
                                 </table>
                             </div>
+                            <EmptyState
+                                v-else
+                                title="Активных инвайтов нет"
+                                description="Создайте приглашения с нужным типом и ролью ниже."
+                                icon="bi-envelope-plus"
+                            />
                         </div>
                     </div>
 
                     <!-- Создание инвайтов -->
                     <div class="card">
                         <div class="card-header">
-                            <h3 class="m-0">Создать новые инвайты</h3>
+                            <h5 class="m-0">Создать новые инвайты</h5>
                         </div>
                         <div class="card-body">
                             <form @submit.prevent="handleCreateInvitations" class="row g-3">
@@ -152,7 +159,6 @@
 
                 </div>
             </div>
-        </div>
     </BaseLayout>
 </template>
 
@@ -167,12 +173,16 @@ import BaseLayout from "@/components/layouts/BaseLayout.vue";
 import Loading from "@/components/common/Loading.vue";
 import {formatDateTime} from "../../utils/helpers.js";
 import useMainStore from "@/stores/mainStore.js";
+import EmptyState from "@/components/common/EmptyState.vue";
+import PageHeader from "@/components/common/PageHeader.vue";
 
 export default {
     name: "InvitationsView",
     components: {
         BaseLayout,
+        EmptyState,
         Loading,
+        PageHeader,
     },
     data() {
         return {

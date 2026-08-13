@@ -114,7 +114,7 @@
                         </draggable>
 
                         <div class="d-flex gap-2">
-                            <button class="btn btn-sm btn-outline-success" type="button" @click="addOption(field)">
+                            <button class="btn btn-sm btn-outline-primary" type="button" @click="addOption(field)">
                                 <i class="bi bi-plus-lg me-1"></i> Вариант
                             </button>
                             <button class="btn btn-sm btn-outline-secondary" type="button" @click="sortOptions(field)">
@@ -126,7 +126,7 @@
             </template>
         </draggable>
 
-        <button class="btn btn-sm btn-outline-success" type="button" @click="addField">
+        <button class="btn btn-sm btn-outline-primary" type="button" @click="addField">
             <i class="bi bi-plus-circle me-1"></i> Добавить поле
         </button>
     </div>
@@ -225,7 +225,7 @@ export default {
 
 <style scoped>
 .field-card {
-    background: #fafafa;
+    background: var(--silaeder-surface-subtle);
 }
 
 .drag-handle,
@@ -235,7 +235,7 @@ export default {
 }
 
 .drag-ghost {
-    background-color: #f0f0f0;
+    background-color: var(--silaeder-primary-soft);
     opacity: 0.7;
 }
 </style>

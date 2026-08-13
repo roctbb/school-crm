@@ -14,11 +14,12 @@
                 </h5>
 
 
-                <table class="table table-sm table-bordered table-hover align-middle">
+                <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle">
                     <thead class="table-light">
                     <tr>
                         <!-- Колонка "Имя" -->
-                        <th @click="onSort('name')">
+                        <th class="table-sortable" tabindex="0" @click="onSort('name')" @keydown.enter="onSort('name')">
                             <span class="underline">Имя</span>
                             <span v-if="sortKey === 'name'">{{ sortDirection === 'asc' ? '▲' : '▼' }}</span>
                         </th>
@@ -26,7 +27,10 @@
                         <th
                             v-for="attr in attributes"
                             :key="attr.code"
+                            class="table-sortable"
+                            tabindex="0"
                             @click="onSort(attr.code)"
+                            @keydown.enter="onSort(attr.code)"
                         >
                             <span class="underline">{{ attr.name }}</span>
                             <span v-if="sortKey === attr.code">
@@ -36,8 +40,10 @@
                         <!-- Столбец для кнопки свернуть/развернуть -->
                         <th class="text-end" style="width: 40px;">
                             <button
-                                class="btn btn-sm btn-outline-secondary"
+                                class="btn btn-sm btn-outline-secondary icon-button"
                                 @click="toggleCollapse"
+                                :aria-label="isCollapsed ? 'Развернуть таблицу' : 'Свернуть таблицу'"
+                                :title="isCollapsed ? 'Развернуть' : 'Свернуть'"
                             >
                                 <i v-if="isCollapsed" class="bi bi-chevron-down"></i>
                                 <i v-else class="bi bi-chevron-up"></i>
@@ -51,7 +57,11 @@
                         v-for="object in sortData(objects)"
                         :key="object.id" :class="{'table-warning': !object.is_approved}"
                     >
-                        <td>{{ object.name }}</td>
+                        <td>
+                            <router-link :to="`/${object.type}/${object.id}`" class="fw-medium text-decoration-none">
+                                {{ object.name }}
+                            </router-link>
+                        </td>
                         <td
                             v-for="attr in attributes"
                             :key="attr.code"
@@ -61,29 +71,33 @@
                         </td>
                         <!-- Ячейка с иконкой-ссылкой справа -->
                         <td class="text-end">
-                            <router-link :to="`/${object.type}/${object.id}`">
+                            <router-link :to="`/${object.type}/${object.id}`" :aria-label="`Открыть ${object.name}`" title="Открыть запись">
                                 <i class="bi bi-link-45deg text-primary"></i>
                             </router-link>
                         </td>
                     </tr>
                     </tbody>
                 </table>
+                </div>
             </div>
         </div>
 
         <!-- Если обычный массив объектов (не сгруппировано) -->
         <div v-else-if="data.length" class="table-responsive">
-            <table class="table table-sm table-bordered table-hover align-middle">
+            <table class="table table-sm table-hover align-middle">
                 <thead class="table-light">
                 <tr>
-                    <th @click="onSort('name')">
+                    <th class="table-sortable" tabindex="0" @click="onSort('name')" @keydown.enter="onSort('name')">
                         <span class="underline">Имя</span>
                         <span class="ms-1" v-if="sortKey === 'name'">{{ sortDirection === 'asc' ? '▲' : '▼' }}</span>
                     </th>
                     <th
                         v-for="attr in attributes"
                         :key="attr.code"
+                        class="table-sortable"
+                        tabindex="0"
                         @click="onSort(attr.code)"
+                        @keydown.enter="onSort(attr.code)"
                     >
                         <span class="underline">{{ attr.name }}</span>
                         <span class="ms-1" v-if="sortKey === attr.code">
@@ -92,8 +106,10 @@
                     </th>
                     <th class="text-end" style="width: 40px;">
                         <button
-                            class="btn btn-sm btn-outline-secondary"
+                            class="btn btn-sm btn-outline-secondary icon-button"
                             @click="toggleCollapse"
+                            :aria-label="isCollapsed ? 'Развернуть таблицу' : 'Свернуть таблицу'"
+                            :title="isCollapsed ? 'Развернуть' : 'Свернуть'"
                         >
                             <i v-if="isCollapsed" class="bi bi-chevron-down"></i>
                             <i v-else class="bi bi-chevron-up"></i>
@@ -106,7 +122,11 @@
                     v-for="object in sortData(data)"
                     :key="object.id"  :class="{'table-warning': !object.is_approved}"
                 >
-                    <td>{{ object.name }}</td>
+                    <td>
+                        <router-link :to="`/${object.type}/${object.id}`" class="fw-medium text-decoration-none">
+                            {{ object.name }}
+                        </router-link>
+                    </td>
                     <td
                         v-for="attr in attributes"
                         :key="attr.code"
@@ -114,7 +134,7 @@
                         {{ formatValue(object.attributes[attr.code]) }}
                     </td>
                     <td class="text-end">
-                        <router-link :to="`/${object.type}/${object.id}`">
+                        <router-link :to="`/${object.type}/${object.id}`" :aria-label="`Открыть ${object.name}`" title="Открыть запись">
                             <i class="bi bi-link-45deg text-primary"></i>
                         </router-link>
                     </td>
@@ -124,17 +144,22 @@
         </div>
 
         <!-- Если данных нет -->
-        <div v-else>
-            <p class="text-center">Объекты отсутствуют для данного типа.</p>
-        </div>
+        <EmptyState
+            v-else
+            title="Записей пока нет"
+            description="Измените фильтры или создайте первую запись этого типа."
+            icon="bi-table"
+        />
     </div>
 </template>
 
 <script>
 import {formatValue} from "../../utils/helpers.js";
+import EmptyState from "@/components/common/EmptyState.vue";
 
 export default {
     name: "TableView",
+    components: {EmptyState},
 
     // Убрали sortKey/sortDirection из пропсов, так как управляем локально
     props: {
@@ -207,6 +232,7 @@ export default {
 
 <style scoped>
 .underline {
-    text-decoration: underline;
+    text-decoration: underline dotted;
+    text-underline-offset: 0.2rem;
 }
 </style>

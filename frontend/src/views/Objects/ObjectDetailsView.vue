@@ -12,7 +12,7 @@
 
             <DetailsWidgetBar :object="object" :type="object_type" />
 
-            <div class="row">
+            <div class="row g-4">
                 <div class="col-md-8">
                     <!-- Блок связанных объектов -->
                     <ConnectedTypes
@@ -37,7 +37,7 @@
                 </div>
             </div>
 
-            <button class="btn btn-light btn-sm" @click="$router.back()">Назад</button>
+            <BackButton class="mt-2" />
         </div>
         <Loading v-else />
     </BaseLayout>
@@ -54,6 +54,7 @@ import ConnectedTypes from "@/components/objects/ConnectedTypes.vue";
 import FormsSubmissions from "@/components/objects/FormsSubmissions.vue";
 import { capitalize } from "@/utils/helpers.js";
 import { canCommentObject, canModifyObject, hasTeacherAccess } from "@/utils/access.js";
+import BackButton from "@/components/common/BackButton.vue";
 
 export default {
     name: "ObjectDetailsView",
@@ -64,7 +65,8 @@ export default {
         CommentsPanel,
         ObjectHeader,
         ConnectedTypes,
-        FormsSubmissions
+        FormsSubmissions,
+        BackButton,
     },
     data() {
         return {
@@ -159,6 +161,6 @@ export default {
 
 <style scoped>
 .object-details-page {
-    padding: 20px;
+    min-width: 0;
 }
 </style>

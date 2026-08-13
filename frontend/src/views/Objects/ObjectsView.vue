@@ -1,7 +1,7 @@
 <template>
     <BaseLayout>
         <!-- Навигация по вкладкам -->
-        <div class="d-flex align-items-center justify-content-between border-bottom mt-3">
+        <div class="objects-tabs-bar d-flex flex-wrap align-items-end justify-content-between gap-2">
             <TabNavigation
                 :tabs="objectTypesWithPortfolio"
                 :active-tab="activeTab"
@@ -42,24 +42,43 @@
             />
 
             <!-- Поиск и выпадающее меню группировки -->
-            <div class="d-flex mt-3 align-items-center">
-                <input
-                    type="text"
-                    class="form-control form-control-sm me-1"
-                    placeholder="Введите текст для поиска..."
-                    v-model="searchQuery"
-                />
+            <div class="page-toolbar mt-3">
+                <div class="input-group input-group-sm toolbar-search flex-grow-1">
+                    <span class="input-group-text bg-white text-muted" aria-hidden="true">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input
+                        type="search"
+                        class="form-control"
+                        placeholder="Поиск по названию…"
+                        aria-label="Поиск по названию"
+                        v-model="searchQuery"
+                    />
+                    <button
+                        v-if="searchQuery"
+                        class="btn btn-light icon-button"
+                        type="button"
+                        aria-label="Очистить поиск"
+                        title="Очистить поиск"
+                        @click="searchQuery = ''"
+                    >
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
                 <!-- Кнопка -->
                 <div class="dropdown" :class="{ show: isMenuOpen }">
                     <button
-                        class="btn btn-sm btn-outline-secondary dropdown-toggle me-1"
+                        class="btn btn-sm btn-outline-secondary dropdown-toggle"
                         type="button"
                         @click="toggleMenu"
                         :class="{ show: isMenuOpen }"
+                        aria-label="Выбрать группировку"
+                        title="Группировка"
                     >
-                        <i class="bi bi-filter"></i>
+                        <i class="bi bi-collection me-sm-1"></i>
+                        <span class="d-none d-sm-inline">{{ selectedAttribute.name || 'Группировка' }}</span>
                     </button>
-                    <ul class="dropdown-menu" :class="{ 'show': isMenuOpen }">
+                    <ul class="dropdown-menu dropdown-menu-end" :class="{ 'show': isMenuOpen }">
                         <li>
                             <button
                                 class="dropdown-item"
@@ -96,9 +115,11 @@
 
                 <!-- Кнопка переключения вида (таблица/карточки) -->
                 <button
-                    class="btn btn-outline-secondary btn-sm"
+                    class="btn btn-outline-secondary btn-sm icon-button"
                     type="button"
                     @click="toggleTableView()"
+                    :aria-label="isTableView ? 'Показать карточками' : 'Показать таблицей'"
+                    :title="isTableView ? 'Карточки' : 'Таблица'"
                 >
                     <i
                         v-if="isTableView"
@@ -113,9 +134,13 @@
                 <!-- Кнопка для преподавателей: фильтр неподтверждённых (иконки) -->
                 <button
                     v-if="hasTeacherAccess()"
-                    class="btn btn-outline-secondary btn-sm ms-1 position-relative"
+                    class="btn btn-sm icon-button position-relative"
+                    :class="onlyUnconfirmed ? 'btn-warning' : 'btn-outline-secondary'"
                     type="button"
                     @click="toggleUnconfirmed"
+                    :aria-pressed="onlyUnconfirmed"
+                    :aria-label="onlyUnconfirmed ? 'Показать все записи' : 'Показать только неподтверждённые'"
+                    :title="onlyUnconfirmed ? 'Показать все' : 'Только неподтверждённые'"
                 >
                     <i
                         v-if="onlyUnconfirmed"
@@ -134,6 +159,15 @@
                         class="position-absolute top-0 start-100 translate-middle p-1 bg-warning border border-light rounded-circle"
                         style="width: 0.8rem; height: 0.8rem"
                     ></span>
+                </button>
+
+                <button
+                    v-if="hasActiveFilters"
+                    class="btn btn-sm btn-link text-secondary text-decoration-none ms-auto ms-sm-0"
+                    type="button"
+                    @click="resetFilters"
+                >
+                    Сбросить
                 </button>
 
             </div>
@@ -190,6 +224,8 @@ import PaginationControls from "@/components/common/PaginationControls.vue";
 
 import {canCreateByType, hasTeacherAccess} from "@/utils/access.js";
 
+const NO_GROUPING_QUERY_VALUE = "__none__";
+
 export default {
     name: "ObjectsView",
 
@@ -205,6 +241,10 @@ export default {
         grouping: {
             type: String,
             default: "",
+        },
+        groupingSpecified: {
+            type: Boolean,
+            default: false,
         },
         search: {
             type: String,
@@ -389,6 +429,9 @@ export default {
             const start = (this.currentPage - 1) * this.pageSize;
             return this.sortedObjects.slice(start, start + this.pageSize);
         },
+        hasActiveFilters() {
+            return Boolean(this.searchQuery || this.selectedAttribute.code || this.onlyUnconfirmed);
+        },
     },
 
     async created() {
@@ -401,19 +444,31 @@ export default {
         this.onlyUnconfirmed = this.unconfirmed;
         this.currentPage = this.page;
 
+        let shouldNormalizePath = false;
         if (this.objectTypeCode) {
             this.activeTab = this.objectTypeCode;
         } else if (this.objectTypesWithPortfolio.length) {
-            await this.openDefaultTab();
+            this.activeTab = this.objectTypesWithPortfolio[0].code;
+            this.currentPage = 1;
+            shouldNormalizePath = true;
         }
 
-        this.syncGrouping(this.grouping);
+        this.syncGrouping(this.groupingSpecified ? this.grouping : this.defaultGroupingCode());
         this.currentPage = Math.min(this.currentPage, this.totalPages);
         this.isInitializing = false;
+
+        if (this.activeTab && (shouldNormalizePath || !this.groupingSpecified)) {
+            await this.updatePath({replace: true});
+        }
     },
 
     beforeUnmount() {
         window.clearTimeout(this.searchUpdateTimer);
+        document.removeEventListener("click", this.handleOutsideMenu);
+    },
+
+    mounted() {
+        document.addEventListener("click", this.handleOutsideMenu);
     },
 
     watch: {
@@ -421,6 +476,7 @@ export default {
             if (newVal) {
                 this.activeTab = newVal;
                 this.currentPage = this.page;
+                this.syncGrouping(this.groupingSpecified ? this.grouping : this.defaultGroupingCode());
             } else if (!this.isInitializing) {
                 await this.openDefaultTab();
             }
@@ -435,7 +491,12 @@ export default {
             this.onlyUnconfirmed = newVal;
         },
         grouping(newVal) {
-            this.syncGrouping(newVal);
+            this.syncGrouping(this.groupingSpecified ? newVal : this.defaultGroupingCode());
+        },
+        groupingSpecified(newVal) {
+            if (!this.isInitializing) {
+                this.syncGrouping(newVal ? this.grouping : this.defaultGroupingCode());
+            }
         },
         page(newVal) {
             this.currentPage = Math.max(1, newVal);
@@ -464,7 +525,7 @@ export default {
             if (this.activeTab === tabCode) return;
 
             this.activeTab = tabCode;
-            this.selectedAttribute = {};
+            this.syncGrouping(this.defaultGroupingCode());
             this.currentPage = 1;
             await this.updatePath();
         },
@@ -473,6 +534,10 @@ export default {
         },
         toggleMenu() {
             this.isMenuOpen = !this.isMenuOpen;
+        },
+        handleOutsideMenu(event) {
+            if (!this.isMenuOpen || event.target.closest(".page-toolbar .dropdown")) return;
+            this.isMenuOpen = false;
         },
         selectGrouping(attribute) {
             this.selectedAttribute = attribute;
@@ -494,11 +559,19 @@ export default {
             this.currentPage = 1;
             this.updatePath();
         },
+        resetFilters() {
+            this.searchQuery = "";
+            this.selectedAttribute = {};
+            this.onlyUnconfirmed = false;
+            this.currentPage = 1;
+            window.clearTimeout(this.searchUpdateTimer);
+            this.updatePath({replace: true});
+        },
         routeQuery() {
             return {
                 view: this.isTableView ? "table" : "cards",
                 search: this.searchQuery,
-                grouping: this.selectedAttribute?.code || "",
+                grouping: this.selectedAttribute?.code || NO_GROUPING_QUERY_VALUE,
                 unconfirmed: String(this.onlyUnconfirmed),
                 page: String(this.currentPage),
             };
@@ -519,8 +592,12 @@ export default {
             if (!defaultTab) return;
 
             this.activeTab = defaultTab;
+            this.syncGrouping(this.groupingSpecified ? this.grouping : this.defaultGroupingCode());
             this.currentPage = 1;
             await this.updatePath({replace: true});
+        },
+        defaultGroupingCode() {
+            return this.store.getObjectTypeByCode(this.activeTab)?.params?.default_grouping || "";
         },
         syncGrouping(groupingCode) {
             this.selectedAttribute = this.groupingAttributes.find(
@@ -540,10 +617,17 @@ export default {
 </script>
 
 <style scoped>
+.objects-tabs-bar {
+    margin-top: 0.25rem;
+    border-bottom: 1px solid var(--silaeder-border);
+}
+
 .tab-content {
     padding: 1rem;
-    border: 1px solid #dee2e6;
+    border: 1px solid var(--silaeder-border);
     border-top: none;
+    border-radius: 0 0 0.75rem 0.75rem;
+    background: #fff;
 }
 
 /* Анимация плавного появления и исчезновения контента */
@@ -558,18 +642,13 @@ export default {
 }
 
 /* Анимация выезда меню сверху вниз */
-.menu-slide-enter-active,
-.menu-slide-leave-active {
-    transition: all 0.3s ease;
-}
+@media (max-width: 575.98px) {
+    .objects-tabs-bar {
+        align-items: center !important;
+    }
 
-.menu-slide-enter {
-    opacity: 0;
-    transform: translateY(-10px);
-}
-
-.menu-slide-leave-to {
-    opacity: 0;
-    transform: translateY(-10px);
+    .tab-content {
+        padding: 0.75rem;
+    }
 }
 </style>

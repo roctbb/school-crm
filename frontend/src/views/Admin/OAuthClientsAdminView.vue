@@ -1,15 +1,12 @@
 <template>
     <BaseLayout>
-        <div class="container py-4">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <div>
-                    <h2 class="mb-1">Внешний вход</h2>
-                    <p class="text-muted mb-0">OIDC-клиенты для LMS, внутренней валюты и других сервисов.</p>
-                </div>
-                <button class="btn btn-success" type="button" @click="startCreate">
+            <PageHeader title="Внешний вход" subtitle="OIDC-клиенты для LMS, внутренней валюты и других сервисов.">
+                <template #actions>
+                <button class="btn btn-primary" type="button" @click="startCreate">
                     <i class="bi bi-plus-lg me-1"></i> Новый клиент
                 </button>
-            </div>
+                </template>
+            </PageHeader>
 
             <div v-if="clientSecret" class="alert alert-warning">
                 <strong>Сохраните client secret сейчас — повторно он показан не будет.</strong>
@@ -21,9 +18,15 @@
 
             <div class="row g-3">
                 <div class="col-lg-4">
-                    <div class="list-group">
+                    <div class="list-group sticky-lg-top client-list">
+                        <div class="list-group-item p-2">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-white text-muted"><i class="bi bi-search"></i></span>
+                                <input v-model="listSearch" class="form-control" type="search" placeholder="Найти клиент…" aria-label="Поиск OIDC-клиентов" />
+                            </div>
+                        </div>
                         <button
-                            v-for="client in clients"
+                            v-for="client in filteredClients"
                             :key="client.id"
                             class="list-group-item list-group-item-action"
                             :class="{active: draft?.id === client.id}"
@@ -37,16 +40,23 @@
                             <code :class="{'text-white': draft?.id === client.id}">{{ client.client_id }}</code>
                         </button>
                         <div v-if="!clients.length" class="list-group-item text-muted">Клиентов пока нет.</div>
+                        <div v-else-if="!filteredClients.length" class="list-group-item text-muted small">Ничего не найдено.</div>
                     </div>
                 </div>
 
                 <div class="col-lg-8">
                     <div v-if="!draft" class="alert alert-light border">Выберите или создайте OIDC-клиент.</div>
-                    <form v-else @submit.prevent="save">
+                    <form v-else @submit.prevent="save" @input="saved = false" @change="saved = false">
                         <div v-if="error" class="alert alert-danger">{{ error }}</div>
                         <div v-if="saved" class="alert alert-success">Настройки сохранены.</div>
 
-                        <div class="card mb-3">
+                        <nav class="editor-section-nav d-flex flex-wrap gap-2 mb-3" aria-label="Разделы редактора">
+                            <a class="btn btn-sm btn-light" href="#client-main">Основное</a>
+                            <a class="btn btn-sm btn-light" href="#client-uris">Адреса</a>
+                            <a class="btn btn-sm btn-light" href="#client-access">Доступ</a>
+                        </nav>
+
+                        <div id="client-main" class="card editor-card mb-3">
                             <div class="card-header">Основное</div>
                             <div class="card-body row g-3">
                                 <div class="col-md-7">
@@ -99,7 +109,7 @@
                             </div>
                         </div>
 
-                        <div class="card mb-3">
+                        <div id="client-uris" class="card editor-card mb-3">
                             <div class="card-header">Разрешённые адреса</div>
                             <div class="card-body">
                                 <label class="form-label">Redirect URI, по одному на строку</label>
@@ -111,14 +121,14 @@
                             </div>
                         </div>
 
-                        <div class="card mb-3">
+                        <div id="client-access" class="card editor-card mb-3">
                             <div class="card-header">Доступ и данные</div>
                             <div class="card-body row g-3">
                                 <div class="col-md-6">
                                     <h6>Роли</h6>
                                     <label v-for="role in roles" :key="role" class="form-check">
                                         <input v-model="draft.allowed_roles" :value="role" class="form-check-input" type="checkbox" />
-                                        <span class="form-check-label">{{ role }}</span>
+                                        <span class="form-check-label">{{ roleLabel(role) }}</span>
                                     </label>
                                 </div>
                                 <div class="col-md-6">
@@ -137,7 +147,7 @@
                             </div>
                         </div>
 
-                        <div class="d-flex justify-content-between mb-5">
+                        <div class="editor-save-bar">
                             <button
                                 v-if="draft.id && draft.is_confidential"
                                 class="btn btn-outline-warning"
@@ -147,33 +157,42 @@
                             >
                                 Сменить secret
                             </button>
-                            <span v-else></span>
-                            <button class="btn btn-primary" type="submit" :disabled="saving">
-                                {{ saving ? 'Сохранение…' : 'Сохранить' }}
-                            </button>
+                            <span v-else class="small" :class="hasUnsavedChanges ? 'text-warning-emphasis' : 'text-muted'">
+                                {{ hasUnsavedChanges ? 'Есть несохранённые изменения' : 'Изменений нет' }}
+                            </span>
+                            <div class="d-flex align-items-center gap-3">
+                                <span v-if="draft.id && hasUnsavedChanges" class="small text-warning-emphasis d-none d-md-inline">
+                                    Есть несохранённые изменения
+                                </span>
+                                <button class="btn btn-primary" type="submit" :disabled="saving">
+                                    {{ saving ? 'Сохранение…' : 'Сохранить' }}
+                                </button>
+                            </div>
                         </div>
                     </form>
                 </div>
             </div>
-        </div>
     </BaseLayout>
 </template>
 
 <script>
 import BaseLayout from '@/components/layouts/BaseLayout.vue';
+import PageHeader from '@/components/common/PageHeader.vue';
 import {
     createOAuthClient,
     fetchOAuthClients,
     rotateOAuthClientSecret,
     updateOAuthClient,
 } from '@/api/oidc_api.js';
+import unsavedChangesMixin from '@/mixins/unsavedChangesMixin.js';
 
 const clone = value => JSON.parse(JSON.stringify(value));
 const lines = value => value.split('\n').map(item => item.trim()).filter(Boolean);
 
 export default {
     name: 'OAuthClientsAdminView',
-    components: {BaseLayout},
+    components: {BaseLayout, PageHeader},
+    mixins: [unsavedChangesMixin],
     data() {
         return {
             clients: [],
@@ -182,9 +201,23 @@ export default {
             saved: false,
             error: null,
             clientSecret: null,
+            initialSnapshot: '',
+            listSearch: '',
             roles: ['student', 'teacher', 'admin'],
             scopes: ['openid', 'profile', 'email', 'roles', 'avatar', 'offline_access'],
         };
+    },
+    computed: {
+        filteredClients() {
+            const query = this.listSearch.trim().toLowerCase();
+            if (!query) return this.clients;
+            return this.clients.filter(client => (
+                client.name.toLowerCase().includes(query) || client.client_id.toLowerCase().includes(query)
+            ));
+        },
+        hasUnsavedChanges() {
+            return Boolean(this.draft && this.initialSnapshot && JSON.stringify(this.payload()) !== this.initialSnapshot);
+        },
     },
     async created() {
         try {
@@ -204,12 +237,16 @@ export default {
             };
         },
         selectClient(client) {
+            if (this.draft?.id === client.id) return;
+            if (this.hasUnsavedChanges && !window.confirm('Отменить несохранённые изменения и открыть другой клиент?')) return;
             this.draft = this.prepareDraft(client);
+            this.initialSnapshot = JSON.stringify(this.payload());
             this.error = null;
             this.saved = false;
             this.clientSecret = null;
         },
         startCreate() {
+            if (this.hasUnsavedChanges && !window.confirm('Отменить несохранённые изменения и создать новый клиент?')) return;
             this.draft = this.prepareDraft({
                 id: null,
                 client_id: '',
@@ -226,6 +263,7 @@ export default {
             this.error = null;
             this.saved = false;
             this.clientSecret = null;
+            this.initialSnapshot = JSON.stringify(this.payload());
         },
         payload() {
             return {
@@ -256,6 +294,7 @@ export default {
                 if (index >= 0) this.clients[index] = result;
                 else this.clients.push(result);
                 this.draft = this.prepareDraft(result);
+                this.initialSnapshot = JSON.stringify(this.payload());
                 this.saved = true;
             } catch (error) {
                 this.error = error.message || 'Не удалось сохранить OIDC-клиент.';
@@ -274,6 +313,7 @@ export default {
                 const index = this.clients.findIndex(client => client.id === result.id);
                 this.clients[index] = result;
                 this.draft = this.prepareDraft(result);
+                this.initialSnapshot = JSON.stringify(this.payload());
             } catch (error) {
                 this.error = error.message || 'Не удалось сменить secret.';
             } finally {
@@ -283,6 +323,15 @@ export default {
         async copySecret() {
             await navigator.clipboard.writeText(this.clientSecret);
         },
+        roleLabel(role) {
+            return {student: 'Ученик', teacher: 'Учитель', admin: 'Администратор'}[role] || role;
+        },
     },
 };
 </script>
+
+<style scoped>
+.client-list {
+    top: 4.75rem;
+}
+</style>

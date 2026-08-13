@@ -1,8 +1,8 @@
 <template>
-    <div class="reset-password-page d-flex justify-content-center align-items-center vh-100">
-        <div class="card p-4 m-3" style="width: 100%; max-width: 400px;">
+    <div class="reset-password-page auth-page">
+        <div class="card auth-card p-4">
             <div class="text-center mb-3">
-                <img src="@/assets/logo.png" alt="Logo" style="max-width: 150px; height: auto;">
+                <img src="@/assets/logo.png" alt="Силаэдр" class="auth-logo">
             </div>
 
             <h3 class="card-title text-center mb-3">Сброс пароля</h3>
@@ -16,20 +16,30 @@
 
             <form @submit.prevent="handleReset">
                 <div class="mb-3">
-                    <label for="password" class="form-label">Новый пароль</label>
-                    <input
-                        type="password"
-                        id="password"
-                        class="form-control"
-                        v-model="password"
-                        required
-                    />
+                    <label for="password" class="form-label">Новый пароль <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <input
+                            :type="showPasswords ? 'text' : 'password'"
+                            id="password"
+                            class="form-control"
+                            v-model="password"
+                            required
+                        />
+                        <button
+                            class="btn btn-light icon-button"
+                            type="button"
+                            :aria-label="showPasswords ? 'Скрыть пароли' : 'Показать пароли'"
+                            @click="showPasswords = !showPasswords"
+                        >
+                            <i class="bi" :class="showPasswords ? 'bi-eye-slash' : 'bi-eye'"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="mb-3">
                     <label for="confirmPassword" class="form-label">Подтверждение пароля</label>
                     <input
-                        type="password"
+                        :type="showPasswords ? 'text' : 'password'"
                         id="confirmPassword"
                         class="form-control"
                         v-model="passwordConfirm"
@@ -63,6 +73,7 @@ export default {
             passwordConfirm: "",
             success: "",
             error: "",
+            showPasswords: false,
         };
     },
     mounted() {
@@ -104,9 +115,3 @@ export default {
     },
 };
 </script>
-
-<style>
-.reset-password-page {
-    background-color: #f8f9fa;
-}
-</style>

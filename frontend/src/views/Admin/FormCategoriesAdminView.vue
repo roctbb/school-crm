@@ -1,22 +1,25 @@
 <template>
     <BaseLayout>
-        <div class="container py-4">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <div>
-                    <h2 class="mb-1">Категории форм</h2>
-                    <p class="text-muted mb-0">Общие поля, доступ и отображение форм.</p>
-                </div>
-                <button class="btn btn-success" type="button" @click="startCreate">
+            <PageHeader title="Категории форм" subtitle="Общие поля, доступ и отображение форм.">
+                <template #actions>
+                <button class="btn btn-primary" type="button" @click="startCreate">
                     <i class="bi bi-plus-lg me-1"></i> Новая категория
                 </button>
-            </div>
+                </template>
+            </PageHeader>
 
             <Loading v-if="loading" />
             <div v-else class="row g-3">
                 <div class="col-lg-3">
                     <div class="list-group sticky-lg-top category-list">
+                        <div class="list-group-item p-2">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-white text-muted"><i class="bi bi-search"></i></span>
+                                <input v-model="listSearch" class="form-control" type="search" placeholder="Найти категорию…" aria-label="Поиск категорий форм" />
+                            </div>
+                        </div>
                         <button
-                            v-for="category in sortedCategories"
+                            v-for="category in filteredCategories"
                             :key="category.id"
                             class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
                             :class="{active: draft?.id === category.id}"
@@ -31,6 +34,7 @@
                         <div v-if="!sortedCategories.length" class="list-group-item text-muted">
                             Категорий пока нет.
                         </div>
+                        <div v-else-if="!filteredCategories.length" class="list-group-item text-muted small">Ничего не найдено.</div>
                     </div>
                 </div>
 
@@ -38,9 +42,15 @@
                     <div v-if="!draft" class="alert alert-light border">
                         Выберите категорию или создайте новую.
                     </div>
-                    <form v-else @submit.prevent="save">
+                    <form v-else @submit.prevent="save" @input="saved = false" @change="saved = false">
                         <div v-if="error" class="alert alert-danger">{{ error }}</div>
                         <div v-if="saved" class="alert alert-success">Изменения сохранены.</div>
+
+                        <nav class="editor-section-nav d-flex flex-wrap gap-2 mb-3" aria-label="Разделы редактора">
+                            <a class="btn btn-sm btn-light" href="#category-main">Основное</a>
+                            <a class="btn btn-sm btn-light" href="#category-access">Доступ</a>
+                            <a class="btn btn-sm btn-light" href="#category-fields">Общие поля</a>
+                        </nav>
 
                         <div v-if="usage" class="card mb-3">
                             <div class="card-body py-2 d-flex flex-wrap gap-3">
@@ -52,7 +62,7 @@
                             </div>
                         </div>
 
-                        <div class="card mb-3">
+                        <div id="category-main" class="card editor-card mb-3">
                             <div class="card-header">Основное</div>
                             <div class="card-body">
                                 <div class="mb-3">
@@ -83,7 +93,7 @@
                             </div>
                         </div>
 
-                        <div class="card mb-3">
+                        <div id="category-access" class="card editor-card mb-3">
                             <div class="card-header">Доступ и группировка</div>
                             <div class="card-body">
                                 <div class="mb-3">
@@ -115,7 +125,7 @@
                             </div>
                         </div>
 
-                        <div class="card mb-3">
+                        <div id="category-fields" class="card editor-card mb-3">
                             <div class="card-header">Общие поля</div>
                             <div class="card-body">
                                 <p class="text-muted small">
@@ -125,31 +135,41 @@
                             </div>
                         </div>
 
-                        <div class="d-flex justify-content-between gap-2 mb-5">
-                            <button
-                                v-if="draft.id"
-                                class="btn btn-outline-danger"
-                                type="button"
-                                :disabled="saving || hasUsage"
-                                :title="deleteHint"
-                                @click="removeCategory"
-                            >
-                                <i class="bi bi-trash me-1"></i> Удалить
-                            </button>
-                            <span v-else></span>
-                            <button class="btn btn-primary" type="submit" :disabled="saving">
-                                {{ saving ? 'Сохранение…' : (draft.id ? 'Сохранить' : 'Создать') }}
-                            </button>
+                        <div class="editor-save-bar">
+                            <div v-if="draft.id" class="d-flex flex-column align-items-start">
+                                <button
+                                    class="btn btn-outline-danger"
+                                    type="button"
+                                    :disabled="saving || hasUsage"
+                                    :title="deleteHint"
+                                    @click="removeCategory"
+                                >
+                                    <i class="bi bi-trash me-1"></i> Удалить
+                                </button>
+                                <small v-if="hasUsage" class="text-muted mt-1">Категория используется и пока не может быть удалена.</small>
+                            </div>
+                            <span v-else class="small" :class="hasUnsavedChanges ? 'text-warning-emphasis' : 'text-muted'">
+                                <i class="bi me-1" :class="hasUnsavedChanges ? 'bi-circle-fill' : 'bi-check-circle'"></i>
+                                {{ hasUnsavedChanges ? 'Есть несохранённые изменения' : 'Изменений нет' }}
+                            </span>
+                            <div class="d-flex align-items-center gap-3">
+                                <span v-if="draft.id" class="small d-none d-md-inline" :class="hasUnsavedChanges ? 'text-warning-emphasis' : 'text-muted'">
+                                    {{ hasUnsavedChanges ? 'Есть несохранённые изменения' : 'Все изменения сохранены' }}
+                                </span>
+                                <button class="btn btn-primary" type="submit" :disabled="saving">
+                                    {{ saving ? 'Сохранение…' : (draft.id ? 'Сохранить' : 'Создать') }}
+                                </button>
+                            </div>
                         </div>
                     </form>
                 </div>
             </div>
-        </div>
     </BaseLayout>
 </template>
 
 <script>
 import BaseLayout from '@/components/layouts/BaseLayout.vue';
+import PageHeader from '@/components/common/PageHeader.vue';
 import Loading from '@/components/common/Loading.vue';
 import FormFieldsEditor from '@/components/forms/FormFieldsEditor.vue';
 import {
@@ -159,12 +179,14 @@ import {
     updateFormCategory,
 } from '@/api/forms_api.js';
 import useMainStore from '@/stores/mainStore.js';
+import unsavedChangesMixin from '@/mixins/unsavedChangesMixin.js';
 
 const clone = value => JSON.parse(JSON.stringify(value));
 
 export default {
     name: 'FormCategoriesAdminView',
-    components: {BaseLayout, FormFieldsEditor, Loading},
+    components: {BaseLayout, FormFieldsEditor, Loading, PageHeader},
+    mixins: [unsavedChangesMixin],
     data() {
         return {
             store: useMainStore(),
@@ -175,6 +197,8 @@ export default {
             saving: false,
             saved: false,
             error: null,
+            initialSnapshot: '',
+            listSearch: '',
             roles: [
                 {value: 'student', label: 'Ученик'},
                 {value: 'teacher', label: 'Учитель'},
@@ -186,6 +210,11 @@ export default {
         sortedCategories() {
             return [...this.store.formCategories].sort((a, b) => a.name.localeCompare(b.name, 'ru'));
         },
+        filteredCategories() {
+            const query = this.listSearch.trim().toLowerCase();
+            if (!query) return this.sortedCategories;
+            return this.sortedCategories.filter(category => category.name.toLowerCase().includes(query));
+        },
         hasUsage() {
             return Boolean(
                 this.usage?.form_count
@@ -196,6 +225,9 @@ export default {
         deleteHint() {
             if (!this.hasUsage) return 'Удалить категорию';
             return 'Сначала удалите формы и дочерние категории, затем отвяжите категорию от типов сущностей.';
+        },
+        hasUnsavedChanges() {
+            return Boolean(this.draft && this.initialSnapshot && JSON.stringify(this.payload()) !== this.initialSnapshot);
         },
     },
     async created() {
@@ -227,8 +259,11 @@ export default {
             return prepared;
         },
         async selectCategory(category) {
+            if (this.draft?.id === category.id) return;
+            if (this.hasUnsavedChanges && !window.confirm('Отменить несохранённые изменения и открыть другую категорию?')) return;
             this.draft = this.prepareDraft(category);
             this.groupingText = this.draft.params.show_off_grouping.join('\n');
+            this.initialSnapshot = JSON.stringify(this.payload());
             this.saved = false;
             this.error = null;
             try {
@@ -239,6 +274,7 @@ export default {
             }
         },
         startCreate() {
+            if (this.hasUnsavedChanges && !window.confirm('Отменить несохранённые изменения и создать новую категорию?')) return;
             this.draft = this.prepareDraft({
                 id: null,
                 name: '',
@@ -250,6 +286,7 @@ export default {
             this.usage = null;
             this.saved = false;
             this.error = null;
+            this.initialSnapshot = JSON.stringify(this.payload());
         },
         payload() {
             const params = clone(this.draft.params);
@@ -272,6 +309,7 @@ export default {
                     : await createFormCategory(this.payload());
                 await this.store.fetchFormCategories();
                 const savedCategory = this.store.getFormCategory(result.id);
+                this.initialSnapshot = JSON.stringify(this.payload());
                 await this.selectCategory(savedCategory);
                 this.saved = true;
             } catch (error) {
@@ -304,6 +342,6 @@ export default {
 
 <style scoped>
 .category-list {
-    top: 1rem;
+    top: 4.75rem;
 }
 </style>

@@ -1,11 +1,10 @@
 <template>
     <div class="layout">
-        <!-- Навбар (Общий для всех страниц) -->
         <Navbar/>
 
-        <div class="container py-2">
+        <main class="container page-container">
             <slot/>
-        </div>
+        </main>
     </div>
 </template>
 
@@ -19,4 +18,3 @@ export default {
     },
 };
 </script>
-

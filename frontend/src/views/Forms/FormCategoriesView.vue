@@ -1,18 +1,33 @@
 <template>
     <BaseLayout>
-        <!-- Заголовок -->
-        <div class="d-flex align-items-center justify-content-between mt-3">
-            <h4 class="mb-0">Формы</h4>
-        </div>
+        <PageHeader
+            title="Формы"
+            subtitle="Шаблоны форм и ответы, сгруппированные по категориям."
+        />
 
-        <!-- Поле поиска -->
-        <div class="d-flex mt-3 align-items-center">
-            <input
-                type="text"
-                class="form-control me-3"
-                placeholder="Введите название формы для поиска..."
-                v-model="searchQuery"
-            />
+        <div class="page-toolbar">
+            <div class="input-group toolbar-search flex-grow-1">
+                <span class="input-group-text bg-white text-muted" aria-hidden="true">
+                    <i class="bi bi-search"></i>
+                </span>
+                <input
+                    type="search"
+                    class="form-control"
+                    placeholder="Поиск по названию формы…"
+                    aria-label="Поиск по названию формы"
+                    v-model="searchQuery"
+                />
+                <button
+                    v-if="searchQuery"
+                    class="btn btn-light icon-button"
+                    type="button"
+                    aria-label="Очистить поиск"
+                    title="Очистить поиск"
+                    @click="searchQuery = ''"
+                >
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
         </div>
 
         <div class="tab-content mt-3">
@@ -24,29 +39,36 @@
                     class="category-block"
                 >
                     <!-- Заголовок категории + кнопка Добавить -->
-                    <div class="d-flex justify-content-between align-items-center pb-2">
+                    <div class="d-flex justify-content-between align-items-center gap-3 pb-2 border-bottom">
                         <h5 class="fw-bold mb-0">{{ category.name }}</h5>
                         <button
-                            class="btn btn-sm btn-light"
+                            class="btn btn-sm btn-outline-primary"
                             @click="goToCreateForm(category.id)"
                         >
-                            Добавить
+                            <i class="bi bi-plus-lg me-1"></i>Добавить форму
                         </button>
                     </div>
-                    <div class="row mt-2">
+                    <div class="row g-3 mt-0">
                         <div
                             v-for="form in category.forms"
                             :key="form.id"
-                            class="col-md-3 col-lg-3 col-xl-2 mb-0 d-flex align-items-stretch"
+                            class="col-sm-6 col-lg-4 col-xl-3 d-flex align-items-stretch"
                         >
                             <FormCard :form="form" :category="category"/>
                         </div>
                         <div v-if="!category.forms.length" class="col-12">
-                            <p>Формы отсутствуют.</p>
+                            <div class="text-muted small py-3">В этой категории пока нет форм.</div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <EmptyState
+                v-else
+                title="Формы не найдены"
+                :description="searchQuery ? 'Попробуйте изменить поисковый запрос.' : 'Категории форм пока не настроены.'"
+                icon="bi-ui-checks-grid"
+            />
 
         </div>
 
@@ -58,9 +80,11 @@ import BaseLayout from "@/components/layouts/BaseLayout.vue";
 import Loading from "@/components/common/Loading.vue";
 import FormCard from "@/components/forms/FormCard.vue";
 import useMainStore from "@/stores/mainStore.js";
+import EmptyState from "@/components/common/EmptyState.vue";
+import PageHeader from "@/components/common/PageHeader.vue";
 
 export default {
-    components: {BaseLayout, Loading, FormCard},
+    components: {BaseLayout, EmptyState, Loading, FormCard, PageHeader},
 
     data() {
         return {
@@ -113,6 +137,11 @@ export default {
 
 <style scoped>
 .category-block {
-    margin-bottom: 30px;
+    margin-bottom: 2rem;
+    padding: 1rem;
+    border: 1px solid var(--silaeder-border);
+    border-radius: 0.75rem;
+    background: #fff;
+    box-shadow: var(--silaeder-shadow-sm);
 }
 </style>

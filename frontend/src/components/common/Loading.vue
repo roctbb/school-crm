@@ -1,7 +1,12 @@
 <template>
-  <div class="spinner-container" v-if="isVisible">
-    <div class="spinner" />
-    <p v-if="message">{{ message }}</p>
+  <div
+    v-if="isVisible"
+    class="loading-state"
+    role="status"
+    aria-live="polite"
+  >
+    <div class="spinner-border text-primary" aria-hidden="true"></div>
+    <p class="mb-0 text-muted">{{ message || 'Загрузка…' }}</p>
   </div>
 </template>
 
@@ -22,45 +27,16 @@ export default {
 </script>
 
 <style scoped>
-/* Контейнер для спиннера */
-.spinner-container {
+.loading-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100%;
   width: 100%;
-  position: absolute;
-  top: 0;
-  left: 0;
-  background-color: rgba(255, 255, 255, 0.8); /* Полупрозрачный фон */
-  z-index: 1000;
-}
-
-/* Стиль самого спиннера */
-.spinner {
-  width: 50px;
-  height: 50px;
-  border: 5px solid #f3f3f3; /* Светлый бордюр */
-  border-top: 5px solid #3498db; /* Синий бордюр (анимация вращения) */
-  border-radius: 50%; /* Круглая форма */
-  animation: spin 1s linear infinite; /* Анимация вращения */
-}
-
-/* Текст под спиннером */
-p {
-  margin-top: 10px;
-  font-size: 16px;
-  color: #555;
-}
-
-/* Анимация вращения */
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
+  min-height: 10rem;
+  gap: 0.8rem;
+  padding: 2rem;
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.55);
 }
 </style>

@@ -1,10 +1,9 @@
 <template>
     <BaseLayout>
-        <div class="container py-4">
-            <div class="mb-4">
-                <h2 class="mb-1">Настройки уведомлений</h2>
-                <p class="text-muted mb-0">По электронной почте уведомления приходят всегда. Telegram можно подключить дополнительно.</p>
-            </div>
+            <PageHeader
+                title="Настройки уведомлений"
+                subtitle="По электронной почте уведомления приходят всегда. Telegram можно подключить дополнительно."
+            />
 
             <div class="card notification-card">
                 <div class="card-body">
@@ -58,12 +57,12 @@
                     </div>
                 </div>
             </div>
-        </div>
     </BaseLayout>
 </template>
 
 <script>
 import BaseLayout from '@/components/layouts/BaseLayout.vue';
+import PageHeader from '@/components/common/PageHeader.vue';
 import {
     createTelegramLink,
     disconnectTelegram,
@@ -73,7 +72,7 @@ import {
 
 export default {
     name: 'NotificationSettingsView',
-    components: {BaseLayout},
+    components: {BaseLayout, PageHeader},
     data() {
         return {
             settings: null,

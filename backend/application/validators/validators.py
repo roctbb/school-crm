@@ -14,7 +14,8 @@ OBJECT_ATTRIBUTE_KEYS = {
 }
 OBJECT_TYPE_PARAM_KEYS = {
     'index', 'possible_children', 'can_create', 'can_delete', 'can_fill',
-    'is_hidden', 'comments_hidden', 'widgets', 'details_widgets', 'edit_description'
+    'is_hidden', 'comments_hidden', 'widgets', 'details_widgets', 'edit_description',
+    'default_grouping',
 }
 OBJECT_TYPE_WIDGETS = {'active_events', 'birthdays', 'calendar', 'portfolio_progress'}
 ROLE_CODES = {'student', 'teacher', 'admin'}
@@ -216,6 +217,25 @@ def validate_object_type(data):
     if 'edit_description' in params and (
             not isinstance(params['edit_description'], str) or len(params['edit_description']) > 4000):
         raise LogicException("Параметр edit_description должен быть строкой до 4000 символов.", 422)
+    if 'default_grouping' in params:
+        default_grouping = params['default_grouping']
+        if not isinstance(default_grouping, str):
+            raise LogicException(
+                "Параметр default_grouping должен быть строкой.",
+                422,
+                field='default_grouping',
+            )
+        default_grouping = default_grouping.strip()
+        groupable_attribute_codes = {
+            attribute['code'] for attribute in attributes if attribute.get('group')
+        }
+        if default_grouping and default_grouping not in groupable_attribute_codes:
+            raise LogicException(
+                "Группировка по умолчанию должна ссылаться на атрибут с включённой группировкой.",
+                422,
+                field='default_grouping',
+            )
+        params['default_grouping'] = default_grouping
 
     category_ids = data.get('form_category_ids', [])
     if not isinstance(category_ids, list) or not all(isinstance(category_id, int) for category_id in category_ids):

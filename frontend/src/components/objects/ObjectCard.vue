@@ -8,6 +8,8 @@
                         :src="photoUrl"
                         alt="Фото объекта"
                         class="card-img-top object-card-img"
+                        loading="lazy"
+                        decoding="async"
                     />
                 </a>
             </template>
@@ -22,7 +24,9 @@
         <!-- Основное содержимое карточки -->
         <div class="card-body flex-grow-1 pb-2">
             <h5 class="card-title mb-2">
-                {{ object.name }}
+                <router-link :to="`/${type.code}/${object.id}`" class="card-title-link stretched-link-scope">
+                    {{ object.name }}
+                </router-link>
                 <i
                     class="bi bi-person-check text-success"
                     title="Подтверждён владелец"
@@ -52,14 +56,16 @@
         <div class="card-footer bg-white border-0">
             <router-link
                 :to="`/${type.code}/${object.id}`"
-                class="btn btn-sm btn-light"
+                class="btn btn-sm btn-outline-primary"
             >
                 Подробнее
             </router-link>
 
             <button
                 v-if="object.invitation && hasAdminAccess()"
-                class="btn btn-sm btn-light ms-2"
+                class="btn btn-sm btn-light icon-button ms-2"
+                aria-label="Скопировать ссылку-приглашение"
+                title="Скопировать приглашение"
                 @click="copyInviteLink"
             >
                 <i class="bi bi-clipboard"></i>
@@ -72,6 +78,7 @@
             >
                 Скопировано!
             </small>
+            <small v-if="copyError" class="text-danger ms-2">{{ copyError }}</small>
         </div>
     </div>
 </template>
@@ -95,6 +102,7 @@ export default {
         return {
             store: useMainStore(),
             showCopied: false,
+            copyError: "",
             photoUrl: null,
             photoLoadId: 0,
         };
@@ -153,6 +161,7 @@ export default {
         },
 
         copyInviteLink() {
+            this.copyError = "";
             const invKey = this.object.invitation.key;
             const inviteUrl = `${window.location.origin}/register?invite=${invKey}`;
 
@@ -165,6 +174,7 @@ export default {
                     }, 1500);
                 })
                 .catch((err) => {
+                    this.copyError = "Не удалось скопировать";
                     console.error("Ошибка при копировании ссылки:", err);
                 });
         },
@@ -175,8 +185,23 @@ export default {
 <style scoped>
 
 .hover-card:hover {
-    box-shadow: 0 0 7px rgba(0, 0, 0, 0.08);
-    transition: box-shadow 0.03s ease-in-out;
+    border-color: #bfd2dc;
+    box-shadow: var(--silaeder-shadow);
+    transform: translateY(-2px);
+}
+
+.hover-card {
+    overflow: hidden;
+    transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+}
+
+.card-title-link {
+    color: var(--silaeder-text);
+    text-decoration: none;
+}
+
+.card-title-link:hover {
+    color: var(--silaeder-primary-dark);
 }
 
 .object-card-img {
@@ -195,5 +220,10 @@ export default {
     border-top-left-radius: 0.25rem;
     border-top-right-radius: 0.25rem;
     text-align: center;
+}
+
+.card-footer {
+    position: relative;
+    z-index: 2;
 }
 </style>

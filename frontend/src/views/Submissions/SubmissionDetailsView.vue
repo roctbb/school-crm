@@ -1,13 +1,13 @@
 <template>
     <BaseLayout>
-        <div class="container mt-4" v-if="submission && !isLoading">
+        <div v-if="submission && !isLoading">
             <div class="row justify-content-center">
-                <div class="col-md-10 col-lg-8">
+                <div class="col-xl-9">
                     <!-- Карточка с деталями ответа  -->
                     <div class="card">
-                        <div class="card-header d-flex align-items-center justify-content-between">
-                            <div class="d-flex align-items-center">
-                                <BackButton/>
+                        <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-3">
+                            <div class="d-flex align-items-center min-w-0">
+                                <BackButton class="me-3"/>
 
                                 <h4 class="m-0">
                                     Ответ на форму:
@@ -77,7 +77,8 @@
                             <!-- Таблица с ответами -->
                             <div class="submission-answers">
                                 <h5 class="mb-3">Ответы</h5>
-                                <table class="table table-sm table-bordered table-hover align-middle">
+                                <div class="table-responsive">
+                                <table class="table table-sm table-hover align-middle">
                                     <thead class="table-light">
                                     <tr>
                                         <th style="width: 30%">Название поля</th>
@@ -95,6 +96,7 @@
                                     </tr>
                                     </tbody>
                                 </table>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -204,5 +206,15 @@ export default {
 <style scoped>
 .table th, .table td {
     vertical-align: middle !important;
+}
+
+.min-w-0 {
+    min-width: 0;
+}
+
+@media (max-width: 575.98px) {
+    .card-header h4 {
+        font-size: 1.05rem;
+    }
 }
 </style>

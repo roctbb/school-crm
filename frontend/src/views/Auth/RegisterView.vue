@@ -1,8 +1,8 @@
 <template>
-    <div class="register-page d-flex justify-content-center align-items-center vh-100">
-        <div class="card p-4 m-3" style="width: 100%; max-width: 400px;">
+    <div class="register-page auth-page">
+        <div class="card auth-card p-4">
             <div class="text-center mb-3">
-                <img src="@/assets/logo.png" alt="Logo" style="max-width: 150px; height: auto;">
+                <img src="@/assets/logo.png" alt="Силаэдр" class="auth-logo">
             </div>
             <h3 class="card-title text-center mb-3">Регистрация</h3>
 
@@ -36,21 +36,31 @@
                     <div class="invalid-feedback">Введите корректный email</div>
                 </div>
                 <div class="mb-3">
-                    <label for="password" class="form-label">Пароль</label>
-                    <input
-                        type="password"
-                        id="password"
-                        class="form-control"
-                        v-model="password"
-                        :class="{ 'is-invalid': errors.password === true }"
-                        required
-                    />
+                    <label for="password" class="form-label">Пароль <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <input
+                            :type="showPasswords ? 'text' : 'password'"
+                            id="password"
+                            class="form-control"
+                            v-model="password"
+                            :class="{ 'is-invalid': errors.password === true }"
+                            required
+                        />
+                        <button
+                            class="btn btn-light icon-button"
+                            type="button"
+                            :aria-label="showPasswords ? 'Скрыть пароли' : 'Показать пароли'"
+                            @click="showPasswords = !showPasswords"
+                        >
+                            <i class="bi" :class="showPasswords ? 'bi-eye-slash' : 'bi-eye'"></i>
+                        </button>
+                    </div>
                     <div class="invalid-feedback">Введите пароль</div>
                 </div>
                 <div class="mb-3">
                     <label for="confirmPassword" class="form-label">Подтвердите пароль</label>
                     <input
-                        type="password"
+                        :type="showPasswords ? 'text' : 'password'"
                         id="confirmPassword"
                         class="form-control"
                         v-model="confirmPassword"
@@ -101,6 +111,7 @@ export default {
             confirmPassword: "",
             invite: "", // Поле для кода приглашения
             error: "",
+            showPasswords: false,
             errors: reactive({
                 name: false,
                 email: false,
@@ -169,10 +180,6 @@ export default {
 </script>
 
 <style>
-.register-page {
-    background-color: #f8f9fa;
-}
-
 .is-invalid {
     border-color: #dc3545;
 }

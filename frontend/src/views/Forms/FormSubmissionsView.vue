@@ -1,41 +1,49 @@
 <template>
     <BaseLayout>
-        <div class="container mt-3">
             <loading v-if="isLoading" />
             <div v-else>
-                <h3 class="mb-4">Ответы на форму: {{ form.name }}</h3>
+                <PageHeader
+                    :title="`Ответы: ${form.name}`"
+                    subtitle="Фильтрация, просмотр и выгрузка ответов на форму."
+                />
 
-                <!-- Глобальный фильтр по имени объекта -->
-                <div class="mb-3">
-                    <input
-                        v-model="searchQuery"
-                        type="text"
-                        class="form-control"
-                        placeholder="Глобальный фильтр по имени объекта"
-                    />
+                <div class="page-toolbar">
+                    <div class="input-group toolbar-search flex-grow-1">
+                        <span class="input-group-text bg-white text-muted" aria-hidden="true">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input
+                            v-model="searchQuery"
+                            type="search"
+                            class="form-control"
+                            placeholder="Поиск по имени объекта…"
+                            aria-label="Поиск по имени объекта"
+                        />
+                    </div>
                 </div>
 
                 <!-- Сгруппированные ответы по типу объекта (группировка по ВСЕМ данным, без фильтрации) -->
                 <div v-for="(submissions, objectType) in groupedSubmissions" :key="objectType" class="mb-5">
                     <div class="d-flex align-items-center mb-2">
-                        <h4 class="mb-0">
+                        <h5 class="mb-0">
                             {{ objectType === 'Без объекта' ? 'Объекты без типа' : ('Тип объекта: ' + store.getObjectTypeByCode(objectType)?.name) }}
-                        </h4>
-                        <button class="btn btn-sm btn-secondary ms-auto" @click="exportFilteredSubmissionsToExcel">
+                        </h5>
+                        <button class="btn btn-sm btn-outline-primary ms-auto" @click="exportFilteredSubmissionsToExcel">
                             <i class="bi bi-download me-1"></i> Выгрузить
                         </button>
                     </div>
 
-                    <table class="table table-bordered table-striped table-hover align-middle">
+                    <div class="table-responsive">
+                    <table class="table table-striped table-hover align-middle submissions-table">
                         <thead>
                         <tr>
-                            <th @click="changeSort('id')" style="cursor: pointer">
+                            <th class="table-sortable" @click="changeSort('id')">
                                 ID
                                 <span v-if="isColumnSorted('id')">
                     {{ getSortDirection('id') === 'asc' ? '↑' : '↓' }}
                   </span>
                             </th>
-                            <th @click="changeSort('object_name')" style="cursor: pointer">
+                            <th class="table-sortable" @click="changeSort('object_name')">
                                 Объект
                                 <span v-if="isColumnSorted('object_name')">
                     {{ getSortDirection('object_name') === 'asc' ? '↑' : '↓' }}
@@ -45,15 +53,15 @@
                             <th
                                 v-for="attr in getAttributeColumns(submissions, objectType)"
                                 :key="attr.code"
+                                class="table-sortable"
                                 @click="changeSort('attr_' + attr.code)"
-                                style="cursor: pointer"
                             >
                                 {{ attr.name }}
                                 <span v-if="isColumnSorted('attr_' + attr.code)">
                     {{ getSortDirection('attr_' + attr.code) === 'asc' ? '↑' : '↓' }}
                   </span>
                             </th>
-                            <th @click="changeSort('created_at')" style="cursor: pointer">
+                            <th class="table-sortable" @click="changeSort('created_at')">
                                 Дата создания
                                 <span v-if="isColumnSorted('created_at')">
                     {{ getSortDirection('created_at') === 'asc' ? '↑' : '↓' }}
@@ -63,8 +71,8 @@
                             <th
                                 v-for="field in formFields"
                                 :key="field.code"
+                                class="table-sortable"
                                 @click="changeSort(field.code)"
-                                style="cursor: pointer"
                             >
                                 {{ field.name }}
                                 <span v-if="isColumnSorted(field.code)">
@@ -78,7 +86,7 @@
                                 <input
                                     v-model="filters.id"
                                     type="text"
-                                    class="form-control"
+                                    class="form-control form-control-sm"
                                     placeholder="Фильтр по ID"
                                 />
                             </th>
@@ -86,7 +94,7 @@
                                 <input
                                     v-model="filters.objectName"
                                     type="text"
-                                    class="form-control"
+                                    class="form-control form-control-sm"
                                     placeholder="Фильтр по объекту"
                                 />
                             </th>
@@ -98,7 +106,7 @@
                                 <input
                                     v-model="filters['attr_' + attr.code]"
                                     type="text"
-                                    class="form-control"
+                                    class="form-control form-control-sm"
                                     :placeholder="`Фильтр по ${attr.name}`"
                                 />
                             </th>
@@ -106,7 +114,7 @@
                                 <input
                                     v-model="filters.createdAt"
                                     type="text"
-                                    class="form-control"
+                                    class="form-control form-control-sm"
                                     placeholder="Фильтр по дате"
                                 />
                             </th>
@@ -118,7 +126,7 @@
                                 <input
                                     v-model="filters[field.code]"
                                     type="text"
-                                    class="form-control"
+                                    class="form-control form-control-sm"
                                     :placeholder="`Фильтр по ${field.name}`"
                                 />
                             </th>
@@ -182,9 +190,9 @@
                         </tr>
                         </tbody>
                     </table>
+                    </div>
                 </div>
             </div>
-        </div>
     </BaseLayout>
 </template>
 
@@ -193,6 +201,7 @@ import { fetchFormSubmissions } from '@/api/forms_api.js';
 import Loading from '@/components/common/Loading.vue';
 import BaseLayout from '@/components/layouts/BaseLayout.vue';
 import useMainStore from '@/stores/mainStore.js';
+import PageHeader from '@/components/common/PageHeader.vue';
 
 // Подключаем библиотеки xlsx и file-saver
 import * as XLSX from 'xlsx';
@@ -203,6 +212,7 @@ export default {
     components: {
         Loading,
         BaseLayout,
+        PageHeader,
     },
     props: {
         formId: {
@@ -516,5 +526,7 @@ export default {
 </script>
 
 <style scoped>
-/* Стили можно расширить по необходимости */
+.submissions-table {
+    min-width: 56rem;
+}
 </style>

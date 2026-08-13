@@ -210,10 +210,12 @@ def test_admin_can_create_and_update_object_type(client, db_session):
             'code': 'photo',
             'type': 'file',
             'display': True,
+            'group': True,
             'keep_history': True,
         }],
         'params': {
             'index': 1,
+            'default_grouping': 'photo',
             'possible_children': [],
             'can_create': ['teacher'],
             'can_delete': ['student'],
@@ -228,6 +230,7 @@ def test_admin_can_create_and_update_object_type(client, db_session):
     created = create_response.get_json()
     assert created['code'] == 'participants'
     assert created['available_attributes'][0]['keep_history'] is True
+    assert created['params']['default_grouping'] == 'photo'
     assert created['form_categories'][0]['id'] == category.id
 
     payload['name'] = 'People'
@@ -238,6 +241,35 @@ def test_admin_can_create_and_update_object_type(client, db_session):
     revision = ObjectTypeRevision.query.filter_by(object_type_id=created['id']).one()
     assert revision.snapshot['name'] == 'Participants'
     assert revision.editor_id == admin.id
+
+
+def test_default_grouping_requires_groupable_attribute(client, db_session):
+    admin = User(
+        name='Admin',
+        email='admin@example.com',
+        password=bcrypt.generate_password_hash('password123').decode('utf-8'),
+        role='admin',
+    )
+    db_session.add(admin)
+    db_session.commit()
+    token = create_access_token(identity=str(admin.id))
+
+    response = client.post('/api/objects/types', headers={
+        'Authorization': f'Bearer {token}',
+    }, json={
+        'name': 'Participants',
+        'code': 'participants',
+        'available_attributes': [{
+            'name': 'Class',
+            'code': 'class_name',
+            'type': 'string',
+            'group': False,
+        }],
+        'params': {'default_grouping': 'class_name'},
+        'form_category_ids': [],
+    })
+
+    assert response.status_code == 422
 
 
 def test_non_admin_cannot_create_object_type(client, auth_headers):

@@ -20,6 +20,10 @@
             </label>
         </div>
 
+        <div v-if="error" class="alert alert-danger py-2 mt-2 mb-0 small" role="alert">
+            {{ error }}
+        </div>
+
         <!-- Если URL к файлу уже есть (и ничего не загружается) -->
         <div v-if="currentFileUrl && !isUploading" class="mt-2">
             <a
@@ -40,8 +44,9 @@
         </div>
 
         <!-- Показать индикатор процесса загрузки -->
-        <div v-else-if="isUploading" class="text-muted mt-2">
-            Загружается...
+        <div v-else-if="isUploading" class="d-flex align-items-center gap-2 text-muted mt-2" role="status">
+            <span class="spinner-border spinner-border-sm text-primary" aria-hidden="true"></span>
+            Загружается…
         </div>
     </div>
 </template>
@@ -75,6 +80,7 @@ export default {
         return {
             isUploading: false,
             appendToHistory: false,
+            error: "",
         };
     },
     computed: {
@@ -97,6 +103,7 @@ export default {
             if (!file) return;
 
             this.isUploading = true;
+            this.error = "";
             try {
                 const path = await uploadFile(file);
                 this.isUploading = false;
@@ -106,6 +113,7 @@ export default {
                 this.$emit("update:modelValue", nextValue);
             } catch (error) {
                 console.error("Ошибка загрузки файла", error);
+                this.error = error.message || "Не удалось загрузить файл.";
                 this.isUploading = false;
             }
         },

@@ -12,15 +12,16 @@
                     {{ formatDate(comment.created_at) }}
                 </div>
                 <!-- Иконка удаления справа -->
-                <div
+                <button
                     v-if="canDeleteComment(comment)"
-                    class="text-danger ms-auto"
-                    style="cursor: pointer; font-size: 0.85rem;"
+                    class="btn btn-sm btn-link text-danger ms-auto p-1"
+                    type="button"
                     title="Удалить комментарий"
+                    :aria-label="`Удалить комментарий пользователя ${comment.author?.name || ''}`"
                     @click="removeComment(comment)"
                 >
                     <i class="bi bi-trash"></i>
-                </div>
+                </button>
             </div>
             <!-- Текст комментария -->
             <div>{{ comment.text }}</div>
@@ -29,6 +30,7 @@
 
         <!-- Форма добавления нового комментария -->
         <div class="mt-3" v-if="canCommentObject(object)">
+            <div v-if="error" class="alert alert-danger py-2 small">{{ error }}</div>
             <form @submit.prevent="postComment">
                 <div class="mb-3">
                     <textarea
@@ -38,7 +40,7 @@
                         placeholder="Напишите свой комментарий..."
                     />
                 </div>
-                <button class="btn btn-primary btn-sm" type="submit">Отправить</button>
+                <button class="btn btn-primary btn-sm" type="submit" :disabled="!newComment.trim()">Отправить</button>
             </form>
         </div>
     </div>
@@ -60,7 +62,8 @@ export default {
     data() {
         return {
             newComment: "",
-            store: useMainStore()
+            store: useMainStore(),
+            error: "",
         };
     },
     computed: {
@@ -82,10 +85,12 @@ export default {
             if (!text) return;
 
             try {
+                this.error = "";
                 const createdComment = await postComment(this.object.id, text);
                 this.object.comments.push(createdComment);
                 this.newComment = "";
             } catch (error) {
+                this.error = error.message || "Не удалось добавить комментарий.";
                 console.error("Ошибка при добавлении комментария:", error);
             }
         },
@@ -94,11 +99,13 @@ export default {
                 return;
             }
             try {
+                this.error = "";
                 await deleteComment(this.object.id, comment.id);
                 this.object.comments = this.object.comments.filter(
                     (item) => item.id !== comment.id
                 );
             } catch (error) {
+                this.error = error.message || "Не удалось удалить комментарий.";
                 console.error("Ошибка при удалении комментария:", error);
             }
         },

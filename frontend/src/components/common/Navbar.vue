@@ -1,9 +1,11 @@
 <template>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-brand">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-brand sticky-top shadow-sm">
         <div class="container">
-            <!-- Логотип -->
-            <router-link :to="{name: 'Objects'}" class="navbar-brand">
-                Силаэдр CRM
+            <router-link :to="{name: 'Objects'}" class="navbar-brand d-flex align-items-center gap-2">
+                <span class="brand-logo-wrap" aria-hidden="true">
+                    <img src="@/assets/logo.png" alt="" class="brand-logo" />
+                </span>
+                <span>Силаэдр CRM</span>
             </router-link>
 
             <!-- Кнопка (тогглер) -->
@@ -14,7 +16,7 @@
                 data-bs-target="#navbarContent"
                 aria-controls="navbarContent"
                 aria-expanded="false"
-                aria-label="Toggle navigation"
+                aria-label="Открыть меню"
             >
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -81,9 +83,8 @@
                         data-bs-toggle="dropdown"
                         aria-expanded="false"
                     >
-                        <!-- Иконка пользователя (например, из bootstrap-icons) -->
                         <i class="bi bi-person-circle me-1"></i>
-                        {{ profile.name }}
+                        <span class="user-name">{{ profile.name }}</span>
                     </button>
 
                     <ul
@@ -168,29 +169,87 @@ export default {
 </script>
 
 <style scoped>
-/* Фирменный цвет для Navbar */
 .bg-brand {
-    background-color: #397698; /* Основной брендовый цвет */
+    background-color: #397698;
 }
 
-/* Темный текст и иконки для кнопки-тогглера */
-.navbar-dark .navbar-toggler-icon {
-    filter: brightness(0) invert(1);
+.navbar {
+    --bs-navbar-padding-y: 0.55rem;
+    z-index: 1030;
 }
 
-/* Пример плавного перехода для ссылок */
+.navbar-brand {
+    font-size: 1.05rem;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+}
+
+.brand-logo-wrap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    overflow: hidden;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.28);
+}
+
+.brand-logo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
 .nav-link {
-    transition: background-color 0.3s ease, color 0.3s ease;
+    margin-inline: 0.08rem;
+    padding-inline: 0.75rem !important;
+    border-radius: 0.45rem;
 }
 
-/* Кнопка с именем пользователя */
+.nav-link:hover,
+.nav-link:focus-visible {
+    background: rgba(255, 255, 255, 0.09);
+}
+
+.nav-link.active {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.16);
+}
+
 .btn-user-menu {
     color: #fff;
-    background-color: transparent;
-    border: none;
+    background-color: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.14);
 }
 
-/* Плавное раскрытие dropdown (Bootstrap 5 по умолчанию скрывает)
-   Для наглядности можно добавить transition, но придётся переопределять сегменты BS.
-   Проще оставить «как есть», чтобы не усложнять. */
+.btn-user-menu:hover,
+.btn-user-menu:focus-visible,
+.btn-user-menu.show {
+    color: #fff;
+    background-color: rgba(255, 255, 255, 0.16);
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+@media (max-width: 991.98px) {
+    .navbar-collapse {
+        padding-top: 0.75rem;
+        padding-bottom: 0.25rem;
+    }
+
+    .nav-link {
+        margin-bottom: 0.2rem;
+    }
+
+    .btn-user-menu {
+        width: 100%;
+        margin-top: 0.4rem;
+        text-align: left;
+    }
+
+    .dropdown-menu-end {
+        width: 100%;
+    }
+}
 </style>

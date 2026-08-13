@@ -3,7 +3,7 @@
     <div v-if="activeTab !== 'portfolio'">
         <button
             v-if="activeTab && canCreateByType(getObjectTypeByCode(activeTab))"
-            class="btn btn-success btn-sm ms-1"
+            class="btn btn-primary btn-sm ms-1"
             @click="triggerCreateObject(activeTab)"
         >
             <i class="bi bi-plus me-1"></i> Создать
@@ -14,19 +14,14 @@
     <div v-else>
         <div class="dropdown">
             <button
-                class="btn btn-success btn-sm dropdown-toggle"
+                class="btn btn-primary btn-sm dropdown-toggle"
                 type="button"
                 @click="toggleDropdown"
             >
                 <i class="bi bi-plus me-1"></i> Создать
             </button>
 
-            <!-- Добавляем плавное появление/скрытие списка типов объектов -->
-            <transition name="dropdown-fade">
-                <ul
-                    v-if="showDropdown"
-                    class="dropdown-menu show"
-                >
+                <ul v-if="showDropdown" class="dropdown-menu show">
                     <li
                         v-for="type in filteredTypes"
                         :key="type.code"
@@ -39,7 +34,6 @@
                         </button>
                     </li>
                 </ul>
-            </transition>
         </div>
     </div>
 </template>
@@ -108,16 +102,3 @@ export default {
     },
 };
 </script>
-
-<style scoped>
-/* Небольшая анимация исчезновения/появления меню */
-.dropdown-fade-enter-active,
-.dropdown-fade-leave-active {
-    transition: opacity 0.2s ease;
-}
-
-.dropdown-fade-enter,
-.dropdown-fade-leave-to {
-    opacity: 0;
-}
-</style>

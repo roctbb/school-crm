@@ -13,8 +13,10 @@
             </span>
           </span>
           <button
-            class="btn btn-outline-secondary btn-sm ms-2"
+            class="btn btn-outline-secondary btn-sm icon-button ms-2"
             @click="toggleTypeView(type)"
+            :aria-label="viewModes[type.code] === 'table' ? 'Показать карточками' : 'Показать таблицей'"
+            :title="viewModes[type.code] === 'table' ? 'Карточки' : 'Таблица'"
           >
             <i v-if="viewModes[type.code] === 'table'" class="bi bi-grid"></i>
             <i v-else class="bi bi-list"></i>

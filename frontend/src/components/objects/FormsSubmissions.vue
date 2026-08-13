@@ -29,8 +29,8 @@
           </h5>
           
           <!-- Tabs for show_off_grouping if present -->
-          <div v-if="hasShowOffGrouping(form_category)" class="ms-auto mt-2 mt-sm-0">
-            <ul class="nav nav-tabs">
+          <div v-if="hasShowOffGrouping(form_category)" class="group-tabs ms-sm-auto mt-2 mt-sm-0">
+            <ul class="nav nav-tabs flex-nowrap">
               <li class="nav-item" v-for="(group, index) in getGroupingValues(form_category)" :key="index">
                 <button 
                   class="nav-link" 
@@ -54,9 +54,9 @@
           :key="formId"
           class="mb-1"
         >
-          <div class="row">
+          <div class="row g-3">
             <div
-              class="col-md-6 col-lg-4 col-xl-3 col-xl-2 mb-3 d-flex align-items-stretch"
+              class="col-md-6 col-lg-4 col-xl-3 d-flex align-items-stretch"
               v-for="submission in submissionsGroup"
               :key="submission.id"
             >
@@ -69,7 +69,7 @@
           v-if="canFillInCategory(form_category) && canModifyObject(object)"
         >
           <button
-            class="btn btn-sm btn-light dropdown-toggle"
+            class="btn btn-sm btn-outline-primary dropdown-toggle"
             type="button"
             data-bs-toggle="dropdown"
             aria-expanded="false"
@@ -100,9 +100,9 @@
       class="mb-2"
     >
       <h5 class="pb-2">{{ category_name }}</h5>
-      <div class="row">
+      <div class="row g-3">
         <div
-          class="col-md-6 col-lg-4 col-xl-3 col-xl-2 mb-4 d-flex align-items-stretch"
+          class="col-md-6 col-lg-4 col-xl-3 d-flex align-items-stretch"
           v-for="submission in object._submissions.filter(
             s => s.form.category === category_name
           )"
@@ -293,3 +293,14 @@ export default {
   }
 };
 </script>
+
+<style scoped>
+.group-tabs {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.group-tabs .nav-link {
+  white-space: nowrap;
+}
+</style>

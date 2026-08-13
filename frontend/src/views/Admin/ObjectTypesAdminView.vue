@@ -1,21 +1,24 @@
 <template>
     <BaseLayout>
-        <div class="container py-4">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <div>
-                    <h2 class="mb-1">Типы сущностей</h2>
-                    <p class="text-muted mb-0">Атрибуты, права, связи и виджеты CRM.</p>
-                </div>
-                <button class="btn btn-success" type="button" @click="startCreate">
+            <PageHeader title="Типы сущностей" subtitle="Атрибуты, права, связи и виджеты CRM.">
+                <template #actions>
+                <button class="btn btn-primary" type="button" @click="startCreate">
                     <i class="bi bi-plus-lg me-1"></i> Новый тип
                 </button>
-            </div>
+                </template>
+            </PageHeader>
 
             <div class="row g-3">
                 <div class="col-lg-3">
                     <div class="list-group sticky-lg-top type-list">
+                        <div class="list-group-item p-2">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-white text-muted"><i class="bi bi-search"></i></span>
+                                <input v-model="listSearch" class="form-control" type="search" placeholder="Найти тип…" aria-label="Поиск типов сущностей" />
+                            </div>
+                        </div>
                         <button
-                            v-for="type in sortedTypes"
+                            v-for="type in filteredTypes"
                             :key="type.id"
                             class="list-group-item list-group-item-action d-flex justify-content-between"
                             :class="{active: draft?.id === type.id}"
@@ -25,14 +28,22 @@
                             <span>{{ type.name }}</span>
                             <code :class="{'text-white': draft?.id === type.id}">{{ type.code }}</code>
                         </button>
+                        <div v-if="!filteredTypes.length" class="list-group-item text-muted small">Ничего не найдено.</div>
                     </div>
                 </div>
 
                 <div class="col-lg-9">
                     <div v-if="!draft" class="alert alert-light border">Выберите тип сущности.</div>
-                    <form v-else @submit.prevent="save">
+                    <form v-else @submit.prevent="save" @input="saved = false" @change="saved = false">
                         <div v-if="error" class="alert alert-danger">{{ error }}</div>
                         <div v-if="saved" class="alert alert-success">Изменения сохранены.</div>
+
+                        <nav class="editor-section-nav d-flex flex-wrap gap-2 mb-3" aria-label="Разделы редактора">
+                            <a class="btn btn-sm btn-light" href="#type-main">Основное</a>
+                            <a class="btn btn-sm btn-light" href="#type-attributes">Атрибуты</a>
+                            <a class="btn btn-sm btn-light" href="#type-params">Параметры</a>
+                            <a class="btn btn-sm btn-light" href="#type-forms">Формы</a>
+                        </nav>
 
                         <div v-if="usage" class="card mb-3">
                             <div class="card-body py-2 d-flex flex-wrap gap-3">
@@ -45,7 +56,7 @@
                             </div>
                         </div>
 
-                        <div class="card mb-3">
+                        <div id="type-main" class="card editor-card mb-3">
                             <div class="card-header">Основное</div>
                             <div class="card-body row g-3">
                                 <div class="col-md-7">
@@ -66,10 +77,10 @@
                             </div>
                         </div>
 
-                        <div class="card mb-3">
+                        <div id="type-attributes" class="card editor-card mb-3">
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <span>Атрибуты</span>
-                                <button class="btn btn-sm btn-outline-success" type="button" @click="addAttribute">
+                                <button class="btn btn-sm btn-outline-primary" type="button" @click="addAttribute">
                                     Добавить поле
                                 </button>
                             </div>
@@ -113,7 +124,7 @@
                                                         class="form-select form-select-sm"
                                                         :disabled="attributeUsage(attribute.code) > 0"
                                                     >
-                                                        <option v-for="type in attributeTypes" :key="type" :value="type">{{ type }}</option>
+                                                        <option v-for="type in attributeTypes" :key="type.value" :value="type.value">{{ type.label }}</option>
                                                     </select>
                                                 </div>
                                                 <div class="col-12">
@@ -128,7 +139,12 @@
 
                                             <div class="d-flex flex-wrap gap-3 mt-3">
                                                 <label v-for="flag in attributeFlags" :key="flag.key" class="form-check">
-                                                    <input v-model="attribute[flag.key]" class="form-check-input" type="checkbox" />
+                                                    <input
+                                                        v-model="attribute[flag.key]"
+                                                        class="form-check-input"
+                                                        type="checkbox"
+                                                        @change="flag.key === 'group' && normalizeDefaultGrouping()"
+                                                    />
                                                     <span class="form-check-label">{{ flag.label }}</span>
                                                 </label>
                                                 <label v-if="attribute.type === 'file'" class="form-check">
@@ -146,7 +162,7 @@
                             </div>
                         </div>
 
-                        <div class="card mb-3">
+                        <div id="type-params" class="card editor-card mb-3">
                             <div class="card-header">Параметры типа</div>
                             <div class="card-body">
                                 <div class="row g-3">
@@ -154,7 +170,21 @@
                                         <label class="form-label">Позиция</label>
                                         <input v-model.number="draft.params.index" class="form-control" min="0" type="number" />
                                     </div>
-                                    <div class="col-md-9">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Группировка по умолчанию</label>
+                                        <select v-model="draft.params.default_grouping" class="form-select">
+                                            <option value="">Не группировать</option>
+                                            <option
+                                                v-for="attribute in defaultGroupingAttributes"
+                                                :key="attribute.code"
+                                                :value="attribute.code"
+                                            >
+                                                {{ attribute.name }}
+                                            </option>
+                                        </select>
+                                        <div class="form-text">Применяется при открытии страницы без выбранной группировки.</div>
+                                    </div>
+                                    <div class="col-md-5">
                                         <label class="form-label">Подсказка редактора</label>
                                         <input v-model="draft.params.edit_description" class="form-control" />
                                     </div>
@@ -165,21 +195,21 @@
                                         <h6>Права создания</h6>
                                         <label v-for="role in roles" :key="`create-${role}`" class="form-check form-check-inline">
                                             <input v-model="draft.params.can_create" :value="role" class="form-check-input" type="checkbox" />
-                                            <span class="form-check-label">{{ role }}</span>
+                                            <span class="form-check-label">{{ roleLabel(role) }}</span>
                                         </label>
                                     </div>
                                     <div class="col-md-4">
                                         <h6>Права удаления владельцем</h6>
                                         <label v-for="role in roles" :key="`delete-${role}`" class="form-check form-check-inline">
                                             <input v-model="draft.params.can_delete" :value="role" class="form-check-input" type="checkbox" />
-                                            <span class="form-check-label">{{ role }}</span>
+                                            <span class="form-check-label">{{ roleLabel(role) }}</span>
                                         </label>
                                     </div>
                                     <div class="col-md-4">
                                         <h6>Права заполнения</h6>
                                         <label v-for="role in roles" :key="`fill-${role}`" class="form-check form-check-inline">
                                             <input v-model="draft.params.can_fill" :value="role" class="form-check-input" type="checkbox" />
-                                            <span class="form-check-label">{{ role }}</span>
+                                            <span class="form-check-label">{{ roleLabel(role) }}</span>
                                         </label>
                                     </div>
                                 </div>
@@ -224,7 +254,7 @@
                             </div>
                         </div>
 
-                        <div class="card mb-3">
+                        <div id="type-forms" class="card editor-card mb-3">
                             <div class="card-header">Категории форм</div>
                             <div class="card-body">
                                 <label v-for="category in store.formCategories" :key="category.id" class="form-check">
@@ -245,7 +275,11 @@
                             </ul>
                         </div>
 
-                        <div class="d-flex justify-content-end gap-2 mb-5">
+                        <div class="editor-save-bar">
+                            <span class="small" :class="hasUnsavedChanges ? 'text-warning-emphasis' : 'text-muted'">
+                                <i class="bi me-1" :class="hasUnsavedChanges ? 'bi-circle-fill' : 'bi-check-circle'"></i>
+                                {{ hasUnsavedChanges ? 'Есть несохранённые изменения' : 'Все изменения сохранены' }}
+                            </span>
                             <button class="btn btn-primary" type="submit" :disabled="saving">
                                 {{ saving ? 'Сохранение…' : 'Сохранить' }}
                             </button>
@@ -253,14 +287,15 @@
                     </form>
                 </div>
             </div>
-        </div>
     </BaseLayout>
 </template>
 
 <script>
 import draggable from 'vuedraggable';
 import BaseLayout from '@/components/layouts/BaseLayout.vue';
+import PageHeader from '@/components/common/PageHeader.vue';
 import useMainStore from '@/stores/mainStore.js';
+import unsavedChangesMixin from '@/mixins/unsavedChangesMixin.js';
 import {
     createObjectType,
     fetchObjectTypeRevisions,
@@ -272,7 +307,8 @@ const clone = value => JSON.parse(JSON.stringify(value));
 
 export default {
     name: 'ObjectTypesAdminView',
-    components: {BaseLayout, draggable},
+    components: {BaseLayout, PageHeader, draggable},
+    mixins: [unsavedChangesMixin],
     data() {
         return {
             store: useMainStore(),
@@ -282,7 +318,18 @@ export default {
             saving: false,
             saved: false,
             error: null,
-            attributeTypes: ['string', 'text', 'number', 'date', 'file', 'link', 'select', 'checkboxes'],
+            initialSnapshot: '',
+            listSearch: '',
+            attributeTypes: [
+                {value: 'string', label: 'Строка'},
+                {value: 'text', label: 'Текст'},
+                {value: 'number', label: 'Число'},
+                {value: 'date', label: 'Дата'},
+                {value: 'file', label: 'Файл'},
+                {value: 'link', label: 'Ссылка'},
+                {value: 'select', label: 'Один вариант'},
+                {value: 'checkboxes', label: 'Несколько вариантов'},
+            ],
             roles: ['student', 'teacher', 'admin'],
             widgets: ['active_events', 'birthdays', 'calendar', 'portfolio_progress'],
             attributeFlags: [
@@ -301,11 +348,24 @@ export default {
         sortedTypes() {
             return [...this.store.objectTypes].sort((a, b) => (a.params?.index || 0) - (b.params?.index || 0));
         },
+        filteredTypes() {
+            const query = this.listSearch.trim().toLowerCase();
+            if (!query) return this.sortedTypes;
+            return this.sortedTypes.filter(type => (
+                type.name.toLowerCase().includes(query) || type.code.toLowerCase().includes(query)
+            ));
+        },
         childTypeOptions() {
             return this.store.objectTypes;
         },
+        defaultGroupingAttributes() {
+            return (this.draft?.available_attributes || []).filter(attribute => attribute.group && attribute.code);
+        },
         orphanEntries() {
             return Object.entries(this.usage?.orphan_attributes || {});
+        },
+        hasUnsavedChanges() {
+            return Boolean(this.draft && this.initialSnapshot && JSON.stringify(this.payload()) !== this.initialSnapshot);
         },
     },
     async created() {
@@ -341,13 +401,17 @@ export default {
                 is_hidden: false,
                 comments_hidden: false,
                 edit_description: '',
+                default_grouping: '',
                 ...(prepared.params || {}),
             };
             prepared.form_category_ids = (prepared.form_categories || []).map(category => category.id);
             return prepared;
         },
         async selectType(type) {
+            if (this.draft?.id === type.id) return;
+            if (this.hasUnsavedChanges && !window.confirm('Отменить несохранённые изменения и открыть другой тип?')) return;
             this.draft = this.prepareDraft(type);
+            this.initialSnapshot = JSON.stringify(this.payload());
             this.error = null;
             this.saved = false;
             [this.usage, this.revisions] = await Promise.all([
@@ -356,6 +420,7 @@ export default {
             ]);
         },
         startCreate() {
+            if (this.hasUnsavedChanges && !window.confirm('Отменить несохранённые изменения и создать новый тип?')) return;
             this.draft = this.prepareDraft({
                 id: null,
                 name: '',
@@ -368,6 +433,7 @@ export default {
             this.revisions = [];
             this.error = null;
             this.saved = false;
+            this.initialSnapshot = JSON.stringify(this.payload());
         },
         addAttribute() {
             this.draft.available_attributes.push({
@@ -391,6 +457,7 @@ export default {
         },
         removeAttribute(index) {
             this.draft.available_attributes.splice(index, 1);
+            this.normalizeDefaultGrouping();
         },
         attributeUsage(code) {
             return this.usage?.attribute_usage?.[code] || 0;
@@ -401,13 +468,24 @@ export default {
                 clean.options = optionsText.split('\n').map(option => option.trim()).filter(Boolean);
                 return clean;
             });
+            const params = clone(this.draft.params);
+            const groupableCodes = new Set(
+                attributes.filter(attribute => attribute.group).map(attribute => attribute.code)
+            );
+            if (!groupableCodes.has(params.default_grouping)) params.default_grouping = '';
             return {
                 name: this.draft.name,
                 code: this.draft.code,
                 available_attributes: attributes,
-                params: clone(this.draft.params),
+                params,
                 form_category_ids: [...this.draft.form_category_ids],
             };
+        },
+        normalizeDefaultGrouping() {
+            const selectedCode = this.draft?.params?.default_grouping;
+            if (selectedCode && !this.defaultGroupingAttributes.some(attribute => attribute.code === selectedCode)) {
+                this.draft.params.default_grouping = '';
+            }
         },
         async save() {
             this.saving = true;
@@ -423,6 +501,7 @@ export default {
                     this.store.objectTypes.push(result);
                     this.store.objects[result.code] = [];
                 }
+                this.initialSnapshot = JSON.stringify(this.payload());
                 await this.selectType(result);
                 this.saved = true;
             } catch (error) {
@@ -434,17 +513,20 @@ export default {
         formatRevisionDate(value) {
             return new Date(value).toLocaleString('ru-RU');
         },
+        roleLabel(role) {
+            return {student: 'Ученик', teacher: 'Учитель', admin: 'Администратор'}[role] || role;
+        },
     },
 };
 </script>
 
 <style scoped>
 .type-list {
-    top: 1rem;
+    top: 4.75rem;
 }
 
 .attribute-card {
-    background: #fafafa;
+    background: var(--silaeder-surface-subtle);
 }
 
 .drag-handle {

@@ -1,6 +1,5 @@
 <template>
-  <!-- Можно добавить общий <transition-group>, если мы хотим анимировать сами вкладки -->
-  <transition-group name="tabs" tag="ul" class="nav nav-tabs flex-grow-1 border-0">
+  <ul class="nav nav-tabs flex-grow-1 border-0 object-tabs">
     <li
       v-for="tab in tabs"
       :key="tab.code"
@@ -17,24 +16,22 @@
       >
         {{ tab.name }}
         <!-- Пример отображения счётчика -->
-        <transition name="fade">
-          <span
-            v-if="objectCounts[tab.code] > 0"
-            :class="[
-              'badge',
-              hasTeacherAccess && hasUnconfirmed(tab.code)
-                ? 'bg-warning text-dark'
-                : 'bg-secondary',
-              'rounded-5',
-              'ms-1'
-            ]"
-          >
-            {{ objectCounts[tab.code] }}
-          </span>
-        </transition>
+        <span
+          v-if="objectCounts[tab.code] > 0"
+          :class="[
+            'badge',
+            hasTeacherAccess && hasUnconfirmed(tab.code)
+              ? 'bg-warning text-dark'
+              : 'bg-secondary',
+            'rounded-5',
+            'ms-1'
+          ]"
+        >
+          {{ objectCounts[tab.code] }}
+        </span>
       </button>
     </li>
-  </transition-group>
+  </ul>
 </template>
 
 <script>
@@ -75,28 +72,19 @@ export default {
 .nav-link {
   color: #343a40;
   font-weight: 500;
-  transition: background-color 0.2s ease;
+  white-space: nowrap;
 }
 
-
-/* Анимация для перехода между вкладками */
-.tabs-enter-active,
-.tabs-leave-active {
-  transition: opacity 0.3s ease, transform 0.3s ease;
-}
-.tabs-enter,
-.tabs-leave-to {
-  opacity: 0;
-  transform: translateY(-5px);
+.object-tabs {
+  min-width: 0;
 }
 
-/* Вспомогательная анимация для fade */
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.2s linear;
-}
-.fade-enter,
-.fade-leave-to {
-  opacity: 0;
+@media (max-width: 767.98px) {
+  .object-tabs {
+    flex-wrap: nowrap;
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
 }
 </style>

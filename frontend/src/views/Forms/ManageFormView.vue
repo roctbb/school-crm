@@ -1,11 +1,13 @@
 <template>
     <BaseLayout>
-        <div class="container mt-3">
             <Loading v-if="loading" />
             <div v-else-if="form">
-                <h3 class="mb-4">
-                    {{ isEditMode ? 'Редактирование формы' : 'Создание формы' }}
-                </h3>
+                <PageHeader
+                    :title="isEditMode ? 'Редактирование формы' : 'Создание формы'"
+                    :subtitle="`Категория: ${category.name}`"
+                />
+
+                <div v-if="error" class="alert alert-danger">{{ error }}</div>
 
                 <form @submit.prevent="handleSave">
                     <div class="mb-3">
@@ -25,15 +27,19 @@
                         <FormFieldsEditor v-model="form.fields" />
                     </div>
 
-                    <button class="btn btn-primary" type="submit">
-                        {{ isEditMode ? 'Сохранить' : 'Создать' }}
-                    </button>
-                    <button class="btn btn-secondary ms-2" type="button" @click="cancel">
-                        Отмена
-                    </button>
+                    <div class="editor-save-bar">
+                        <button class="btn btn-light" type="button" @click="cancel">Отмена</button>
+                        <div class="d-flex align-items-center gap-3">
+                            <span v-if="hasUnsavedChanges" class="small text-warning-emphasis d-none d-sm-inline">
+                                Есть несохранённые изменения
+                            </span>
+                            <button class="btn btn-primary" type="submit">
+                                {{ isEditMode ? 'Сохранить' : 'Создать' }}
+                            </button>
+                        </div>
+                    </div>
                 </form>
             </div>
-        </div>
     </BaseLayout>
 </template>
 
@@ -43,10 +49,13 @@ import Loading from '@/components/common/Loading.vue';
 import FormFieldsEditor from '@/components/forms/FormFieldsEditor.vue';
 import Form from '@/models/Form.js';
 import useMainStore from '@/stores/mainStore.js';
+import PageHeader from '@/components/common/PageHeader.vue';
+import unsavedChangesMixin from '@/mixins/unsavedChangesMixin.js';
 
 export default {
     name: 'ManageFormView',
-    components: {BaseLayout, FormFieldsEditor, Loading},
+    components: {BaseLayout, FormFieldsEditor, Loading, PageHeader},
+    mixins: [unsavedChangesMixin],
     props: {
         formId: {
             type: Number,
@@ -63,11 +72,16 @@ export default {
             form: null,
             category: null,
             store: useMainStore(),
+            error: '',
+            initialSnapshot: '',
         };
     },
     computed: {
         isEditMode() {
             return Boolean(this.formId);
+        },
+        hasUnsavedChanges() {
+            return Boolean(this.form && this.initialSnapshot && this.formSnapshot() !== this.initialSnapshot);
         },
     },
     async created() {
@@ -86,6 +100,7 @@ export default {
             } else {
                 this.form = new Form({}, this.store, this.categoryId);
             }
+            this.initialSnapshot = this.formSnapshot();
         } catch (error) {
             console.error(error);
             window.alert('Не удалось загрузить форму.');
@@ -95,18 +110,24 @@ export default {
         }
     },
     methods: {
+        formSnapshot() {
+            return JSON.stringify({name: this.form?.name || '', fields: this.form?.fields || []});
+        },
         async handleSave() {
             try {
+                this.error = '';
                 await this.form.save();
                 if (!this.isEditMode) this.category.forms.push(this.form);
+                this.initialSnapshot = this.formSnapshot();
                 await this.$router.push({name: 'Forms'});
             } catch (error) {
                 console.error('Ошибка при сохранении формы:', error);
-                window.alert(error.message || 'Не удалось сохранить форму.');
+                this.error = error.message || 'Не удалось сохранить форму.';
             }
         },
         cancel() {
             this.form.reset();
+            this.initialSnapshot = this.formSnapshot();
             this.$router.push({name: 'Forms'});
         },
     },

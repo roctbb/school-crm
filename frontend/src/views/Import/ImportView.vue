@@ -1,11 +1,14 @@
 <template>
     <BaseLayout>
-        <div class="container py-4">
+        <PageHeader
+            title="Импорт данных"
+            subtitle="Загрузите CSV-файл с объектами или ответами на формы."
+        />
             <div class="row justify-content-center">
                 <div class="col-md-8">
                     <div class="card">
                         <div class="card-header">
-                            <h3 class="m-0">Импорт файла CSV</h3>
+                            <h5 class="m-0">Импорт файла CSV</h5>
                         </div>
 
                         <div class="card-body">
@@ -19,6 +22,7 @@
                                         ref="fileInput"
                                         @change="handleFileChange"
                                         class="form-control"
+                                        accept=".csv,text/csv"
                                     />
                                 </div>
 
@@ -37,7 +41,7 @@
                                     class="btn btn-primary"
                                     :disabled="isUploading"
                                 >
-                                    Импортировать
+                                    <i class="bi bi-upload me-1"></i>Импортировать
                                 </button>
                             </form>
                         </div>
@@ -61,7 +65,6 @@
                     <Loading v-if="isUploading" class="mt-3"/>
                 </div>
             </div>
-        </div>
     </BaseLayout>
 </template>
 
@@ -70,9 +73,10 @@ import { importObjects, importSubmissions } from "@/api/import_api.js";
 import useMainStore from "@/stores/mainStore.js";
 import Loading from "@/components/common/Loading.vue";
 import BaseLayout from "@/components/layouts/BaseLayout.vue";
+import PageHeader from "@/components/common/PageHeader.vue";
 
 export default {
-    components: { BaseLayout, Loading },
+    components: { BaseLayout, Loading, PageHeader },
     name: "ImportView",
     data() {
         return {
@@ -129,12 +133,3 @@ export default {
     }
 };
 </script>
-
-<style scoped>
-.container {
-    max-width: 720px;
-}
-.card {
-    border-radius: 6px;
-}
-</style>

@@ -1,6 +1,8 @@
 import {createRouter, createWebHistory} from 'vue-router';
 import useMainStore from "@/stores/mainStore.js";
 
+const NO_GROUPING_QUERY_VALUE = '__none__';
+
 const routes = [
     {
         path: '/login',
@@ -34,7 +36,8 @@ const routes = [
         // Передаём параметры через query
         props: route => ({
             view: route.query.view || 'cards',
-            grouping: route.query.grouping || '',
+            grouping: route.query.grouping === NO_GROUPING_QUERY_VALUE ? '' : route.query.grouping || '',
+            groupingSpecified: Boolean(route.query.grouping),
             search: route.query.search || '',
             unconfirmed: route.query.unconfirmed === 'true',
             page: Math.max(1, Number.parseInt(route.query.page, 10) || 1)
@@ -84,7 +87,8 @@ const routes = [
             objectTypeCode: route.params.object_type,
             // Аналогично, вытягиваем нужные параметры из query
             view: route.query.view || 'cards',
-            grouping: route.query.grouping || '',
+            grouping: route.query.grouping === NO_GROUPING_QUERY_VALUE ? '' : route.query.grouping || '',
+            groupingSpecified: Boolean(route.query.grouping),
             search: route.query.search || '',
             unconfirmed: route.query.unconfirmed === 'true',
             page: Math.max(1, Number.parseInt(route.query.page, 10) || 1)

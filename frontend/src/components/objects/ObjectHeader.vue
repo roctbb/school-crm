@@ -1,12 +1,11 @@
 <template>
-  <div class="d-flex align-items-start mb-3">
+  <div class="object-header d-flex flex-wrap align-items-start gap-3 mb-4">
     <!-- Фото слева -->
-    <div v-if="photoUrl" class="me-3 participant-photo-block">
+    <div v-if="photoUrl" class="participant-photo-block">
       <img
         :src="photoUrl"
         alt="Object Photo"
-        class="rounded-1"
-        style="max-width: 150px;"
+        class="participant-photo rounded-3"
       />
       <button
         v-if="previousPhotos.length"
@@ -30,25 +29,26 @@
       </div>
     </div>
     <!-- Заголовок -->
-    <div class="flex-grow-1">
-      <h2 class="me-2">
-        <small class="text-muted">{{ capitalize(object_type.name) }}:</small>
+    <div class="flex-grow-1 object-heading">
+      <h2 class="mb-2">
+        <small class="d-block text-muted fs-6 fw-normal mb-1">{{ capitalize(object_type.name) }}</small>
         {{ object.name }}
         <i class="bi bi-person-check" v-if="object.has_registered_owner"></i>
       </h2>
       <div>
-        <div
-          class="badge bg-warning mb-2"
-          v-if="!object.is_approved"
-          @click="hasTeacherAccess() && handleApprove()"
-        >
-          Не подтвержден
-        </div>
+        <button
+          v-if="!object.is_approved && hasTeacherAccess()"
+          class="badge bg-warning border-0 mb-2"
+          type="button"
+          title="Нажмите, чтобы утвердить"
+          @click="handleApprove()"
+        >Не подтвержден</button>
+        <span v-else-if="!object.is_approved" class="badge bg-warning mb-2">Не подтвержден</span>
         <AttributePresenter :object="object" :type="object_type" />
       </div>
     </div>
     <!-- Выпадающий список -->
-    <div v-if="canModifyObject(object)">
+    <div v-if="canModifyObject(object)" class="object-actions ms-auto">
       <div class="dropdown">
         <button
           class="btn btn-light dropdown-toggle"
@@ -189,6 +189,18 @@ export default {
   max-width: 190px;
 }
 
+.participant-photo {
+  display: block;
+  width: 150px;
+  max-height: 190px;
+  object-fit: cover;
+  box-shadow: var(--silaeder-shadow-sm);
+}
+
+.object-heading {
+  min-width: 14rem;
+}
+
 .photo-history {
   display: grid;
   grid-template-columns: repeat(3, 52px);
@@ -199,5 +211,39 @@ export default {
   width: 52px;
   height: 52px;
   object-fit: cover;
+}
+
+@media (max-width: 575.98px) {
+  .object-header {
+    gap: 1rem !important;
+  }
+
+  .participant-photo-block,
+  .participant-photo {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .participant-photo {
+    height: 15rem;
+  }
+
+  .object-heading {
+    min-width: 0;
+    flex-basis: 100%;
+  }
+
+  .object-heading h2 {
+    font-size: 1.5rem;
+  }
+
+  .object-actions {
+    width: 100%;
+    margin-left: 0 !important;
+  }
+
+  .object-actions .dropdown > button {
+    width: 100%;
+  }
 }
 </style>
