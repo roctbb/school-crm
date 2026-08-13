@@ -1,5 +1,8 @@
 <template>
-  <header class="object-header d-flex flex-wrap align-items-start">
+  <header
+    class="object-header"
+    :class="{ 'object-header--with-photo': photoUrl && !photoFailed }"
+  >
     <!-- Фото слева -->
     <div v-if="photoUrl && !photoFailed" class="participant-photo-block">
       <img
@@ -190,12 +193,22 @@ export default {
 
 <style scoped>
 .participant-photo-block {
+  grid-area: photo;
   max-width: 190px;
 }
 
 .object-header {
+  display: grid;
+  grid-template-areas: "heading actions";
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
   gap: 1.25rem;
   padding: 1.25rem;
+}
+
+.object-header--with-photo {
+  grid-template-areas: "photo heading actions";
+  grid-template-columns: auto minmax(0, 1fr) auto;
 }
 
 .participant-photo {
@@ -207,7 +220,16 @@ export default {
 }
 
 .object-heading {
+  grid-area: heading;
   min-width: 14rem;
+}
+
+.object-heading :deep(li) {
+  overflow-wrap: anywhere;
+}
+
+.object-actions {
+  grid-area: actions;
 }
 
 .photo-history {
@@ -224,23 +246,32 @@ export default {
 
 @media (max-width: 575.98px) {
   .object-header {
+    grid-template-areas:
+      "heading"
+      "actions";
+    grid-template-columns: minmax(0, 1fr);
     gap: 1rem;
     padding: 1rem;
   }
 
-  .participant-photo-block,
-  .participant-photo {
-    width: 100%;
-    max-width: 100%;
+  .object-header--with-photo {
+    grid-template-areas:
+      "photo heading"
+      "actions actions";
+    grid-template-columns: 6.5rem minmax(0, 1fr);
+  }
+
+  .participant-photo-block {
+    width: 6.5rem;
   }
 
   .participant-photo {
-    height: 15rem;
+    width: 6.5rem;
+    height: 8rem;
   }
 
   .object-heading {
     min-width: 0;
-    flex-basis: 100%;
   }
 
   .object-heading h2 {
@@ -254,7 +285,6 @@ export default {
 
   .object-actions {
     width: 100%;
-    margin-left: 0 !important;
   }
 
   .object-actions .dropdown > button {

@@ -4,17 +4,27 @@ export default {
     props: {
         attributes: {
             type: Object,
-            default: {},
+            default: () => ({}),
+        },
+        hiddenAttributes: {
+            type: Array,
+            default: () => [],
         }
+    },
+    computed: {
+        visibleAttributes() {
+            return Object.entries(this.attributes || {})
+                .filter(([name]) => !this.hiddenAttributes.includes(name));
+        },
     },
 }
 </script>
 
 <template>
     <ul>
-        <li v-for="(value, name) in attributes"
+        <li v-for="([name, value]) in visibleAttributes"
             :key="name">
-            <b>{{ name }}: </b>
+            <span class="attribute-name">{{ name }}</span>
 
             <span v-if="Array.isArray(value)">
                 {{ value.join(', ') }}
@@ -28,15 +38,26 @@ export default {
 
 <style scoped>
 ul {
-    list-style-type: none; /* Убирает стандартные маркеры */
-    padding: 0 !important; /* Убирает отступы */
-    margin: 0; /* Убирает внешние отступы */
+    display: grid;
+    gap: 0.45rem;
+    list-style-type: none;
+    padding: 0 !important;
+    margin: 0;
 }
 
 li {
-    margin: 0; /* Убирает внешние отступы у элементов списка */
-    padding: 0; /* Убирает внутренние отступы у элементов списка */
-    margin-bottom: 2px;
+    display: grid;
+    gap: 0.05rem;
+    margin: 0;
+    padding: 0;
     font-size: 0.9rem;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+.attribute-name {
+    color: var(--silaeder-muted);
+    font-size: 0.75rem;
+    font-weight: 500;
 }
 </style>

@@ -1,5 +1,6 @@
 import {createRouter, createWebHistory} from 'vue-router';
 import useMainStore from "@/stores/mainStore.js";
+import {finishNavigationLoading, startNavigationLoading} from '@/services/globalLoading.js';
 
 const NO_GROUPING_QUERY_VALUE = '__none__';
 
@@ -210,6 +211,7 @@ const router = createRouter({
 });
 
 router.beforeEach(async (to) => {
+    startNavigationLoading();
     const store = useMainStore();
     const has_auth = await store.checkAuth();
     console.log("Router auth check: ", has_auth ? "OK" : "FAIL");
@@ -230,6 +232,14 @@ router.beforeEach(async (to) => {
         return redirect || {name: 'Objects'};
     }
     return true;
+});
+
+router.afterEach(() => {
+    finishNavigationLoading();
+});
+
+router.onError(() => {
+    finishNavigationLoading();
 });
 
 export default router;

@@ -11,22 +11,22 @@
         "
         class="form-category-section"
       >
-        <div class="d-flex flex-wrap align-items-center gap-2 mb-4 section-heading">
-          <h5 class="pb-0 mb-0 me-3">
-            {{ form_category.name }}
+        <header class="category-header">
+          <div class="category-title-line">
+            <h5 class="category-title">{{ form_category.name }}</h5>
             <span
-              class="badge text-bg-light"
+              class="category-visibility"
               v-if="form_category.params.is_private"
             >
-              Приватный раздел <i class="ms-1 bi bi-eye-slash"></i>
+              <i class="bi bi-eye-slash" aria-hidden="true"></i> Приватный
             </span>
             <span
-              class="badge text-bg-light"
+              class="category-visibility"
               v-if="form_category.params.is_hidden"
             >
-              Скрытый раздел <i class="ms-1 bi bi-eye-slash"></i>
+              <i class="bi bi-eye-slash" aria-hidden="true"></i> Скрытый
             </span>
-          </h5>
+          </div>
 
           <div
             class="btn-group category-create-action"
@@ -55,24 +55,25 @@
               </li>
             </ul>
           </div>
-          
-          <!-- Tabs for show_off_grouping if present -->
-          <div v-if="hasShowOffGrouping(form_category)" class="group-tabs ms-sm-auto">
-            <ul class="nav nav-tabs flex-nowrap">
-              <li class="nav-item" v-for="(group, index) in getGroupingValues(form_category)" :key="index">
-                <button 
-                  class="nav-link" 
-                  :class="{ active: isActiveGroup(form_category, group) }"
-                  :aria-pressed="isActiveGroup(form_category, group)"
-                  @click="setActiveGroup(form_category.id, group)"
-                >
-                  {{ group }}
-                  <span class="badge rounded-pill bg-secondary ms-1">
-                    {{ countSubmissionsForGroup(submissionsInCategory(form_category), form_category.params.show_off_grouping, group) }}
-                  </span>
-                </button>
-              </li>
-            </ul>
+        </header>
+
+        <div v-if="hasShowOffGrouping(form_category)" class="group-tabs">
+          <div class="category-group-nav" role="tablist" :aria-label="`Период: ${form_category.name}`">
+            <button
+              v-for="(group, index) in getGroupingValues(form_category)"
+              :key="index"
+              class="category-group-pill"
+              :class="{ active: isActiveGroup(form_category, group) }"
+              type="button"
+              role="tab"
+              :aria-selected="isActiveGroup(form_category, group)"
+              @click="setActiveGroup(form_category.id, group)"
+            >
+              <span>{{ group }}</span>
+              <span class="category-group-count">
+                · {{ countSubmissionsForGroup(submissionsInCategory(form_category), form_category.params.show_off_grouping, group) }}
+              </span>
+            </button>
           </div>
         </div>
         
@@ -89,7 +90,11 @@
               v-for="submission in submissionsGroup"
               :key="submission.id"
             >
-              <SubmissionCard :submission="submission" :object="object" />
+              <SubmissionCard
+                :submission="submission"
+                :object="object"
+                :hidden-attributes="hiddenGroupingAttributes(form_category)"
+              />
             </div>
           </div>
         </div>
@@ -275,6 +280,12 @@ export default {
       
       // Otherwise, count submissions that match the group value
       return this.filterSubmissionsByGroup(submissions, groupingFields, groupValue).length;
+    },
+    hiddenGroupingAttributes(category) {
+      if (!this.hasShowOffGrouping(category) || this.selectedGroup(category) === "Все") {
+        return [];
+      }
+      return category.params.show_off_grouping;
     }
   }
 };
@@ -284,60 +295,112 @@ export default {
 .group-tabs {
   max-width: 100%;
   overflow-x: auto;
+  margin-bottom: 1.25rem;
+  scrollbar-width: thin;
 }
 
-.group-tabs .nav-link {
+.category-group-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: max-content;
+  min-width: 100%;
+}
+
+.category-group-pill {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.15rem;
+  min-height: 2.25rem;
+  padding: 0.4rem 0.75rem;
+  color: var(--silaeder-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
   white-space: nowrap;
+  border: 1px solid transparent;
+  border-radius: 0.6rem;
+  background: transparent;
+  transition: color 140ms ease, background-color 140ms ease, border-color 140ms ease;
 }
 
-.group-tabs .nav-link.active {
+.category-group-pill:hover {
   color: var(--silaeder-primary-dark);
-  border-color: #bfd2dc #bfd2dc var(--silaeder-primary);
   background: var(--silaeder-primary-soft);
-  box-shadow: inset 0 -2px 0 var(--silaeder-primary);
+}
+
+.category-group-pill.active {
+  color: var(--silaeder-primary-dark);
+  border-color: #bfd2dc;
+  background: var(--silaeder-primary-soft);
+  font-weight: 600;
+}
+
+.category-group-pill:focus-visible {
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgb(57 118 152 / 18%);
+}
+
+.category-group-count {
+  color: var(--silaeder-muted);
+  font-variant-numeric: tabular-nums;
 }
 
 .forms-submissions-stack {
   display: grid;
-  gap: 2.25rem;
+  gap: 2.5rem;
 }
 
 .submission-group + .submission-group {
   margin-top: 1.5rem;
 }
 
-.section-heading h5,
+.category-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.category-title-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem 0.75rem;
+  min-width: 0;
+}
+
+.category-title,
 .form-category-section > h5 {
+  margin: 0;
   line-height: 1.35;
 }
 
-.category-create-action {
-  order: 3;
+.category-visibility {
+  color: var(--silaeder-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
 }
 
 .submission-card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(13.25rem, 1fr));
-  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 18rem));
+  justify-content: start;
+  gap: 1rem;
 }
 
 @media (max-width: 575.98px) {
-  .section-heading {
-    align-items: stretch !important;
+  .category-header {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
   }
 
-  .section-heading > h5,
   .category-create-action,
   .category-create-action > button {
     width: 100%;
   }
 
-  .category-create-action {
-    order: 2;
-  }
-
   .group-tabs {
-    order: 3;
     width: 100%;
   }
 

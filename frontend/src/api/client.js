@@ -1,4 +1,5 @@
 import {API_URL, validateResponse} from './common.js';
+import {finishRequestLoading, startRequestLoading} from '@/services/globalLoading.js';
 
 class ApiClient {
     constructor(token = null) {
@@ -19,8 +20,6 @@ class ApiClient {
     }
 
     async fetch(url, options = {}, contentType = 'application/json') {
-
-
         let headers = options.headers
 
         if (contentType) {
@@ -36,9 +35,14 @@ class ApiClient {
             };
         }
 
-        const response = await fetch(API_URL + url, {...options, headers});
-        await validateResponse(response);
-        return response.json();
+        startRequestLoading();
+        try {
+            const response = await fetch(API_URL + url, {...options, headers});
+            await validateResponse(response);
+            return response.json();
+        } finally {
+            finishRequestLoading();
+        }
     }
 }
 
