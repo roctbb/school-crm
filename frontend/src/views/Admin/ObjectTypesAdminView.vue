@@ -296,6 +296,7 @@ import BaseLayout from '@/components/layouts/BaseLayout.vue';
 import PageHeader from '@/components/common/PageHeader.vue';
 import useMainStore from '@/stores/mainStore.js';
 import unsavedChangesMixin from '@/mixins/unsavedChangesMixin.js';
+import {buildGroupingOptions} from '@/utils/objectGrouping.js';
 import {
     createObjectType,
     fetchObjectTypeRevisions,
@@ -359,7 +360,7 @@ export default {
             return this.store.objectTypes;
         },
         defaultGroupingAttributes() {
-            return (this.draft?.available_attributes || []).filter(attribute => attribute.group && attribute.code);
+            return buildGroupingOptions(this.draft?.available_attributes).filter(attribute => attribute.code);
         },
         orphanEntries() {
             return Object.entries(this.usage?.orphan_attributes || {});
@@ -469,9 +470,7 @@ export default {
                 return clean;
             });
             const params = clone(this.draft.params);
-            const groupableCodes = new Set(
-                attributes.filter(attribute => attribute.group).map(attribute => attribute.code)
-            );
+            const groupableCodes = new Set(buildGroupingOptions(attributes).map(attribute => attribute.code));
             if (!groupableCodes.has(params.default_grouping)) params.default_grouping = '';
             return {
                 name: this.draft.name,

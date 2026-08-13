@@ -1,5 +1,5 @@
 <template>
-  <ul class="nav nav-tabs flex-grow-1 border-0 object-tabs">
+  <ul class="nav nav-pills flex-grow-1 object-tabs">
     <li
       v-for="tab in tabs"
       :key="tab.code"
@@ -70,13 +70,25 @@ export default {
 
 <style scoped>
 .nav-link {
-  color: #343a40;
+  color: #475962;
   font-weight: 500;
   white-space: nowrap;
 }
 
+.nav-link:hover {
+  color: var(--silaeder-primary-dark);
+  background: var(--silaeder-primary-soft);
+}
+
+.nav-link.active {
+  color: var(--silaeder-primary-dark);
+  font-weight: 600;
+  background: var(--silaeder-primary-soft);
+}
+
 .object-tabs {
   min-width: 0;
+  gap: 0.25rem;
 }
 
 @media (max-width: 767.98px) {

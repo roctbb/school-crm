@@ -1,10 +1,16 @@
+from html import escape
+
+from flask import current_app
+
 from application.helpers import url
 from application.tasks.mail import send_flask_mail
 
 
 def send_password_reset_email(user):
     email = user.email
-    subject = "Восстановление пароля в Силаэдр CRM"
+    app_name = current_app.config['APP_NAME']
+    safe_app_name = escape(app_name)
+    subject = f"Восстановление пароля в {app_name}"
     token = user.reset_token
     reset_link = url("/password/reset?token=" + token)
 
@@ -13,7 +19,7 @@ def send_password_reset_email(user):
     <html>
       <body>
         <p>Здравствуйте!</p>
-        <p>Вы запросили восстановление пароля в Силаэдр CRM. 
+        <p>Вы запросили восстановление пароля в {safe_app_name}.
            Нажмите на ссылку, чтобы создать новый пароль:</p>
         <p>
           <a href="{reset_link}" 
@@ -24,7 +30,7 @@ def send_password_reset_email(user):
         </p>
         <p>Если вы не делали такой запрос, просто проигнорируйте это письмо.</p>
         <p>С уважением,<br/>
-        Команда Силаэдр CRM</p>
+        Команда {safe_app_name}</p>
       </body>
     </html>
     """

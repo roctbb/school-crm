@@ -18,6 +18,7 @@ OBJECT_TYPE_PARAM_KEYS = {
     'default_grouping',
 }
 OBJECT_TYPE_WIDGETS = {'active_events', 'birthdays', 'calendar', 'portfolio_progress'}
+MONTH_GROUPING_PREFIX = 'month:'
 ROLE_CODES = {'student', 'teacher', 'admin'}
 FORM_FIELD_TYPES = {
     'number', 'string', 'text', 'date', 'datetime', 'select', 'file',
@@ -226,12 +227,16 @@ def validate_object_type(data):
                 field='default_grouping',
             )
         default_grouping = default_grouping.strip()
-        groupable_attribute_codes = {
+        valid_default_groupings = {
             attribute['code'] for attribute in attributes if attribute.get('group')
         }
-        if default_grouping and default_grouping not in groupable_attribute_codes:
+        valid_default_groupings.update(
+            f'{MONTH_GROUPING_PREFIX}{attribute["code"]}'
+            for attribute in attributes if attribute.get('type') == 'date'
+        )
+        if default_grouping and default_grouping not in valid_default_groupings:
             raise LogicException(
-                "Группировка по умолчанию должна ссылаться на атрибут с включённой группировкой.",
+                "Группировка по умолчанию должна ссылаться на доступный вариант группировки.",
                 422,
                 field='default_grouping',
             )

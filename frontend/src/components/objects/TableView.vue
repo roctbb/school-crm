@@ -8,7 +8,7 @@
                 class="mb-4"
             >
                 <h5 class="fw-bold d-flex align-items-center pb-2 mb-0">
-                    <span class="me-2">{{ groupingAttribute?.name }}: {{ group }}</span>
+                    <span class="me-2">{{ groupingAttribute?.name }}: {{ formatGroupingLabel(group, groupingAttribute) }}</span>
                     <span class="badge bg-secondary rounded-pill py-1 px-2"
                           style="font-size: 0.75rem;">{{ groupCounts[group] || objects.length }}</span>
                 </h5>
@@ -156,6 +156,7 @@
 <script>
 import {formatValue} from "../../utils/helpers.js";
 import EmptyState from "@/components/common/EmptyState.vue";
+import {groupingLabel} from "@/utils/objectGrouping.js";
 
 export default {
     name: "TableView",
@@ -184,6 +185,7 @@ export default {
 
     methods: {
         formatValue,
+        formatGroupingLabel: groupingLabel,
         toggleCollapse() {
             this.isCollapsed = !this.isCollapsed;
         },

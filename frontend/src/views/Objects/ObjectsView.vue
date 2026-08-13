@@ -42,7 +42,7 @@
             />
 
             <!-- Поиск и выпадающее меню группировки -->
-            <div class="page-toolbar mt-3">
+            <div class="page-toolbar objects-toolbar mt-3">
                 <div class="input-group input-group-sm toolbar-search flex-grow-1">
                     <span class="input-group-text bg-white text-muted" aria-hidden="true">
                         <i class="bi bi-search"></i>
@@ -173,7 +173,7 @@
             </div>
 
             <!-- Содержимое вкладки -->
-            <div class="mt-3">
+            <div class="objects-results">
                 <loading v-if="isLoading"/>
                 <div v-else>
                     <TableView
@@ -223,6 +223,7 @@ import CreateObjectArea from "@/components/objects/CreateObjectArea.vue";
 import PaginationControls from "@/components/common/PaginationControls.vue";
 
 import {canCreateByType, hasTeacherAccess} from "@/utils/access.js";
+import {buildGroupingOptions, groupingKey} from "@/utils/objectGrouping.js";
 
 const NO_GROUPING_QUERY_VALUE = "__none__";
 
@@ -340,22 +341,22 @@ export default {
         },
         groupingAttributes() {
             const activeType = this.store.getObjectTypeByCode(this.activeTab);
-            return activeType
-                ? activeType.available_attributes.filter((attr) => attr.group)
-                : [];
+            return buildGroupingOptions(activeType?.available_attributes);
         },
         groupedObjects() {
             if (!this.selectedAttribute.code) return null;
             const groups = {};
             this.filteredObjects.forEach((obj) => {
-                const attributeValue = obj.attributes[this.selectedAttribute.code];
+                const attributeCode = this.selectedAttribute.sourceCode || this.selectedAttribute.code;
+                const attributeValue = obj.attributes[attributeCode];
                 if (Array.isArray(attributeValue) && attributeValue.length > 0) {
                     attributeValue.forEach((val) => {
-                        if (!groups[val]) groups[val] = [];
-                        groups[val].push(obj);
+                        const key = groupingKey(val, this.selectedAttribute);
+                        if (!groups[key]) groups[key] = [];
+                        groups[key].push(obj);
                     });
                 } else {
-                    const key = attributeValue || "Без группы";
+                    const key = groupingKey(attributeValue, this.selectedAttribute);
                     if (!groups[key]) groups[key] = [];
                     groups[key].push(obj);
                 }
@@ -619,15 +620,26 @@ export default {
 <style scoped>
 .objects-tabs-bar {
     margin-top: 0.25rem;
+    padding: 0.4rem 0 0.7rem;
     border-bottom: 1px solid var(--silaeder-border);
 }
 
 .tab-content {
-    padding: 1rem;
-    border: 1px solid var(--silaeder-border);
-    border-top: none;
-    border-radius: 0 0 0.75rem 0.75rem;
-    background: #fff;
+    padding-top: 0.35rem;
+}
+
+.objects-toolbar {
+    padding: 0.75rem 0;
+    margin-bottom: 1.25rem;
+    border: 0;
+    border-bottom: 1px solid var(--silaeder-border);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.objects-results {
+    margin-top: 0;
 }
 
 /* Анимация плавного появления и исчезновения контента */
@@ -645,10 +657,11 @@ export default {
 @media (max-width: 575.98px) {
     .objects-tabs-bar {
         align-items: center !important;
+        padding-bottom: 0.6rem;
     }
 
-    .tab-content {
-        padding: 0.75rem;
+    .objects-toolbar {
+        padding-block: 0.65rem;
     }
 }
 </style>

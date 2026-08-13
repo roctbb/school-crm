@@ -1,9 +1,9 @@
 <script>
 import useMainStore from "@/stores/mainStore.js";
-import {isEventActive, parseDate} from "@/utils/helpers.js";
+import {parseDate} from "@/utils/helpers.js";
 
 export default {
-    name: "ActiveEventsWidget",
+    name: "BirthdaysWidget",
     data() {
         return {
             store: useMainStore(),
@@ -29,27 +29,45 @@ export default {
 </script>
 
 <template>
-    <div v-if="birthdaysToday.length > 0" class="card bg-light my-3 p-3 shadow-sm border-0">
-        <div class="card-body">
-            <h5 class="card-title d-flex align-items-center">
-                <i class="bi bi-gift me-2"></i> Сегодня день рождения!
-            </h5>
-            <p class="card-text">
-        <span
-            class="badge bg-success text-white me-1 mb-1"
-            v-for="student in birthdaysToday"
-            :key="student.id"
-        >
-          <router-link :to="'/students/' + student.id" class="text-decoration-none text-reset">
-            {{ student.name }}
-          </router-link>
-        </span>
-            </p>
+    <section v-if="birthdaysToday.length > 0" class="birthdays-widget my-3">
+        <div class="birthdays-icon" aria-hidden="true">
+            <i class="bi bi-gift"></i>
         </div>
-    </div>
-
+        <div>
+            <h5 class="mb-2">Сегодня день рождения!</h5>
+            <div class="d-flex flex-wrap gap-1">
+                <span
+                    class="badge bg-success text-white"
+                    v-for="student in birthdaysToday"
+                    :key="student.id"
+                >
+                    <router-link :to="'/students/' + student.id" class="text-decoration-none text-reset">
+                        {{ student.name }}
+                    </router-link>
+                </span>
+            </div>
+        </div>
+    </section>
 </template>
 
 <style scoped>
+.birthdays-widget {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.35rem 0 1rem;
+    border-bottom: 1px solid var(--silaeder-border);
+}
 
+.birthdays-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 2.25rem;
+    height: 2.25rem;
+    color: var(--silaeder-primary-dark);
+    border-radius: 50%;
+    background: var(--silaeder-primary-soft);
+}
 </style>

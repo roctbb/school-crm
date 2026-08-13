@@ -1,39 +1,35 @@
 <template>
-    <!-- Если вкладка не "portfolio" -->
-    <div v-if="activeTab !== 'portfolio'">
+    <div class="create-object-area">
         <button
-            v-if="activeTab && canCreateByType(getObjectTypeByCode(activeTab))"
-            class="btn btn-primary btn-sm ms-1"
+            v-if="activeTab !== 'portfolio' && activeTab && canCreateByType(getObjectTypeByCode(activeTab))"
+            class="btn btn-primary create-object-button ms-2"
             @click="triggerCreateObject(activeTab)"
         >
-            <i class="bi bi-plus me-1"></i> Создать
+            <i class="bi bi-plus-lg me-1"></i> Создать
         </button>
-    </div>
 
-    <!-- Если вкладка — "portfolio" -->
-    <div v-else>
-        <div class="dropdown">
+        <div v-else-if="activeTab === 'portfolio'" class="dropdown ms-2">
             <button
-                class="btn btn-primary btn-sm dropdown-toggle"
+                class="btn btn-primary create-object-button dropdown-toggle"
                 type="button"
                 @click="toggleDropdown"
             >
-                <i class="bi bi-plus me-1"></i> Создать
+                <i class="bi bi-plus-lg me-1"></i> Создать
             </button>
 
-                <ul v-if="showDropdown" class="dropdown-menu show">
-                    <li
-                        v-for="type in filteredTypes"
-                        :key="type.code"
+            <ul v-if="showDropdown" class="dropdown-menu dropdown-menu-end show">
+                <li
+                    v-for="type in filteredTypes"
+                    :key="type.code"
+                >
+                    <button
+                        class="dropdown-item"
+                        @click="triggerCreateObject(type.code)"
                     >
-                        <button
-                            class="dropdown-item"
-                            @click="triggerCreateObject(type.code)"
-                        >
-                            {{ type.name }}
-                        </button>
-                    </li>
-                </ul>
+                        {{ type.name }}
+                    </button>
+                </li>
+            </ul>
         </div>
     </div>
 </template>
@@ -102,3 +98,17 @@ export default {
     },
 };
 </script>
+
+<style scoped>
+.create-object-area,
+.create-object-button {
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
+.create-object-button {
+    min-height: 2.45rem;
+    padding-inline: 1rem;
+    box-shadow: var(--silaeder-shadow-sm);
+}
+</style>

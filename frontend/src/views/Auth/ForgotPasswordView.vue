@@ -3,7 +3,7 @@
     <div class="forgot-password-page auth-page">
         <div class="card auth-card p-4">
             <div class="text-center mb-3">
-                <img src="@/assets/logo.png" alt="Силаэдр" class="auth-logo">
+                <img src="@/assets/logo.png" :alt="$appName" class="auth-logo">
             </div>
             <h3 class="card-title text-center mb-3">Восстановление пароля</h3>
 

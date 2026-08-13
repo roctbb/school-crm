@@ -199,6 +199,7 @@ def test_telegram_settings_endpoints(client, app, test_user):
 
 
 def test_celery_tasks_deliver_both_channels(app, test_user, monkeypatch):
+    app.config['APP_NAME'] = 'Тестовая CRM'
     app.config['TELEGRAM_BOT_TOKEN'] = 'test-token'
     notification = Notification(
         user_id=test_user.id,
@@ -233,6 +234,7 @@ def test_celery_tasks_deliver_both_channels(app, test_user, monkeypatch):
 
     assert len(emails) == 1
     assert emails[0].recipients == [test_user.email]
+    assert emails[0].subject == 'Тестовая CRM — Новый результат'
     assert notification.email_sent_at is not None
     assert telegram_messages == [(
         123456,

@@ -5,7 +5,7 @@
                 <span class="brand-logo-wrap" aria-hidden="true">
                     <img src="@/assets/logo.png" alt="" class="brand-logo" />
                 </span>
-                <span>Силаэдр CRM</span>
+                <span>{{ $appName }}</span>
             </router-link>
 
             <!-- Кнопка (тогглер) -->

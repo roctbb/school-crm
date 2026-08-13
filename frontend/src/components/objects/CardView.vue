@@ -9,12 +9,12 @@
             <div
                 v-for="(objects, group) in groupedData"
                 :key="group"
-                class="group-section mb-4 p-3 rounded"
+                class="group-section mb-5"
             >
-                <h5 class="fw-bold d-flex align-items-center pb-2 border-bottom">
+                <h5 class="group-heading fw-bold d-flex align-items-center pb-2 mb-3 border-bottom">
                     <!-- Заголовок группы -->
                     <span class="me-2">
-                      {{ groupingAttribute?.name }}: {{ group }}
+                      {{ groupingAttribute?.name }}: {{ formatGroupingLabel(group, groupingAttribute) }}
                     </span>
                     <!-- Число объектов в группе -->
                     <span
@@ -25,7 +25,7 @@
                     </span>
                 </h5>
 
-                <div class="row g-3 mt-0">
+                <div class="row g-3">
                     <div
                         v-for="object in objects"
                         :key="object.id"
@@ -69,6 +69,7 @@
 <script>
 import ObjectCard from "@/components/objects/ObjectCard.vue";
 import EmptyState from "@/components/common/EmptyState.vue";
+import {groupingLabel} from "@/utils/objectGrouping.js";
 
 export default {
     name: "CardView",
@@ -94,17 +95,19 @@ export default {
             type: String,
             default: "medium"
         }
-    }
+    },
+    methods: {
+        formatGroupingLabel: groupingLabel,
+    },
 };
 </script>
 
 <style scoped>
 .group-section {
-    border: 1px solid var(--silaeder-border);
-    background: var(--silaeder-surface-subtle);
+    background: transparent;
 }
 
-.border-bottom {
-    border-bottom: 2px solid #dee2e6 !important;
+.group-heading {
+    border-color: var(--silaeder-border) !important;
 }
 </style>

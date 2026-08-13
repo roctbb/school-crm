@@ -3,8 +3,8 @@
         <div class="card shadow-sm authorize-card">
             <div class="card-body p-4">
                 <div class="text-center mb-4">
-                    <img src="@/assets/logo.png" alt="Силаэдр CRM" class="logo auth-logo mb-3" />
-                    <h3>Вход через Силаэдр CRM</h3>
+                    <img src="@/assets/logo.png" :alt="$appName" class="logo auth-logo mb-3" />
+                    <h3>Вход через {{ $appName }}</h3>
                 </div>
 
                 <div v-if="loading" class="text-center text-muted py-4">Проверяем запрос…</div>

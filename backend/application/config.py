@@ -7,6 +7,7 @@ load_dotenv()
 
 class Config:
     """Base configuration"""
+    APP_NAME = os.getenv('APP_NAME', 'Силаэдр CRM').strip() or 'Силаэдр CRM'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SECRET_KEY = os.getenv('SECRET_KEY', 'default-secret-key')
     JWT_SECRET_KEY = os.getenv('SECRET_KEY', 'default-secret-key')

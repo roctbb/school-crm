@@ -205,17 +205,25 @@ def test_admin_can_create_and_update_object_type(client, db_session):
     payload = {
         'name': 'Participants',
         'code': 'participants',
-        'available_attributes': [{
-            'name': 'Photo',
-            'code': 'photo',
-            'type': 'file',
-            'display': True,
-            'group': True,
-            'keep_history': True,
-        }],
+        'available_attributes': [
+            {
+                'name': 'Photo',
+                'code': 'photo',
+                'type': 'file',
+                'display': True,
+                'group': True,
+                'keep_history': True,
+            },
+            {
+                'name': 'Start date',
+                'code': 'start',
+                'type': 'date',
+                'display': True,
+            },
+        ],
         'params': {
             'index': 1,
-            'default_grouping': 'photo',
+            'default_grouping': 'month:start',
             'possible_children': [],
             'can_create': ['teacher'],
             'can_delete': ['student'],
@@ -230,7 +238,7 @@ def test_admin_can_create_and_update_object_type(client, db_session):
     created = create_response.get_json()
     assert created['code'] == 'participants'
     assert created['available_attributes'][0]['keep_history'] is True
-    assert created['params']['default_grouping'] == 'photo'
+    assert created['params']['default_grouping'] == 'month:start'
     assert created['form_categories'][0]['id'] == category.id
 
     payload['name'] = 'People'

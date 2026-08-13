@@ -43,7 +43,7 @@ def send_notification_email(notification_id):
     )
     try:
         mail.send(Message(
-            subject=f'Силаэдр CRM — {notification.title}',
+            subject=f'{current_app.config["APP_NAME"]} — {notification.title}',
             recipients=[notification.user.email],
             html=html,
         ))
