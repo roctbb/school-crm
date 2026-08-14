@@ -65,6 +65,12 @@ export async function updateObjectChildren(objectId, children_ids) {
     });
 }
 
+export async function deleteObjectChild(objectId, childId) {
+    return await api_client.fetch(`/objects/${objectId}/children/${childId}`, {
+        method: "DELETE",
+    });
+}
+
 export async function deleteObject(objectId) {
     return await api_client.fetch(`/objects/${objectId}`, {
         method: "DELETE",

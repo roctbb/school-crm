@@ -1,5 +1,8 @@
 <template>
   <div class="connected-types-stack">
+    <div v-if="relationError" class="alert alert-danger py-2 small mb-0" role="alert">
+      {{ relationError }}
+    </div>
     <section v-for="type in connectedTypes" :key="type.code" class="detail-section">
       <div v-if="findRelativesByType(type).length">
         <h5 class="section-heading d-flex justify-content-between align-items-center">
@@ -28,6 +31,9 @@
           :attributes="type.available_attributes.filter(a => a.show_off)"
           :sortKey.sync="sortKey"
           :sortDirection.sync="sortDirection"
+          :canRemoveObject="canRemoveRelation"
+          :removingObjectIds="removingRelationIds"
+          @remove-object="removeRelation"
         />
         <CardView
           v-else
@@ -43,6 +49,7 @@
 import useMainStore from "@/stores/mainStore.js";
 import TableView from "@/components/objects/TableView.vue";
 import CardView from "@/components/objects/CardView.vue";
+import {canModifyObject} from "@/utils/access.js";
 
 export default {
   name: "ConnectedTypes",
@@ -74,7 +81,9 @@ export default {
   },
   data() {
     return {
-      store: useMainStore()
+      store: useMainStore(),
+      relationError: "",
+      removingRelationIds: []
     };
   },
   methods: {
@@ -84,6 +93,47 @@ export default {
         ...this.object.parents.filter(parent => parent.type === type.code)
       ].map(relative => this.store.getObject(relative.type, relative.id));
       return relatives.sort((a, b) => a.name.localeCompare(b.name));
+    },
+    findRelationship(relative) {
+      const childReference = this.object.children.find(child => child.id === relative.id);
+      if (childReference) {
+        return {parent: this.object, child: relative};
+      }
+
+      const parentReference = this.object.parents.find(parent => parent.id === relative.id);
+      if (parentReference) {
+        return {
+          parent: this.store.getObject(parentReference.type, parentReference.id),
+          child: this.object
+        };
+      }
+
+      return null;
+    },
+    canRemoveRelation(relative) {
+      const relationship = this.findRelationship(relative);
+      return Boolean(relationship?.parent && canModifyObject(relationship.parent));
+    },
+    async removeRelation(relative) {
+      const relationship = this.findRelationship(relative);
+      if (!relationship || !this.canRemoveRelation(relative)) return;
+
+      const confirmed = window.confirm(
+        `Удалить связь между «${relationship.parent.name}» и «${relationship.child.name}»? ` +
+        "Сами объекты останутся в CRM."
+      );
+      if (!confirmed) return;
+
+      this.relationError = "";
+      this.removingRelationIds.push(relative.id);
+      try {
+        await relationship.parent.removeChild(relationship.child);
+      } catch (error) {
+        this.relationError = error.message || "Не удалось удалить связь.";
+        console.error("Ошибка при удалении связи:", error);
+      } finally {
+        this.removingRelationIds = this.removingRelationIds.filter(id => id !== relative.id);
+      }
     },
     toggleTypeView(type) {
       this.$emit("toggle-view", type);

@@ -58,7 +58,10 @@
                 </span>
                         </th>
                         <!-- Столбец для кнопки свернуть/развернуть -->
-                        <th class="text-end" style="width: 40px;">
+                        <th
+                            class="text-end object-actions-column"
+                            :class="{'has-remove-action': canRemoveObject}"
+                        >
                             <button
                                 class="btn btn-sm btn-outline-secondary icon-button"
                                 @click="toggleCollapse"
@@ -89,11 +92,25 @@
                             {{ formatValue(object.attributes[attr.code]) }}
 
                         </td>
-                        <!-- Ячейка с иконкой-ссылкой справа -->
+                        <!-- Действия со строкой -->
                         <td class="text-end">
-                            <router-link :to="`/${object.type}/${object.id}`" :aria-label="`Открыть ${object.name}`" title="Открыть запись">
-                                <i class="bi bi-link-45deg text-primary"></i>
-                            </router-link>
+                            <div class="d-inline-flex align-items-center gap-1">
+                                <router-link :to="`/${object.type}/${object.id}`" :aria-label="`Открыть ${object.name}`" title="Открыть запись">
+                                    <i class="bi bi-link-45deg text-primary"></i>
+                                </router-link>
+                                <button
+                                    v-if="showRemoveObject(object)"
+                                    class="btn btn-sm btn-link text-danger relation-remove-button"
+                                    type="button"
+                                    :disabled="isRemovingObject(object)"
+                                    :aria-label="`Удалить связь с ${object.name}`"
+                                    title="Удалить связь"
+                                    @click="$emit('remove-object', object)"
+                                >
+                                    <span v-if="isRemovingObject(object)" class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                                    <i v-else class="bi bi-x-lg"></i>
+                                </button>
+                            </div>
                         </td>
                     </tr>
                     </tbody>
@@ -124,7 +141,10 @@
                 {{ sortDirection === 'asc' ? '▲' : '▼' }}
               </span>
                     </th>
-                    <th class="text-end" style="width: 40px;">
+                    <th
+                        class="text-end object-actions-column"
+                        :class="{'has-remove-action': canRemoveObject}"
+                    >
                         <button
                             class="btn btn-sm btn-outline-secondary icon-button"
                             @click="toggleCollapse"
@@ -154,9 +174,23 @@
                         {{ formatValue(object.attributes[attr.code]) }}
                     </td>
                     <td class="text-end">
-                        <router-link :to="`/${object.type}/${object.id}`" :aria-label="`Открыть ${object.name}`" title="Открыть запись">
-                            <i class="bi bi-link-45deg text-primary"></i>
-                        </router-link>
+                        <div class="d-inline-flex align-items-center gap-1">
+                            <router-link :to="`/${object.type}/${object.id}`" :aria-label="`Открыть ${object.name}`" title="Открыть запись">
+                                <i class="bi bi-link-45deg text-primary"></i>
+                            </router-link>
+                            <button
+                                v-if="showRemoveObject(object)"
+                                class="btn btn-sm btn-link text-danger relation-remove-button"
+                                type="button"
+                                :disabled="isRemovingObject(object)"
+                                :aria-label="`Удалить связь с ${object.name}`"
+                                title="Удалить связь"
+                                @click="$emit('remove-object', object)"
+                            >
+                                <span v-if="isRemovingObject(object)" class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                                <i v-else class="bi bi-x-lg"></i>
+                            </button>
+                        </div>
                     </td>
                 </tr>
                 </tbody>
@@ -188,7 +222,9 @@ export default {
         groupedData: {type: Object, default: null},
         groupCounts: {type: Object, default: () => ({})},
         attributes: {type: Array, required: true},
-        groupingAttributes: {type: Array, default: () => []}
+        groupingAttributes: {type: Array, default: () => []},
+        canRemoveObject: {type: Function, default: null},
+        removingObjectIds: {type: Array, default: () => []}
     },
 
     data() {
@@ -245,6 +281,12 @@ export default {
         formatGroupingLabel: groupingLabel,
         groupCount(groups) {
             return this.groupCounts[JSON.stringify(groups)] || 0;
+        },
+        showRemoveObject(object) {
+            return Boolean(this.canRemoveObject?.(object));
+        },
+        isRemovingObject(object) {
+            return this.removingObjectIds.includes(object.id);
         },
         toggleCollapse() {
             this.isCollapsed = !this.isCollapsed;
@@ -358,6 +400,22 @@ export default {
 
 .object-table a:not(.btn) {
     color: var(--silaeder-primary-dark);
+}
+
+.relation-remove-button {
+    width: 1.75rem;
+    height: 1.75rem;
+    padding: 0;
+    line-height: 1;
+    text-decoration: none;
+}
+
+.object-actions-column {
+    width: 2.75rem;
+}
+
+.object-actions-column.has-remove-action {
+    width: 4.75rem;
 }
 
 .table-sortable {

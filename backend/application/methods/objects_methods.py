@@ -157,6 +157,23 @@ def update_object_children(user, obj, children_ids):
 
 
 @transaction
+def remove_object_child(user, obj, child):
+    linked_child = next(
+        (linked for linked in obj.children if linked.id == child.id),
+        None,
+    )
+    if not linked_child:
+        raise LogicException("Связь между объектами не найдена", 404)
+
+    obj.children.remove(linked_child)
+
+    if not has_teacher_access(user):
+        obj.is_approved = False
+
+    return obj
+
+
+@transaction
 def create_comment(user, object, validated_data):
     comment = Comment(creator_id=user.id, text=validated_data["text"], object_id=object.id)
     db.session.add(comment)

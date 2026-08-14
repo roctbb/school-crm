@@ -130,6 +130,20 @@ def update_object_children_endpoint(validated_data, user, object_id):
         return jsonify([present_connected_object(child) for child in updated_object.children]), 200
 
 
+@objects_blueprint.route('/<int:object_id>/children/<int:child_id>', methods=['DELETE'])
+@requires_user
+def remove_object_child_endpoint(user, object_id, child_id):
+    obj = get_object_by_id(object_id)
+    child = get_object_by_id(child_id)
+    if can_modify_object(user, obj):
+        remove_object_child(user, obj, child)
+        return jsonify({
+            'deleted': True,
+            'parent_id': obj.id,
+            'child_id': child.id,
+        }), 200
+
+
 @objects_blueprint.route('/<int:object_id>/comments', methods=['POST'])
 @requires_user
 @validate_request_with(validate_comment)

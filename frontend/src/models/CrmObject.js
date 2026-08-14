@@ -1,6 +1,13 @@
 import Model from "@/models/common.js";
 import {formatDate} from "@/utils/helpers";
-import {approveObject, createObject, restoreObject, updateObject, updateObjectChildren} from "@/api/objects_api.js";
+import {
+    approveObject,
+    createObject,
+    deleteObjectChild,
+    restoreObject,
+    updateObject,
+    updateObjectChildren,
+} from "@/api/objects_api.js";
 import {fetchObjectSubmissions} from "@/api/submissions_api.js";
 import Submission from "@/models/Submission.js";
 
@@ -111,6 +118,18 @@ class CrmObject extends Model {
 
         // 5. Обновляем резервную копию (чтобы в следующий раз корректно сравнивать)
         this._backup.children = [...this.children];
+    }
+
+    async removeChild(child) {
+        await deleteObjectChild(this.id, child.id);
+
+        this.children = this.children.filter(item => item.id !== child.id);
+        this._backup.children = [...this.children];
+
+        const storeChild = this._store.getObject(child.type, child.id);
+        if (storeChild) {
+            storeChild.parents = storeChild.parents.filter(parent => parent.id !== this.id);
+        }
     }
 
     async delete() {
