@@ -7,6 +7,9 @@
 
             <h3 class="card-title text-center mb-3">Вход в систему</h3>
 
+            <div class="alert alert-warning my-3 px-3" role="status" v-if="sessionMessage">
+                {{ sessionMessage }}
+            </div>
             <div class="alert alert-danger my-3 px-3" v-if="error">{{ error }}</div>
 
             <!-- Форма входа -->
@@ -42,8 +45,26 @@
                         </button>
                     </div>
                 </div>
+                <div class="form-check mb-3">
+                    <input
+                        id="remember-me"
+                        v-model="rememberMe"
+                        class="form-check-input"
+                        type="checkbox"
+                    />
+                    <label class="form-check-label" for="remember-me">
+                        Не выходить из системы
+                    </label>
+                </div>
                 <!-- Кнопка входа -->
-                <button type="submit" class="btn btn-primary w-100">Войти</button>
+                <button type="submit" class="btn btn-primary w-100" :disabled="isSubmitting">
+                    <span
+                        v-if="isSubmitting"
+                        class="spinner-border spinner-border-sm me-2"
+                        aria-hidden="true"
+                    ></span>
+                    {{ isSubmitting ? 'Входим…' : 'Войти' }}
+                </button>
             </form>
 
             <!-- Ссылки -->
@@ -66,14 +87,21 @@ export default {
             email: "",
             password: "",
             error: "",
+            sessionMessage: "",
             showPassword: false,
+            rememberMe: false,
+            isSubmitting: false,
         };
     },
     methods: {
         async handleLogin() {
+            this.error = "";
+            this.sessionMessage = "";
+            this.isSubmitting = true;
             try {
-                const token = await login(this.email, this.password);
-                await useMainStore().setToken(token);
+                const session = await login(this.email, this.password, this.rememberMe);
+                const isValid = await useMainStore().setSession(session, this.rememberMe);
+                if (!isValid) return;
                 const redirect = typeof this.$route.query.redirect === 'string'
                     && this.$route.query.redirect.startsWith('/')
                     && !this.$route.query.redirect.startsWith('//')
@@ -82,9 +110,16 @@ export default {
                 this.$router.push(redirect);
                 this.error = "";
             } catch (error) {
-                this.error = error.message || "Не удалось соединиться с сервером.";
+                this.error = error.code
+                    ? error.message
+                    : "Не удалось соединиться с сервером. Проверьте подключение и попробуйте снова.";
+            } finally {
+                this.isSubmitting = false;
             }
         },
+    },
+    created() {
+        this.sessionMessage = useMainStore().consumeAuthMessage();
     },
 };
 </script>

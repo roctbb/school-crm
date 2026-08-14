@@ -3,16 +3,36 @@
         <!-- Если есть сгруппированные данные -->
         <div v-if="groupedData && Object.keys(groupedData).length">
             <div
-                v-for="(objects, group) in groupedData"
-                :key="group"
+                v-for="section in groupedSections"
+                :key="section.key"
                 class="group-table-section mb-4"
             >
-                <h5 class="fw-bold d-flex align-items-center mb-3">
-                    <span class="me-2">{{ groupingAttribute?.name }}: {{ formatGroupingLabel(group, groupingAttribute) }}</span>
+                <h5
+                    v-if="section.showPrimaryHeading"
+                    class="fw-bold d-flex align-items-center mb-3"
+                >
+                    <span class="me-2">
+                        {{ primaryGroupingAttribute?.name }}:
+                        {{ formatGroupingLabel(section.primaryGroup, primaryGroupingAttribute) }}
+                    </span>
                     <span class="badge bg-secondary rounded-pill py-1 px-2"
-                          style="font-size: 0.75rem;">{{ groupCounts[group] || objects.length }}</span>
+                          style="font-size: 0.75rem;">
+                        {{ groupCount([section.primaryGroup]) || section.primaryObjectCount }}
+                    </span>
                 </h5>
 
+                <h6
+                    v-if="secondaryGroupingAttribute"
+                    class="subgroup-heading d-flex align-items-center gap-2 mb-3"
+                >
+                    <span>
+                        {{ secondaryGroupingAttribute.name }}:
+                        {{ formatGroupingLabel(section.secondaryGroup, secondaryGroupingAttribute) }}
+                    </span>
+                    <span class="badge text-bg-light rounded-pill">
+                        {{ groupCount([section.primaryGroup, section.secondaryGroup]) || section.objects.length }}
+                    </span>
+                </h6>
 
                 <div class="table-responsive object-table-surface">
                 <table class="table table-hover align-middle object-table">
@@ -54,7 +74,7 @@
                     <!-- Тело таблицы скрывается/открывается при свёртывании -->
                     <tbody v-show="!isCollapsed">
                     <tr
-                        v-for="object in sortData(objects)"
+                        v-for="object in sortData(section.objects)"
                         :key="object.id" :class="{'table-warning': !object.is_approved}"
                     >
                         <td>
@@ -168,7 +188,7 @@ export default {
         groupedData: {type: Object, default: null},
         groupCounts: {type: Object, default: () => ({})},
         attributes: {type: Array, required: true},
-        groupingAttribute: {type: Object, default: null}
+        groupingAttributes: {type: Array, default: () => []}
     },
 
     data() {
@@ -180,12 +200,52 @@ export default {
         };
     },
 
+    computed: {
+        primaryGroupingAttribute() {
+            return this.groupingAttributes[0] || null;
+        },
+        secondaryGroupingAttribute() {
+            return this.groupingAttributes[1] || null;
+        },
+        groupedSections() {
+            return Object.entries(this.groupedData || {}).flatMap(([primaryGroup, groupData]) => {
+                if (Array.isArray(groupData)) {
+                    return [{
+                        key: JSON.stringify([primaryGroup]),
+                        primaryGroup,
+                        secondaryGroup: null,
+                        objects: groupData,
+                        primaryObjectCount: groupData.length,
+                        showPrimaryHeading: true,
+                    }];
+                }
+
+                const secondaryGroups = Object.entries(groupData);
+                const primaryObjectCount = secondaryGroups.reduce(
+                    (count, [, objects]) => count + objects.length,
+                    0
+                );
+                return secondaryGroups.map(([secondaryGroup, objects], index) => ({
+                    key: JSON.stringify([primaryGroup, secondaryGroup]),
+                    primaryGroup,
+                    secondaryGroup,
+                    objects,
+                    primaryObjectCount,
+                    showPrimaryHeading: index === 0,
+                }));
+            });
+        },
+    },
+
     // Исходные события тоже не нужны, так как не передаём наружу
     // emits: ["update:sortKey", "update:sortDirection"],
 
     methods: {
         formatValue,
         formatGroupingLabel: groupingLabel,
+        groupCount(groups) {
+            return this.groupCounts[JSON.stringify(groups)] || 0;
+        },
         toggleCollapse() {
             this.isCollapsed = !this.isCollapsed;
         },
@@ -235,6 +295,14 @@ export default {
 <style scoped>
 .group-table-section {
     min-width: 0;
+}
+
+.subgroup-heading {
+    margin-left: 0.85rem;
+    padding-left: 1rem;
+    color: var(--silaeder-text);
+    font-weight: 600;
+    border-left: 3px solid var(--silaeder-primary-soft);
 }
 
 .underline {

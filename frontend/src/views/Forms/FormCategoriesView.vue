@@ -6,7 +6,7 @@
         />
 
         <div class="page-toolbar">
-            <div class="input-group toolbar-search flex-grow-1">
+            <div class="input-group input-group-sm toolbar-search flex-grow-1">
                 <span class="input-group-text bg-white text-muted" aria-hidden="true">
                     <i class="bi bi-search"></i>
                 </span>
@@ -19,7 +19,7 @@
                 />
                 <button
                     v-if="searchQuery"
-                    class="btn btn-light icon-button"
+                    class="btn btn-sm btn-light icon-button"
                     type="button"
                     aria-label="Очистить поиск"
                     title="Очистить поиск"

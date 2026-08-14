@@ -4,10 +4,17 @@ import {finishRequestLoading, startRequestLoading} from '@/services/globalLoadin
 class ApiClient {
     constructor(token = null) {
         this.token = token;
+        this.refreshSession = null;
+        this.onSessionExpired = null;
     }
 
     setToken(token) {
         this.token = token;
+    }
+
+    setSessionHandlers({refreshSession, onSessionExpired}) {
+        this.refreshSession = refreshSession;
+        this.onSessionExpired = onSessionExpired;
     }
 
     getAuthorizationHeaders() {
@@ -20,7 +27,13 @@ class ApiClient {
     }
 
     async fetch(url, options = {}, contentType = 'application/json') {
-        let headers = options.headers
+        const {
+            withAuth = true,
+            retryAuth = true,
+            ...requestOptions
+        } = options;
+        const requestToken = withAuth ? this.token : null;
+        let headers = requestOptions.headers;
 
         if (contentType) {
             headers = {
@@ -28,16 +41,32 @@ class ApiClient {
                 'Content-Type': contentType
             }
         }
-        if (this.token) {
+        if (requestToken) {
             headers = {
                 ...headers,
-                ...this.getAuthorizationHeaders(),
+                Authorization: `Bearer ${requestToken}`,
             };
         }
 
         startRequestLoading();
         try {
-            const response = await fetch(API_URL + url, {...options, headers});
+            const response = await fetch(API_URL + url, {
+                ...requestOptions,
+                credentials: requestOptions.credentials || 'same-origin',
+                headers,
+            });
+            if (response.status === 401 && requestToken && retryAuth) {
+                const tokenWasAlreadyUpdated = this.token && this.token !== requestToken;
+                const refreshed = tokenWasAlreadyUpdated || await this.refreshSession?.();
+                if (refreshed) {
+                    return await this.fetch(url, {
+                        ...requestOptions,
+                        withAuth,
+                        retryAuth: false,
+                    }, contentType);
+                }
+                this.onSessionExpired?.();
+            }
             await validateResponse(response);
             return response.json();
         } finally {

@@ -1,5 +1,5 @@
 import {defineStore} from "pinia";
-import {getProfile} from "@/api/auth_api.js";
+import {getProfile, logoutSession, refreshSession} from "@/api/auth_api.js";
 import {fetchObjectTypes, fetchObjectsByType, fetchObjects} from "@/api/objects_api.js";
 import api_client from "@/api/client.js";
 import CrmObject from "@/models/CrmObject.js";
@@ -7,11 +7,21 @@ import {fetchFormCategories} from "@/api/forms_api.js";
 import Form from "@/models/Form.js";
 import {clearProtectedFileCache} from "@/api/files_api.js";
 
+const ACCESS_TOKEN_KEY = 'crm_access_token';
+const REMEMBER_SESSION_KEY = 'crm_remember_session';
+const AUTH_MESSAGE_KEY = 'crm_auth_message';
+const LEGACY_TOKEN_KEY = 'token';
+const SESSION_EXPIRED_MESSAGE = 'Срок действия сессии истёк. Войдите снова.';
+
+let refreshPromise = null;
+let sessionExpirationHandled = false;
+
 const useMainStore = defineStore("mainStore", {
     // Состояние
     state: () => ({
         token: null,
         profile: null,
+        authMessage: "",
         objects: {}, // Объекты, сгруппированные по типу
         objectTypes: [], // Список типов объектов
         isLoading: false, // Состояние загрузки данных
@@ -21,6 +31,13 @@ const useMainStore = defineStore("mainStore", {
     }),
 
     actions: {
+        configureSessionHandling() {
+            api_client.setSessionHandlers({
+                refreshSession: () => this.refreshAccessToken(),
+                onSessionExpired: () => this.expireSession(),
+            });
+        },
+
         async tryLoadProfile() {
             if (!api_client.token) return false;
             if (this.profile) return true;
@@ -48,39 +65,160 @@ const useMainStore = defineStore("mainStore", {
             return await this.tryLoadProfile();
         },
 
-        async setToken(new_token) {
-            api_client.setToken(new_token);
+        storeAccessToken(token) {
+            api_client.setToken(token);
+            this.token = token;
+            sessionStorage.setItem(ACCESS_TOKEN_KEY, token);
+        },
+
+        async setToken(newToken) {
+            localStorage.removeItem(REMEMBER_SESSION_KEY);
+            localStorage.removeItem(LEGACY_TOKEN_KEY);
+            this.profile = null;
+            this.storeAccessToken(newToken);
 
             const isValid = await this.tryLoadProfile();
             if (!isValid) {
-                this.logout();
-            } else {
-                localStorage.setItem("token", new_token);
+                this.expireSession();
             }
+            return isValid;
         },
 
-        logout() {
-            console.log("Logging out");
+        async setSession(session, rememberSession = false) {
+            if (!session?.access_token) {
+                throw new Error('Сервер не вернул токен сессии.');
+            }
+
+            sessionExpirationHandled = false;
+            this.authMessage = "";
+            sessionStorage.removeItem(AUTH_MESSAGE_KEY);
+            if (rememberSession && session.persistent) {
+                localStorage.setItem(REMEMBER_SESSION_KEY, '1');
+            } else {
+                localStorage.removeItem(REMEMBER_SESSION_KEY);
+            }
+            this.profile = null;
+            this.storeAccessToken(session.access_token);
+
+            const isValid = await this.tryLoadProfile();
+            if (!isValid) {
+                this.expireSession();
+            }
+            return isValid;
+        },
+
+        clearSessionState() {
             clearProtectedFileCache();
             api_client.setToken(null);
             this.token = null;
             this.profile = null;
-            this.reset()
-            localStorage.clear();
+            this.reset();
+            sessionStorage.removeItem(ACCESS_TOKEN_KEY);
+            localStorage.removeItem(REMEMBER_SESSION_KEY);
+            localStorage.removeItem(LEGACY_TOKEN_KEY);
+        },
+
+        async logout() {
+            try {
+                await logoutSession();
+            } catch (_error) {
+                // Локальный выход должен сработать даже при недоступном сервере.
+            } finally {
+                this.clearSessionState();
+                sessionExpirationHandled = false;
+            }
+        },
+
+        setAuthMessage(message) {
+            this.authMessage = message;
+            sessionStorage.setItem(AUTH_MESSAGE_KEY, message);
+        },
+
+        consumeAuthMessage() {
+            const message = this.authMessage || sessionStorage.getItem(AUTH_MESSAGE_KEY) || "";
+            this.authMessage = "";
+            sessionStorage.removeItem(AUTH_MESSAGE_KEY);
+            return message;
+        },
+
+        expireSession(message = SESSION_EXPIRED_MESSAGE) {
+            if (sessionExpirationHandled) return;
+            sessionExpirationHandled = true;
+            const redirect = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+            this.clearSessionState();
+            this.setAuthMessage(message);
+            if (window.location.pathname !== '/login') {
+                window.location.assign(`/login?redirect=${encodeURIComponent(redirect)}`);
+            }
+        },
+
+        async refreshAccessToken() {
+            if (!localStorage.getItem(REMEMBER_SESSION_KEY)) return false;
+            if (refreshPromise) return await refreshPromise;
+
+            refreshPromise = (async () => {
+                try {
+                    const session = await refreshSession();
+                    if (!session?.access_token) return false;
+                    this.storeAccessToken(session.access_token);
+                    localStorage.setItem(REMEMBER_SESSION_KEY, '1');
+                    sessionExpirationHandled = false;
+                    return true;
+                } catch (_error) {
+                    return false;
+                } finally {
+                    refreshPromise = null;
+                }
+            })();
+            return await refreshPromise;
         },
 
         reset() {
             this.objects = {};
             this.objectTypes = [];
+            this.objectsLoaded = false;
+            this.forms = {};
             this.formCategories = [];
         },
 
         async loadStateFromLocalStorage() {
-            const token = localStorage.getItem("token");
+            this.configureSessionHandling();
+            let token = sessionStorage.getItem(ACCESS_TOKEN_KEY);
+            const legacyToken = localStorage.getItem(LEGACY_TOKEN_KEY);
+            if (!token && legacyToken) {
+                token = legacyToken;
+                sessionStorage.setItem(ACCESS_TOKEN_KEY, legacyToken);
+                localStorage.removeItem(LEGACY_TOKEN_KEY);
+            }
 
             if (token) {
-                await this.setToken(token);
+                this.storeAccessToken(token);
+                try {
+                    if (await this.tryLoadProfile()) {
+                        sessionExpirationHandled = false;
+                        return true;
+                    }
+                } catch (_error) {
+                    this.clearSessionState();
+                    this.setAuthMessage('Не удалось проверить сессию. Попробуйте войти снова.');
+                    return false;
+                }
             }
+
+            if (localStorage.getItem(REMEMBER_SESSION_KEY) && await this.refreshAccessToken()) {
+                try {
+                    if (await this.tryLoadProfile()) return true;
+                } catch (_error) {
+                    this.clearSessionState();
+                    this.setAuthMessage('Не удалось проверить сессию. Попробуйте войти снова.');
+                    return false;
+                }
+            }
+
+            if (token || localStorage.getItem(REMEMBER_SESSION_KEY)) {
+                this.expireSession();
+            }
+            return false;
         },
 
         async fetchObjectTypes() {

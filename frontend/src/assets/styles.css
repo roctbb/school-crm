@@ -13,6 +13,8 @@
     --silaeder-shadow-sm: 0 0.125rem 0.5rem rgba(38, 52, 61, 0.07);
     --silaeder-shadow: 0 0.4rem 1.4rem rgba(38, 52, 61, 0.10);
     --silaeder-section-gap: 1.5rem;
+    --silaeder-control-sm: 2rem;
+    --silaeder-control-touch: 2.5rem;
 }
 
 html,
@@ -94,6 +96,14 @@ a:hover {
 .page-toolbar .form-control,
 .page-toolbar .form-select {
     min-width: 0;
+}
+
+.page-toolbar .btn-sm,
+.page-toolbar .input-group-sm > .form-control,
+.page-toolbar .input-group-sm > .form-select,
+.page-toolbar .input-group-sm > .input-group-text,
+.page-toolbar .input-group-sm > .btn {
+    min-height: var(--silaeder-control-sm);
 }
 
 /* Label followed by a required control. */
@@ -333,6 +343,14 @@ label:has(+ textarea[required])::after {
     min-height: 2.25rem;
 }
 
+.icon-button.btn-sm {
+    width: var(--silaeder-control-sm);
+    min-width: var(--silaeder-control-sm);
+    height: var(--silaeder-control-sm);
+    min-height: var(--silaeder-control-sm);
+    padding: 0;
+}
+
 .auth-page {
     display: flex;
     align-items: center;
@@ -406,8 +424,23 @@ label:has(+ textarea[required])::after {
     }
 
     .icon-button {
-        min-width: 2.75rem;
-        min-height: 2.75rem;
+        min-width: var(--silaeder-control-touch);
+        min-height: var(--silaeder-control-touch);
+    }
+
+    .icon-button.btn-sm {
+        width: var(--silaeder-control-touch);
+        min-width: var(--silaeder-control-touch);
+        height: var(--silaeder-control-touch);
+        min-height: var(--silaeder-control-touch);
+    }
+
+    .page-toolbar .btn-sm,
+    .page-toolbar .input-group-sm > .form-control,
+    .page-toolbar .input-group-sm > .form-select,
+    .page-toolbar .input-group-sm > .input-group-text,
+    .page-toolbar .input-group-sm > .btn {
+        min-height: var(--silaeder-control-touch);
     }
 }
 

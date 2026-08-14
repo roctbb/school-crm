@@ -121,20 +121,23 @@ export default {
 
 .submission-card-heading {
     display: flex;
+    flex-wrap: wrap;
     align-items: flex-start;
-    justify-content: space-between;
-    gap: 0.75rem;
+    gap: 0.25rem 0.75rem;
 }
 
 .card-title {
+    flex: 1 1 9rem;
     min-width: 0;
     font-size: 1rem;
     line-height: 1.3;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
+    word-break: normal;
 }
 
 .created-at-text {
     flex: 0 0 auto;
+    margin-left: auto;
     font-size: 0.75rem;
     color: var(--silaeder-muted);
     line-height: 1.3;

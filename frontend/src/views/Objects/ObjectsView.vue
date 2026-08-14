@@ -56,7 +56,7 @@
                     />
                     <button
                         v-if="searchQuery"
-                        class="btn btn-light icon-button"
+                        class="btn btn-sm btn-light icon-button"
                         type="button"
                         aria-label="Очистить поиск"
                         title="Очистить поиск"
@@ -76,17 +76,20 @@
                         title="Группировка"
                     >
                         <i class="bi bi-collection me-sm-1"></i>
-                        <span class="d-none d-sm-inline">{{ selectedAttribute.name || 'Группировка' }}</span>
+                        <span class="d-none d-sm-inline grouping-button-label">{{ groupingButtonLabel }}</span>
                     </button>
-                    <ul class="dropdown-menu dropdown-menu-end" :class="{ 'show': isMenuOpen }">
+                    <ul class="dropdown-menu dropdown-menu-end grouping-menu" :class="{ 'show': isMenuOpen }">
+                        <li>
+                            <h6 class="dropdown-header">До двух критериев, в порядке выбора</h6>
+                        </li>
                         <li>
                             <button
-                                class="dropdown-item"
+                                class="dropdown-item d-flex align-items-center justify-content-between gap-3"
                                 type="button"
                                 @click="selectGrouping({})"
                             >
                                 Не группировать
-                                <span v-if="!selectedAttribute.code" class="me-2">
+                                <span v-if="!selectedAttributes.length">
                                     <i class="bi bi-check2"></i>
                                 </span>
                             </button>
@@ -96,17 +99,22 @@
                             :key="attribute.code"
                         >
                             <button
-                                class="dropdown-item"
+                                class="dropdown-item d-flex align-items-center justify-content-between gap-3"
+                                :class="{ active: isGroupingSelected(attribute) }"
                                 type="button"
+                                :disabled="!canSelectGrouping(attribute)"
+                                :aria-pressed="isGroupingSelected(attribute)"
+                                :title="canSelectGrouping(attribute) ? '' : 'Сначала снимите один из выбранных критериев'"
                                 @click="selectGrouping(attribute)"
                             >
-                                {{ attribute.name }}
                                 <span
-                                    v-if="selectedAttribute.code === attribute.code"
-                                    class="me-1"
+                                    v-if="groupingSelectionIndex(attribute) >= 0"
+                                    class="badge rounded-pill grouping-order-badge"
                                 >
-            <i class="bi bi-check2"></i>
-          </span>
+                                    {{ groupingSelectionIndex(attribute) + 1 }}
+                                </span>
+                                <span class="flex-grow-1">{{ attribute.name }}</span>
+                                <i v-if="isGroupingSelected(attribute)" class="bi bi-check2"></i>
                             </button>
                         </li>
                     </ul>
@@ -129,9 +137,6 @@
                         v-else
                         class="bi bi-list"
                     ></i>
-                    <span class="d-none d-xxl-inline ms-1">
-                        {{ isTableView ? 'Карточки' : 'Таблица' }}
-                    </span>
                 </button>
 
                 <!-- Кнопка для преподавателей: фильтр неподтверждённых (иконки) -->
@@ -155,10 +160,6 @@
                         class="bi bi-exclamation-circle"
                         title="Только неподтверждённые"
                     ></i>
-                    <span class="d-none d-xxl-inline ms-1">
-                        {{ onlyUnconfirmed ? 'Все записи' : 'Неподтверждённые' }}
-                    </span>
-
                     <!-- Сам кружочек -->
                     <span
                         v-if="nonConfirmedObjects.length"
@@ -188,7 +189,7 @@
                         :grouped-data="paginatedGroupedObjects"
                         :group-counts="groupCounts"
                         :attributes="tableAttributes"
-                        :grouping-attribute="selectedAttribute"
+                        :grouping-attributes="selectedAttributes"
                         :sortKey.sync="sortKey"
                         :sortDirection.sync="sortDirection"
                     />
@@ -198,7 +199,7 @@
                         :grouped-data="paginatedGroupedObjects"
                         :group-counts="groupCounts"
                         :object-type="store.getObjectTypeByCode(activeTab)"
-                        :grouping-attribute="selectedAttribute"
+                        :grouping-attributes="selectedAttributes"
                         size="big"
                     />
                 </div>
@@ -287,7 +288,7 @@ export default {
         return {
             activeTab: "",
             searchQuery: "",
-            selectedAttribute: {},
+            selectedAttributes: [],
             store: useMainStore(),
             isTableView: false,
             sortKey: "name",
@@ -302,6 +303,13 @@ export default {
     },
 
     computed: {
+        selectedAttribute() {
+            return this.selectedAttributes[0] || {};
+        },
+        groupingButtonLabel() {
+            if (!this.selectedAttributes.length) return "Группировка";
+            return this.selectedAttributes.map(attribute => attribute.name).join(" → ");
+        },
         portfolioObjects() {
             const userId = this.store.profile?.id;
             if (!userId || hasTeacherAccess()) return [];
@@ -355,52 +363,52 @@ export default {
             return buildGroupingOptions(activeType?.available_attributes);
         },
         groupedObjects() {
-            if (!this.selectedAttribute.code) return null;
-            const groups = {};
-            this.filteredObjects.forEach((obj) => {
-                const attributeCode = this.selectedAttribute.sourceCode || this.selectedAttribute.code;
-                const attributeValue = obj.attributes[attributeCode];
-                if (Array.isArray(attributeValue) && attributeValue.length > 0) {
-                    attributeValue.forEach((val) => {
-                        const key = groupingKey(val, this.selectedAttribute);
-                        if (!groups[key]) groups[key] = [];
-                        groups[key].push(obj);
-                    });
-                } else {
-                    const key = groupingKey(attributeValue, this.selectedAttribute);
-                    if (!groups[key]) groups[key] = [];
-                    groups[key].push(obj);
-                }
-            });
-            Object.keys(groups).forEach((groupKey) => {
-                groups[groupKey].sort((a, b) => compareGroupedObjects(a, b, this.selectedAttribute));
-            });
-            return Object.fromEntries(
-                Object.entries(groups).sort(([a], [b]) => compareGroupingKeys(a, b, this.selectedAttribute))
-            );
+            if (!this.selectedAttributes.length) return null;
+            return this.buildGroupedObjects(this.groupedEntries);
         },
         groupedEntries() {
-            if (!this.groupedObjects) return [];
-            return Object.entries(this.groupedObjects).flatMap(([group, objects]) =>
-                objects.map(object => ({group, object}))
-            );
+            if (!this.selectedAttributes.length) return [];
+
+            const entries = this.filteredObjects.flatMap(object => {
+                const keysByAttribute = this.selectedAttributes.map(attribute =>
+                    this.groupingKeysForObject(object, attribute)
+                );
+                const groupPaths = keysByAttribute.reduce(
+                    (paths, keys) => paths.flatMap(path => keys.map(key => [...path, key])),
+                    [[]]
+                );
+                return groupPaths.map(groups => ({groups, object}));
+            });
+
+            return entries.sort((first, second) => {
+                for (let index = 0; index < this.selectedAttributes.length; index += 1) {
+                    const difference = compareGroupingKeys(
+                        first.groups[index],
+                        second.groups[index],
+                        this.selectedAttributes[index]
+                    );
+                    if (difference) return difference;
+                }
+                return compareGroupedObjects(first.object, second.object, this.selectedAttribute);
+            });
         },
         groupCounts() {
-            if (!this.groupedObjects) return {};
+            const objectIdsByPath = {};
+            this.groupedEntries.forEach(({groups, object}) => {
+                groups.forEach((_, index) => {
+                    const pathKey = this.groupPathKey(groups.slice(0, index + 1));
+                    if (!objectIdsByPath[pathKey]) objectIdsByPath[pathKey] = new Set();
+                    objectIdsByPath[pathKey].add(object.id);
+                });
+            });
             return Object.fromEntries(
-                Object.entries(this.groupedObjects).map(([group, objects]) => [group, objects.length])
+                Object.entries(objectIdsByPath).map(([path, objectIds]) => [path, objectIds.size])
             );
         },
         paginatedGroupedObjects() {
             if (!this.groupedObjects) return null;
             const start = (this.currentPage - 1) * this.pageSize;
-            return this.groupedEntries
-                .slice(start, start + this.pageSize)
-                .reduce((groups, {group, object}) => {
-                    if (!groups[group]) groups[group] = [];
-                    groups[group].push(object);
-                    return groups;
-                }, {});
+            return this.buildGroupedObjects(this.groupedEntries.slice(start, start + this.pageSize));
         },
         isLoading() {
             return this.store.isLoading;
@@ -431,7 +439,7 @@ export default {
             return Math.max(1, Math.ceil(this.paginationTotalItems / this.pageSize));
         },
         paginationTotalItems() {
-            return this.selectedAttribute.code ? this.groupedEntries.length : this.filteredObjects.length;
+            return this.selectedAttributes.length ? this.groupedEntries.length : this.filteredObjects.length;
         },
         paginatedObjects() {
             const start = (this.currentPage - 1) * this.pageSize;
@@ -442,7 +450,7 @@ export default {
             return this.sortedObjects.slice(start, start + this.pageSize);
         },
         hasActiveFilters() {
-            return Boolean(this.searchQuery || this.selectedAttribute.code || this.onlyUnconfirmed);
+            return Boolean(this.searchQuery || this.selectedAttributes.length || this.onlyUnconfirmed);
         },
         hasVisibleResults() {
             return Boolean(
@@ -559,10 +567,30 @@ export default {
             this.isMenuOpen = false;
         },
         selectGrouping(attribute) {
-            this.selectedAttribute = attribute;
-            this.isMenuOpen = false;
+            if (!attribute?.code) {
+                this.selectedAttributes = [];
+                this.isMenuOpen = false;
+            } else {
+                const selectedIndex = this.groupingSelectionIndex(attribute);
+                if (selectedIndex >= 0) {
+                    this.selectedAttributes = this.selectedAttributes.filter(
+                        selected => selected.code !== attribute.code
+                    );
+                } else if (this.selectedAttributes.length < 2) {
+                    this.selectedAttributes = [...this.selectedAttributes, attribute];
+                }
+            }
             this.currentPage = 1;
             this.updatePath();
+        },
+        groupingSelectionIndex(attribute) {
+            return this.selectedAttributes.findIndex(selected => selected.code === attribute?.code);
+        },
+        isGroupingSelected(attribute) {
+            return this.groupingSelectionIndex(attribute) >= 0;
+        },
+        canSelectGrouping(attribute) {
+            return this.selectedAttributes.length < 2 || this.isGroupingSelected(attribute);
         },
         hasUnconfirmed(typeCode) {
             const objects = this.store.getObjectsByType(typeCode);
@@ -580,7 +608,7 @@ export default {
         },
         resetFilters() {
             this.searchQuery = "";
-            this.selectedAttribute = {};
+            this.selectedAttributes = [];
             this.onlyUnconfirmed = false;
             this.currentPage = 1;
             window.clearTimeout(this.searchUpdateTimer);
@@ -590,7 +618,9 @@ export default {
             return {
                 view: this.isTableView ? "table" : "cards",
                 search: this.searchQuery,
-                grouping: this.selectedAttribute?.code || NO_GROUPING_QUERY_VALUE,
+                grouping: this.selectedAttributes.length
+                    ? this.selectedAttributes.map(attribute => attribute.code).join(",")
+                    : NO_GROUPING_QUERY_VALUE,
                 unconfirmed: String(this.onlyUnconfirmed),
                 page: String(this.currentPage),
             };
@@ -619,9 +649,40 @@ export default {
             return this.store.getObjectTypeByCode(this.activeTab)?.params?.default_grouping || "";
         },
         syncGrouping(groupingCode) {
-            this.selectedAttribute = this.groupingAttributes.find(
-                attribute => attribute.code === groupingCode
-            ) || {};
+            const groupingCodes = String(groupingCode || "")
+                .split(",")
+                .map(code => code.trim())
+                .filter(Boolean);
+            this.selectedAttributes = groupingCodes
+                .map(code => this.groupingAttributes.find(attribute => attribute.code === code))
+                .filter((attribute, index, attributes) =>
+                    attribute && attributes.findIndex(item => item.code === attribute.code) === index
+                )
+                .slice(0, 2);
+        },
+        groupingKeysForObject(object, attribute) {
+            const attributeCode = attribute.sourceCode || attribute.code;
+            const value = object.attributes[attributeCode];
+            const values = Array.isArray(value) && value.length ? value : [value];
+            return [...new Set(values.map(item => groupingKey(item, attribute)))];
+        },
+        groupPathKey(groups) {
+            return JSON.stringify(groups);
+        },
+        buildGroupedObjects(entries) {
+            return entries.reduce((result, {groups, object}) => {
+                const primaryGroup = groups[0];
+                if (groups.length === 1) {
+                    if (!result[primaryGroup]) result[primaryGroup] = [];
+                    result[primaryGroup].push(object);
+                } else {
+                    const secondaryGroup = groups[1];
+                    if (!result[primaryGroup]) result[primaryGroup] = {};
+                    if (!result[primaryGroup][secondaryGroup]) result[primaryGroup][secondaryGroup] = [];
+                    result[primaryGroup][secondaryGroup].push(object);
+                }
+                return result;
+            }, {});
         },
         async selectPage(pageNumber) {
             const nextPage = Math.min(Math.max(1, pageNumber), this.totalPages);
@@ -659,6 +720,35 @@ export default {
 .results-updating {
     pointer-events: none;
     opacity: 0.6;
+}
+
+.grouping-button-label {
+    display: inline-block;
+    max-width: 18rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: bottom;
+    white-space: nowrap;
+}
+
+.grouping-menu {
+    min-width: 17rem;
+}
+
+.grouping-menu .dropdown-item.active,
+.grouping-menu .dropdown-item:active {
+    color: var(--silaeder-primary-dark);
+    background: var(--silaeder-primary-soft);
+}
+
+.grouping-menu .dropdown-item:disabled {
+    opacity: 0.48;
+}
+
+.grouping-order-badge {
+    min-width: 1.5rem;
+    color: #fff;
+    background: var(--silaeder-primary);
 }
 
 /* Анимация плавного появления и исчезновения контента */

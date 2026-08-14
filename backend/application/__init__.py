@@ -39,6 +39,19 @@ def create_app(config_name=None):
 
     setup_handlers(app)
     jwt.init_app(app)
+
+    @jwt.expired_token_loader
+    def expired_token_callback(_jwt_header, _jwt_payload):
+        return jsonify({'message': 'Срок действия сессии истёк. Войдите снова.'}), 401
+
+    @jwt.invalid_token_loader
+    def invalid_token_callback(_reason):
+        return jsonify({'message': 'Сессия недействительна. Войдите снова.'}), 401
+
+    @jwt.unauthorized_loader
+    def missing_token_callback(_reason):
+        return jsonify({'message': 'Требуется вход в систему.'}), 401
+
     bcrypt.init_app(app)
 
     # Инициализация базы данных и инструментов миграции
@@ -47,7 +60,12 @@ def create_app(config_name=None):
     init_oidc(app)
 
     # Настройка CORS
-    CORS(app)
+    cors_origins = [
+        origin.strip()
+        for origin in (app.config.get('CORS_ORIGINS') or app.config['BASE_URL']).split(',')
+        if origin.strip()
+    ]
+    CORS(app, origins=cors_origins, supports_credentials=True)
 
     app.register_blueprint(api_blueprint)
     app.register_blueprint(oidc_public_blueprint)

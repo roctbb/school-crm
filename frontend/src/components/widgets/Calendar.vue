@@ -281,8 +281,8 @@ export default {
     }
 
     .calendar-toggle {
-        width: 2.75rem;
-        min-height: 2.75rem;
+        width: var(--silaeder-control-touch);
+        min-height: var(--silaeder-control-touch);
         padding: 0;
         overflow: hidden;
         white-space: nowrap;

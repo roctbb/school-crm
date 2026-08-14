@@ -16,6 +16,14 @@ class Config:
     DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
     DEBUG_QUERIES = os.getenv('DEBUG_QUERIES', 'False').lower() == 'true'
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=12)
+    AUTH_REFRESH_TOKEN_EXPIRES_DAYS = int(os.getenv('AUTH_REFRESH_TOKEN_EXPIRES_DAYS', 30))
+    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=AUTH_REFRESH_TOKEN_EXPIRES_DAYS)
+    JWT_TOKEN_LOCATION = ['headers', 'cookies']
+    JWT_COOKIE_CSRF_PROTECT = True
+    JWT_COOKIE_SAMESITE = 'Lax'
+    JWT_REFRESH_COOKIE_NAME = 'crm_refresh_token'
+    JWT_REFRESH_CSRF_COOKIE_NAME = 'crm_refresh_csrf'
+    JWT_REFRESH_CSRF_HEADER_NAME = 'X-CSRF-TOKEN'
     MAIL_SERVER = os.getenv('MAIL_SERVER', 'smtp.mailtrap.io')
     MAIL_PORT = int(os.getenv('MAIL_PORT', 2525))
     MAIL_USE_TLS = os.getenv('MAIL_USE_TLS', 'True').lower() in ('true', '1')
@@ -50,6 +58,7 @@ class Config:
     MASTER_PASSWORD = os.getenv('MASTER_PASSWORD')
     EXTERNAL_URL = os.getenv('EXTERNAL_URL', '')
     BASE_URL = os.getenv('APP_URL', 'http://localhost:5173')
+    CORS_ORIGINS = os.getenv('CORS_ORIGINS', '')
     OIDC_ISSUER = os.getenv('OIDC_ISSUER')
     OIDC_KEY_PATH = os.getenv(
         'OIDC_KEY_PATH',
@@ -78,6 +87,9 @@ class DevelopmentConfig(Config):
     )
     DEBUG = True
     BASE_URL = os.getenv('APP_URL', "http://localhost:5173")
+    CORS_ORIGINS = os.getenv(
+        'CORS_ORIGINS', 'http://localhost:5173,http://127.0.0.1:5173'
+    )
 
 
 class ProductionConfig(Config):
@@ -88,6 +100,7 @@ class ProductionConfig(Config):
     RATELIMIT_STORAGE_URI = os.getenv('RATELIMIT_STORAGE_URI', 'redis://redis:6379/2')
     DEBUG = False
     BASE_URL = os.getenv('APP_URL', "https://lk.silaeder.ru")
+    CORS_ORIGINS = os.getenv('CORS_ORIGINS', BASE_URL)
 
 
 class TestingConfig(Config):

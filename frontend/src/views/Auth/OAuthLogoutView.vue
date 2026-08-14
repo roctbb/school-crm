@@ -18,10 +18,10 @@ export default {
                 id_token_hint: this.$route.query.id_token_hint,
                 state: this.$route.query.state,
             });
-            useMainStore().logout();
+            await useMainStore().logout();
             window.location.replace(result.redirect_uri);
         } catch (_error) {
-            useMainStore().logout();
+            await useMainStore().logout();
             this.$router.replace('/login');
         }
     },

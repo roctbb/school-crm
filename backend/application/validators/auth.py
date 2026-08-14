@@ -24,6 +24,11 @@ def validate_login(data):
     should_have(data, 'email', min_length=1, max_length=120)
     should_have(data, 'password', min_length=6, max_length=32)
 
+    remember_me = data.get('remember_me', False)
+    if not isinstance(remember_me, bool):
+        raise LogicException("Поле remember_me должно быть логическим значением", 400, field='remember_me')
+    data['remember_me'] = remember_me
+
     return data
 
 

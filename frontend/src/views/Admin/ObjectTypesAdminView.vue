@@ -637,13 +637,20 @@ export default {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 2.25rem;
-    height: 2.25rem;
+    width: var(--silaeder-control-sm);
+    height: var(--silaeder-control-sm);
     color: var(--silaeder-muted);
     border: 1px solid var(--silaeder-border);
     border-radius: 0.4rem;
     background: var(--silaeder-surface-subtle);
     cursor: help;
+}
+
+@media (max-width: 767.98px) {
+    .disabled-action-hint {
+        width: var(--silaeder-control-touch);
+        height: var(--silaeder-control-touch);
+    }
 }
 
 .orphan-warning {

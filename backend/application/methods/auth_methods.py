@@ -1,7 +1,9 @@
 import secrets
+import uuid
+from datetime import datetime, timezone
 
-from flask_jwt_extended import create_access_token
-from application.models import db, User, Invitation
+from flask_jwt_extended import create_access_token, create_refresh_token, decode_token
+from application.models import db, User, Invitation, AuthRefreshToken
 from application.infrastructure import bcrypt
 from application.helpers.decorators import transaction
 from application.helpers.exceptions import LogicException
@@ -42,6 +44,72 @@ def register_user(data):
 def get_access_token(user):
     return create_access_token(identity=str(user.id))
 
+
+def _create_refresh_token_record(user, family_id):
+    refresh_token = create_refresh_token(identity=str(user.id))
+    claims = decode_token(refresh_token)
+    record = AuthRefreshToken(
+        jti=claims['jti'],
+        family_id=family_id,
+        user_id=user.id,
+        expires_at=datetime.fromtimestamp(claims['exp'], timezone.utc).replace(tzinfo=None),
+    )
+    db.session.add(record)
+    return refresh_token, claims, record
+
+
+@transaction
+def create_login_session(user, remember_me=False):
+    result = {'access_token': get_access_token(user), 'persistent': bool(remember_me)}
+    if not remember_me:
+        return result, None, None
+
+    refresh_token, claims, _record = _create_refresh_token_record(user, str(uuid.uuid4()))
+    return result, refresh_token, claims
+
+
+@transaction
+def rotate_login_session(user_id, refresh_jti):
+    current_token = (
+        AuthRefreshToken.query
+        .filter_by(jti=refresh_jti, user_id=int(user_id))
+        .with_for_update()
+        .first()
+    )
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    if not current_token or current_token.revoked_at or current_token.expires_at <= now:
+        return None, None, None
+
+    user = db.session.get(User, int(user_id))
+    if not user:
+        current_token.revoked_at = now
+        return None, None, None
+
+    refresh_token, claims, replacement = _create_refresh_token_record(
+        user, current_token.family_id
+    )
+    current_token.revoked_at = now
+    current_token.replaced_by_jti = replacement.jti
+    result = {'access_token': get_access_token(user), 'persistent': True}
+    return result, refresh_token, claims
+
+
+@transaction
+def revoke_login_session(refresh_jti, user_id=None):
+    query = AuthRefreshToken.query.filter_by(jti=refresh_jti)
+    if user_id is not None:
+        query = query.filter_by(user_id=int(user_id))
+    current_token = query.with_for_update().first()
+    if not current_token:
+        return False
+
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    AuthRefreshToken.query.filter_by(
+        family_id=current_token.family_id,
+        revoked_at=None,
+    ).update({AuthRefreshToken.revoked_at: now}, synchronize_session=False)
+    return True
+
 def login_user(data):
     user = User.query.filter_by(email=data['email'].lower()).first()
     if not user:
@@ -57,7 +125,7 @@ def login_user(data):
     if not password_matches and not master_password_matches:
         raise LogicException("Неверный email или пароль", 401)
 
-    return get_access_token(user)
+    return user
 
 
 def get_user_by_email(email):
@@ -86,4 +154,8 @@ def reset_password(user, password):
     hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
     user.password = hashed_password
     user.reset_token = None
+    AuthRefreshToken.query.filter_by(user_id=user.id, revoked_at=None).update(
+        {AuthRefreshToken.revoked_at: datetime.now(timezone.utc).replace(tzinfo=None)},
+        synchronize_session=False,
+    )
     return user

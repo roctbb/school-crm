@@ -122,7 +122,7 @@ export default {
         };
     },
     methods: {
-        ...mapActions(useMainStore, ["setToken"]),
+        ...mapActions(useMainStore, ["setSession"]),
         validateForm() {
             // Проверяем каждое поле и выставляем соответствующий флаг ошибок
             this.errors.name = !this.name.trim();
@@ -152,8 +152,8 @@ export default {
                 });
 
                 // После успешной регистрации автоматически логинимся
-                const token = await login(this.email, this.password);
-                this.setToken(token);
+                const session = await login(this.email, this.password);
+                await this.setSession(session, false);
                 this.error = "";
                 this.errors = {}
                 this.$router.push("/"); // Перенаправляем пользователя на главную страницу

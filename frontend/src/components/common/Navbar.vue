@@ -160,8 +160,8 @@ export default {
     methods: {
         hasAdminAccess,
         ...mapActions(useMainStore, ["logout"]),
-        handleLogout() {
-            this.logout();
+        async handleLogout() {
+            await this.logout();
             this.$router.push("/login");
         },
     },
