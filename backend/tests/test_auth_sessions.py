@@ -14,13 +14,39 @@ def _login(client, test_user, remember_me=False):
     })
 
 
-def test_regular_login_does_not_create_persistent_session(client, app, test_user):
+def test_regular_login_creates_browser_session(client, app, test_user):
     response = _login(client, test_user)
 
     assert response.status_code == 200
     assert response.get_json()['persistent'] is False
-    assert client.get_cookie(app.config['JWT_REFRESH_COOKIE_NAME'], path='/api') is None
-    assert AuthRefreshToken.query.count() == 0
+    refresh_cookie = client.get_cookie(app.config['JWT_REFRESH_COOKIE_NAME'], path='/api')
+    csrf_cookie = client.get_cookie(app.config['JWT_REFRESH_CSRF_COOKIE_NAME'])
+    assert refresh_cookie is not None
+    assert csrf_cookie is not None
+    assert refresh_cookie.expires is None
+    assert csrf_cookie.expires is None
+    assert decode_token(refresh_cookie.value)['persistent'] is False
+    assert AuthRefreshToken.query.count() == 1
+
+
+def test_regular_browser_session_rotates_without_becoming_persistent(client, app, test_user):
+    _login(client, test_user)
+    old_refresh = client.get_cookie(app.config['JWT_REFRESH_COOKIE_NAME'], path='/api').value
+    old_csrf = client.get_cookie(app.config['JWT_REFRESH_CSRF_COOKIE_NAME']).value
+
+    response = client.post(
+        '/api/refresh',
+        headers={app.config['JWT_REFRESH_CSRF_HEADER_NAME']: old_csrf},
+    )
+
+    assert response.status_code == 200
+    assert response.get_json()['persistent'] is False
+    new_refresh_cookie = client.get_cookie(app.config['JWT_REFRESH_COOKIE_NAME'], path='/api')
+    new_csrf_cookie = client.get_cookie(app.config['JWT_REFRESH_CSRF_COOKIE_NAME'])
+    assert new_refresh_cookie.value != old_refresh
+    assert new_refresh_cookie.expires is None
+    assert new_csrf_cookie.expires is None
+    assert decode_token(new_refresh_cookie.value)['persistent'] is False
 
 
 def test_remember_me_rotates_refresh_token(client, app, test_user):
@@ -28,7 +54,9 @@ def test_remember_me_rotates_refresh_token(client, app, test_user):
 
     assert login_response.status_code == 200
     assert login_response.get_json()['persistent'] is True
-    old_refresh = client.get_cookie(app.config['JWT_REFRESH_COOKIE_NAME'], path='/api').value
+    old_refresh_cookie = client.get_cookie(app.config['JWT_REFRESH_COOKIE_NAME'], path='/api')
+    assert old_refresh_cookie.expires is not None
+    old_refresh = old_refresh_cookie.value
     old_csrf = client.get_cookie(app.config['JWT_REFRESH_CSRF_COOKIE_NAME']).value
     old_claims = decode_token(old_refresh)
 
@@ -92,6 +120,26 @@ def test_logout_revokes_refresh_session_and_clears_cookies(client, app, test_use
     assert AuthRefreshToken.query.filter_by(jti=claims['jti']).one().revoked_at is not None
     assert client.get_cookie(app.config['JWT_REFRESH_COOKIE_NAME'], path='/api') is None
     assert client.get_cookie(app.config['JWT_REFRESH_CSRF_COOKIE_NAME']) is None
+
+
+def test_password_reset_starts_non_persistent_browser_session(
+    client, app, db_session, test_user
+):
+    test_user.reset_token = 'valid-reset-token'
+    db_session.commit()
+
+    response = client.post('/api/password/reset', json={
+        'reset_token': 'valid-reset-token',
+        'password': 'new-password',
+    })
+
+    assert response.status_code == 200
+    assert response.get_json()['access_token']
+    assert response.get_json()['persistent'] is False
+    refresh_cookie = client.get_cookie(app.config['JWT_REFRESH_COOKIE_NAME'], path='/api')
+    assert refresh_cookie is not None
+    assert refresh_cookie.expires is None
+    assert decode_token(refresh_cookie.value)['persistent'] is False
 
 
 def test_expired_access_token_has_readable_message(client, test_user):

@@ -6,7 +6,7 @@ from flask_jwt_extended import decode_token, get_jwt, get_jwt_identity, jwt_requ
 
 from application.emails import send_password_reset_email
 from application.methods import register_user, login_user, get_user_by_email, get_user_by_reset_token, reset_password, \
-    get_access_token, set_reset_token, create_login_session, rotate_login_session, revoke_login_session
+    set_reset_token, create_login_session, rotate_login_session, revoke_login_session
 from application.presenters.presenters import present_user
 from application.helpers.decorators import *
 from application.helpers.rate_limit import (
@@ -21,13 +21,13 @@ from application.infrastructure import limiter
 auth_blueprint = Blueprint('auth', __name__)
 
 
-def _set_refresh_cookies(response, refresh_token, claims):
-    max_age = max(0, int(claims['exp']) - int(time.time()))
+def _set_refresh_cookies(response, refresh_token, claims, persistent):
     cookie_options = {
         'secure': request.is_secure,
         'samesite': 'Lax',
-        'max_age': max_age,
     }
+    if persistent:
+        cookie_options['max_age'] = max(0, int(claims['exp']) - int(time.time()))
     response.set_cookie(
         current_app.config['JWT_REFRESH_COOKIE_NAME'],
         refresh_token,
@@ -106,18 +106,26 @@ def login(credentials):
     )
 
     response = jsonify(session)
-    if refresh_token:
-        _set_refresh_cookies(response, refresh_token, refresh_claims)
-    else:
-        _clear_refresh_cookies(response)
+    _set_refresh_cookies(
+        response,
+        refresh_token,
+        refresh_claims,
+        credentials.get('remember_me', False),
+    )
     return response, 200
 
 
 @auth_blueprint.route('/refresh', methods=['POST'])
 @jwt_required(refresh=True, locations=['cookies'])
 def refresh_session_endpoint():
+    refresh_claims = get_jwt()
+    # Старые refresh-токены выдавались только постоянным сессиям и не
+    # содержали этот claim, поэтому отсутствие значения означает True.
+    persistent = bool(refresh_claims.get('persistent', True))
     session, refresh_token, refresh_claims = rotate_login_session(
-        get_jwt_identity(), get_jwt()['jti']
+        get_jwt_identity(),
+        refresh_claims['jti'],
+        persistent,
     )
     if not session:
         response = jsonify({
@@ -127,7 +135,7 @@ def refresh_session_endpoint():
         return response, 401
 
     response = jsonify(session)
-    _set_refresh_cookies(response, refresh_token, refresh_claims)
+    _set_refresh_cookies(response, refresh_token, refresh_claims, persistent)
     return response, 200
 
 
@@ -173,5 +181,8 @@ def password_email_endpoint(validated_data):
 @validate_request_with(validate_reset_request)
 def password_reset_endpoint(validate_data):
     user = get_user_by_reset_token(validate_data.get('reset_token'))
-    reset_password(user, validate_data.get('password'))
-    return jsonify({"access_token": get_access_token(user)}), 200
+    user = reset_password(user, validate_data.get('password'))
+    session, refresh_token, refresh_claims = create_login_session(user, False)
+    response = jsonify(session)
+    _set_refresh_cookies(response, refresh_token, refresh_claims, False)
+    return response, 200

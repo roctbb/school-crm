@@ -1,5 +1,5 @@
 import {defineStore} from "pinia";
-import {getProfile, logoutSession, refreshSession} from "@/api/auth_api.js";
+import {getProfile, hasRefreshSession, logoutSession, refreshSession} from "@/api/auth_api.js";
 import {fetchObjectTypes, fetchObjectsByType, fetchObjects} from "@/api/objects_api.js";
 import api_client from "@/api/client.js";
 import CrmObject from "@/models/CrmObject.js";
@@ -12,9 +12,17 @@ const REMEMBER_SESSION_KEY = 'crm_remember_session';
 const AUTH_MESSAGE_KEY = 'crm_auth_message';
 const LEGACY_TOKEN_KEY = 'token';
 const SESSION_EXPIRED_MESSAGE = 'Срок действия сессии истёк. Войдите снова.';
+const REFRESH_LOCK_NAME = 'crm-session-refresh';
 
 let refreshPromise = null;
 let sessionExpirationHandled = false;
+
+async function withRefreshLock(callback) {
+    if (typeof navigator !== 'undefined' && navigator.locks?.request) {
+        return await navigator.locks.request(REFRESH_LOCK_NAME, callback);
+    }
+    return await callback();
+}
 
 const useMainStore = defineStore("mainStore", {
     // Состояние
@@ -153,24 +161,32 @@ const useMainStore = defineStore("mainStore", {
         },
 
         async refreshAccessToken() {
-            if (!localStorage.getItem(REMEMBER_SESSION_KEY)) return false;
+            if (!hasRefreshSession()) return false;
             if (refreshPromise) return await refreshPromise;
 
-            refreshPromise = (async () => {
+            refreshPromise = withRefreshLock(async () => {
+                // Пока вкладка ждала блокировку, другая вкладка могла выйти из системы.
+                if (!hasRefreshSession()) return false;
                 try {
                     const session = await refreshSession();
                     if (!session?.access_token) return false;
                     this.storeAccessToken(session.access_token);
-                    localStorage.setItem(REMEMBER_SESSION_KEY, '1');
+                    if (session.persistent) {
+                        localStorage.setItem(REMEMBER_SESSION_KEY, '1');
+                    } else {
+                        localStorage.removeItem(REMEMBER_SESSION_KEY);
+                    }
                     sessionExpirationHandled = false;
                     return true;
                 } catch (_error) {
                     return false;
-                } finally {
-                    refreshPromise = null;
                 }
-            })();
-            return await refreshPromise;
+            });
+            try {
+                return await refreshPromise;
+            } finally {
+                refreshPromise = null;
+            }
         },
 
         reset() {
@@ -205,7 +221,7 @@ const useMainStore = defineStore("mainStore", {
                 }
             }
 
-            if (localStorage.getItem(REMEMBER_SESSION_KEY) && await this.refreshAccessToken()) {
+            if (hasRefreshSession() && await this.refreshAccessToken()) {
                 try {
                     if (await this.tryLoadProfile()) return true;
                 } catch (_error) {
@@ -215,7 +231,7 @@ const useMainStore = defineStore("mainStore", {
                 }
             }
 
-            if (token || localStorage.getItem(REMEMBER_SESSION_KEY)) {
+            if (token || hasRefreshSession() || localStorage.getItem(REMEMBER_SESSION_KEY)) {
                 this.expireSession();
             }
             return false;

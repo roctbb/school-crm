@@ -10,6 +10,10 @@ function getCookie(name) {
     return item ? decodeURIComponent(item.slice(prefix.length)) : null;
 }
 
+export function hasRefreshSession() {
+    return Boolean(getCookie(REFRESH_CSRF_COOKIE));
+}
+
 async function sessionRequest(path) {
     const csrfToken = getCookie(REFRESH_CSRF_COOKIE);
     const headers = csrfToken ? {'X-CSRF-TOKEN': csrfToken} : {};

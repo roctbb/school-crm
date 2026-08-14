@@ -45,8 +45,11 @@ def get_access_token(user):
     return create_access_token(identity=str(user.id))
 
 
-def _create_refresh_token_record(user, family_id):
-    refresh_token = create_refresh_token(identity=str(user.id))
+def _create_refresh_token_record(user, family_id, persistent):
+    refresh_token = create_refresh_token(
+        identity=str(user.id),
+        additional_claims={'persistent': bool(persistent)},
+    )
     claims = decode_token(refresh_token)
     record = AuthRefreshToken(
         jti=claims['jti'],
@@ -61,15 +64,16 @@ def _create_refresh_token_record(user, family_id):
 @transaction
 def create_login_session(user, remember_me=False):
     result = {'access_token': get_access_token(user), 'persistent': bool(remember_me)}
-    if not remember_me:
-        return result, None, None
-
-    refresh_token, claims, _record = _create_refresh_token_record(user, str(uuid.uuid4()))
+    refresh_token, claims, _record = _create_refresh_token_record(
+        user,
+        str(uuid.uuid4()),
+        remember_me,
+    )
     return result, refresh_token, claims
 
 
 @transaction
-def rotate_login_session(user_id, refresh_jti):
+def rotate_login_session(user_id, refresh_jti, persistent=True):
     current_token = (
         AuthRefreshToken.query
         .filter_by(jti=refresh_jti, user_id=int(user_id))
@@ -86,11 +90,13 @@ def rotate_login_session(user_id, refresh_jti):
         return None, None, None
 
     refresh_token, claims, replacement = _create_refresh_token_record(
-        user, current_token.family_id
+        user,
+        current_token.family_id,
+        persistent,
     )
     current_token.revoked_at = now
     current_token.replaced_by_jti = replacement.jti
-    result = {'access_token': get_access_token(user), 'persistent': True}
+    result = {'access_token': get_access_token(user), 'persistent': bool(persistent)}
     return result, refresh_token, claims
 
 
