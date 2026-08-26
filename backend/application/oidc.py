@@ -99,6 +99,26 @@ def get_oidc_identity(user):
     return identity
 
 
+def get_oidc_identity_grade(identity):
+    """Return a normalized school grade from the CRM student object."""
+    if not identity or identity.type.code not in {'student', 'students'}:
+        return None
+    value = (identity.attributes or {}).get('grade')
+    if isinstance(value, list):
+        value = value[0] if len(value) == 1 else None
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        grade = value
+    elif isinstance(value, float) and value.is_integer():
+        grade = int(value)
+    elif isinstance(value, str) and value.strip().isdigit():
+        grade = int(value.strip())
+    else:
+        return None
+    return grade if 1 <= grade <= 11 else None
+
+
 def save_token(token, request):
     issued_at = int(time.time())
     refresh_token = token.get('refresh_token')
@@ -216,15 +236,18 @@ def oidc_user_info(user, scope):
 
     info = UserInfo(sub=identity.sso_subject)
     if 'profile' in scopes:
+        grade = get_oidc_identity_grade(identity)
         info.update({
             'name': identity.name,
             'preferred_username': identity.name,
             'object_id': identity.id,
             'object_type': identity.type.code,
+            'grade': grade,
             'crm_object': {
                 'id': identity.id,
                 'type': identity.type.code,
                 'name': identity.name,
+                'grade': grade,
             },
         })
     if 'email' in scopes:

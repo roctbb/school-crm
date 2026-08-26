@@ -57,7 +57,7 @@ http://localhost:5000/auth/crm/callback
 | Scope | Что сервис получает |
 | --- | --- |
 | `openid` | Стабильный идентификатор привязанного объекта CRM `sub`; обязателен |
-| `profile` | `name`, `preferred_username`, `object_id`, `object_type`, `crm_object` |
+| `profile` | `name`, `preferred_username`, `object_id`, `object_type`, `grade`, `crm_object` |
 | `email` | `email`, `email_verified` |
 | `roles` | `role` и `roles` |
 | `avatar` | Стандартный claim `picture` со ссылкой на фотографию объекта |
@@ -67,7 +67,10 @@ http://localhost:5000/auth/crm/callback
 профили по `object_id` или email: числовой ID локален для установки, почта может
 измениться, а `sub` остаётся прежним. `object_type` содержит код типа объекта,
 например `students` или `teachers`; `crm_object` содержит безопасный минимум
-`id`, `type`, `name` без произвольных атрибутов CRM.
+`id`, `type`, `name` и нормализованный `grade`. Для объекта ученика `grade`
+берётся из `attributes.grade` и возвращается целым числом от 1 до 11; для других
+типов объектов и некорректного значения он равен `null`. Другие произвольные
+атрибуты CRM в OIDC не раскрываются.
 
 Claim `picture` появляется, только если у объекта идентичности есть видимый файловый
 атрибут `photo`. Это защищённый URL: скачивайте изображение с тем же заголовком

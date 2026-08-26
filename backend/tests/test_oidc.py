@@ -200,6 +200,8 @@ def test_authorization_code_pkce_userinfo_refresh_and_revocation(client):
     registered, _admin = _create_registered_client(client)
     secret = registered['client_secret']
     user = _create_user()
+    user.identity_object.attributes = {'grade': '9'}
+    db.session.commit()
     verifier, params = _authorization_params()
     code = _authorize(client, user, params)
 
@@ -230,10 +232,12 @@ def test_authorization_code_pkce_userinfo_refresh_and_revocation(client):
     assert claims['name'] == user.identity_object.name
     assert claims['object_id'] == user.identity_object.id
     assert claims['object_type'] == 'students'
+    assert claims['grade'] == 9
     assert claims['crm_object'] == {
         'id': user.identity_object.id,
         'type': 'students',
         'name': user.identity_object.name,
+        'grade': 9,
     }
     assert claims['nonce'] == params['nonce']
     assert claims['email'] == user.email
@@ -254,6 +258,7 @@ def test_authorization_code_pkce_userinfo_refresh_and_revocation(client):
     assert userinfo.status_code == 200
     assert userinfo.get_json()['sub'] == user.identity_object.sso_subject
     assert userinfo.get_json()['crm_object']['id'] == user.identity_object.id
+    assert userinfo.get_json()['grade'] == 9
 
     replay = _exchange_code(client, code, verifier, secret)
     assert replay.status_code == 400
