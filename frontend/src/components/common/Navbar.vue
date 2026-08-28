@@ -124,6 +124,15 @@
                         </template>
                         <li>
                             <router-link
+                                :to="{name: 'ChangePassword'}"
+                                class="dropdown-item"
+                                active-class="active"
+                            >
+                                <i class="bi bi-key me-2"></i>Изменить пароль
+                            </router-link>
+                        </li>
+                        <li>
+                            <router-link
                                 :to="{name: 'NotificationSettings'}"
                                 class="dropdown-item"
                                 active-class="active"

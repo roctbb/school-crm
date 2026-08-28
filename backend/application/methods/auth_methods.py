@@ -121,17 +121,21 @@ def login_user(data):
     if not user:
         raise LogicException("Неверный email или пароль", 401)
 
-    password_matches = bool(user.password) and bcrypt.check_password_hash(user.password, data['password'])
-    master_password = current_app.config.get('MASTER_PASSWORD')
-    master_password_matches = bool(master_password) and secrets.compare_digest(
-        data['password'].encode('utf-8'),
-        master_password.encode('utf-8'),
-    )
-
-    if not password_matches and not master_password_matches:
+    if not verify_user_password(user, data['password']):
         raise LogicException("Неверный email или пароль", 401)
 
     return user
+
+
+def verify_user_password(user, password):
+    password_matches = bool(user.password) and bcrypt.check_password_hash(user.password, password)
+    master_password = current_app.config.get('MASTER_PASSWORD')
+    master_password_matches = bool(master_password) and secrets.compare_digest(
+        password.encode('utf-8'),
+        master_password.encode('utf-8'),
+    )
+
+    return password_matches or master_password_matches
 
 
 def get_user_by_email(email):
@@ -157,6 +161,20 @@ def set_reset_token(user):
 
 @transaction
 def reset_password(user, password):
+    _replace_password(user, password)
+    return user
+
+
+@transaction
+def change_password(user, current_password, new_password):
+    if not verify_user_password(user, current_password):
+        raise LogicException("Текущий пароль указан неверно", 400, field='current_password')
+
+    _replace_password(user, new_password)
+    return user
+
+
+def _replace_password(user, password):
     hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
     user.password = hashed_password
     user.reset_token = None
@@ -164,4 +182,3 @@ def reset_password(user, password):
         {AuthRefreshToken.revoked_at: datetime.now(timezone.utc).replace(tzinfo=None)},
         synchronize_session=False,
     )
-    return user

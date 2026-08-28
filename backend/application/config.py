@@ -55,6 +55,9 @@ class Config:
     AUTH_PASSWORD_RESET_TOKEN_RATE_LIMIT = os.getenv(
         'AUTH_PASSWORD_RESET_TOKEN_RATE_LIMIT', '10 per hour'
     )
+    AUTH_PASSWORD_CHANGE_RATE_LIMIT = os.getenv(
+        'AUTH_PASSWORD_CHANGE_RATE_LIMIT', '20 per hour'
+    )
     MASTER_PASSWORD = os.getenv('MASTER_PASSWORD')
     EXTERNAL_URL = os.getenv('EXTERNAL_URL', '')
     BASE_URL = os.getenv('APP_URL', 'http://localhost:5173')

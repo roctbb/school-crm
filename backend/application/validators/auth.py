@@ -48,3 +48,18 @@ def validate_reset_request(data):
     should_have(data, 'reset_token', min_length=6, max_length=100)
 
     return data
+
+
+def validate_change_password_request(data):
+    should_have(data, 'current_password', min_length=1, max_length=256)
+    should_have(data, 'new_password', min_length=6, max_length=32)
+    should_have(data, 'new_password_confirmation', min_length=6, max_length=32)
+
+    if data['new_password'] != data['new_password_confirmation']:
+        raise LogicException(
+            "Новый пароль и подтверждение не совпадают",
+            400,
+            field='new_password_confirmation',
+        )
+
+    return data

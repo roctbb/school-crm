@@ -70,3 +70,15 @@ export async function resetPassword({token, password}) {
         body: JSON.stringify({reset_token: token, password: password}),
     });
 }
+
+export async function changePassword({currentPassword, newPassword, newPasswordConfirmation}) {
+    return await api_client.fetch(`/password/change`, {
+        method: 'POST',
+        body: JSON.stringify({
+            current_password: currentPassword,
+            new_password: newPassword,
+            new_password_confirmation: newPasswordConfirmation,
+        }),
+        credentials: 'include',
+    });
+}

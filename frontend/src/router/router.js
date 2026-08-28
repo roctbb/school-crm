@@ -63,6 +63,12 @@ const routes = [
         meta: {requiresAuth: true, requiresAdmin: true}
     },
     {
+        path: '/settings/password',
+        name: 'ChangePassword',
+        component: () => import('@/views/Settings/ChangePasswordView.vue'),
+        meta: {requiresAuth: true}
+    },
+    {
         path: '/settings/notifications',
         name: 'NotificationSettings',
         component: () => import('@/views/Settings/NotificationSettingsView.vue'),
