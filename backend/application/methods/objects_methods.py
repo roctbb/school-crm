@@ -76,6 +76,7 @@ def get_available_objects_by_type_code(type_code):
                                                                                      selectinload(Object.parents),
                                                                                      selectinload(Object.children),
                                                                                      selectinload(Object.owners),
+                                                                                     selectinload(Object.identity_user),
                                                                                      selectinload(
                                                                                          Object.comments)).all()
     return result
@@ -87,6 +88,7 @@ def get_available_objects():
     result = Object.query.filter_by(deleted_at=None).options(selectinload(Object.type), selectinload(Object.parents),
                                                              selectinload(Object.children),
                                                              selectinload(Object.owners),
+                                                             selectinload(Object.identity_user),
                                                              selectinload(
                                                                  Object.comments)).all()
     logging.log(

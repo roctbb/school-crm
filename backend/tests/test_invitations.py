@@ -105,3 +105,58 @@ def test_non_admin_cannot_delete_invitations(client, db_session, auth_headers):
     assert bulk.status_code == 403
     db_session.refresh(invitation)
     assert invitation.deleted_at is None
+
+
+def test_admin_creates_invitation_for_single_student(
+        client, db_session, admin_user, admin_headers):
+    object_type = ObjectType(name='Students', code='students')
+    student = Object(name='Student', type=object_type)
+    db_session.add_all([object_type, student])
+    db_session.commit()
+
+    response = client.post(f'/api/invitations/objects/{student.id}', headers=admin_headers)
+
+    assert response.status_code == 201
+    payload = response.get_json()
+    assert payload['object_id'] == student.id
+    assert payload['role'] == 'student'
+    assert payload['key']
+    assert payload['creator']['id'] == admin_user.id
+    assert Invitation.query.filter_by(object_id=student.id, deleted_at=None).count() == 1
+
+    duplicate = client.post(f'/api/invitations/objects/{student.id}', headers=admin_headers)
+    assert duplicate.status_code == 409
+    assert Invitation.query.filter_by(object_id=student.id, deleted_at=None).count() == 1
+
+
+def test_admin_cannot_create_invitation_for_student_with_linked_user(
+        client, db_session, admin_headers):
+    object_type = ObjectType(name='Students', code='students')
+    student = Object(name='Student', type=object_type)
+    linked_user = User(
+        name='Linked Student',
+        email='linked-student@example.com',
+        password=bcrypt.generate_password_hash('password123').decode('utf-8'),
+        role='student',
+    )
+    linked_user.identity_object = student
+    db_session.add_all([object_type, student, linked_user])
+    db_session.commit()
+
+    response = client.post(f'/api/invitations/objects/{student.id}', headers=admin_headers)
+
+    assert response.status_code == 409
+    assert Invitation.query.filter_by(object_id=student.id).count() == 0
+
+
+def test_non_admin_cannot_create_invitation_for_single_student(
+        client, db_session, auth_headers):
+    object_type = ObjectType(name='Students', code='students')
+    student = Object(name='Student', type=object_type)
+    db_session.add_all([object_type, student])
+    db_session.commit()
+
+    response = client.post(f'/api/invitations/objects/{student.id}', headers=auth_headers)
+
+    assert response.status_code == 403
+    assert Invitation.query.filter_by(object_id=student.id).count() == 0

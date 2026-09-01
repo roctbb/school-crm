@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify
 from application.helpers.decorators import requires_user, requires_roles, validate_request_with
 from application.methods import (
+    create_invitation_for_object,
     create_invitations_for,
     delete_all_unused_invitations,
     delete_invitation,
@@ -11,6 +12,14 @@ from application.presenters.presenters import present_invitation
 from application.validators import validate_invitations_request
 
 invitations_blueprint = Blueprint('invitations', __name__, url_prefix='/invitations')
+
+
+@invitations_blueprint.route('/objects/<int:object_id>', methods=['POST'])
+@requires_user
+@requires_roles(['admin'])
+def create_invitation_for_object_endpoint(user, object_id):
+    invitation = create_invitation_for_object(user, object_id)
+    return jsonify(present_invitation(invitation)), 201
 
 
 @invitations_blueprint.route('', methods=['GET'])

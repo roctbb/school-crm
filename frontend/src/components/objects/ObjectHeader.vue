@@ -82,6 +82,27 @@
               <i class="bi bi-stop-circle me-1"></i> Отменить изменения
             </button>
           </li>
+          <li v-if="showInvitationActions"><hr class="dropdown-divider"></li>
+          <li v-if="canCreateInvitation">
+            <button
+              class="dropdown-item"
+              :disabled="isCreatingInvitation"
+              @click="handleCreateInvitation"
+            >
+              <span
+                v-if="isCreatingInvitation"
+                class="spinner-border spinner-border-sm me-1"
+                aria-hidden="true"
+              ></span>
+              <i v-else class="bi bi-person-plus me-1"></i>
+              Создать инвайт
+            </button>
+          </li>
+          <li v-else-if="canCopyInvitation">
+            <button class="dropdown-item" @click="handleCopyInvitation">
+              <i class="bi bi-clipboard me-1"></i> Скопировать инвайт
+            </button>
+          </li>
           <li v-if="canDeleteObject(object)">
             <button class="dropdown-item text-danger" @click="handleDelete()">
               <i class="bi bi-trash me-1"></i> Удалить
@@ -89,6 +110,16 @@
           </li>
         </ul>
       </div>
+      <div
+        v-if="invitationMessage"
+        class="small text-success mt-2"
+        role="status"
+      >{{ invitationMessage }}</div>
+      <div
+        v-if="invitationError"
+        class="small text-danger mt-2"
+        role="alert"
+      >{{ invitationError }}</div>
     </div>
   </header>
 </template>
@@ -99,9 +130,11 @@ import { capitalize } from "@/utils/helpers.js";
 import {
   canModifyObject,
   canDeleteObject,
+  hasAdminAccess,
   hasTeacherAccess
 } from "@/utils/access.js";
 import {normalizeFileUrls, resolveFileUrl} from "@/api/files_api.js";
+import {createInvitationForObject} from "@/api/invitations_api.js";
 
 export default {
   name: "ObjectHeader",
@@ -124,8 +157,31 @@ export default {
       photoFailed: false,
       previousPhotos: [],
       showPhotoHistory: false,
-      photoLoadId: 0
+      photoLoadId: 0,
+      isCreatingInvitation: false,
+      invitationMessage: "",
+      invitationError: "",
+      invitationMessageTimer: null
     };
+  },
+  computed: {
+    isStudentObject() {
+      return ["student", "students"].includes(this.object_type.code);
+    },
+    canCreateInvitation() {
+      return this.isStudentObject
+        && hasAdminAccess()
+        && !this.object.invitation
+        && !this.object.has_registered_owner;
+    },
+    canCopyInvitation() {
+      return this.isStudentObject
+        && hasAdminAccess()
+        && Boolean(this.object.invitation);
+    },
+    showInvitationActions() {
+      return this.canCreateInvitation || this.canCopyInvitation;
+    }
   },
   watch: {
     'object.attributes.photo': {
@@ -137,13 +193,54 @@ export default {
   },
   beforeUnmount() {
     this.photoLoadId += 1;
+    if (this.invitationMessageTimer) clearTimeout(this.invitationMessageTimer);
     this.releasePhotoUrls();
   },
   methods: {
     capitalize,
     canModifyObject,
     canDeleteObject,
+    hasAdminAccess,
     hasTeacherAccess,
+    showInvitationSuccess(message) {
+      this.invitationMessage = message;
+      this.invitationError = "";
+      if (this.invitationMessageTimer) clearTimeout(this.invitationMessageTimer);
+      this.invitationMessageTimer = setTimeout(() => {
+        this.invitationMessage = "";
+        this.invitationMessageTimer = null;
+      }, 2000);
+    },
+    async handleCreateInvitation() {
+      if (!this.canCreateInvitation || this.isCreatingInvitation) return;
+
+      this.isCreatingInvitation = true;
+      this.invitationMessage = "";
+      this.invitationError = "";
+      try {
+        this.object.invitation = await createInvitationForObject(this.object.id);
+        this.showInvitationSuccess("Инвайт создан");
+      } catch (error) {
+        this.invitationError = error.message || "Не удалось создать инвайт";
+      } finally {
+        this.isCreatingInvitation = false;
+      }
+    },
+    async handleCopyInvitation() {
+      const key = this.object.invitation?.key;
+      if (!key) return;
+
+      const inviteUrl = `${window.location.origin}/register?invite=${key}`;
+      this.invitationMessage = "";
+      this.invitationError = "";
+      try {
+        await navigator.clipboard.writeText(inviteUrl);
+        this.showInvitationSuccess("Инвайт скопирован");
+      } catch (error) {
+        this.invitationError = "Не удалось скопировать инвайт";
+        console.error("Ошибка при копировании инвайта:", error);
+      }
+    },
     releasePhotoUrls() {
       [this.photoUrl, ...this.previousPhotos.map(photo => photo.resolved)].forEach(url => {
         if (url?.startsWith('blob:')) URL.revokeObjectURL(url);

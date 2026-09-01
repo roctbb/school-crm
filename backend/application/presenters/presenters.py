@@ -84,12 +84,14 @@ def present_object(obj, user=None):
         return attributes
 
     invitation = None
-    has_registered_owner = bool([invitation for invitation in obj.invitations if
-                                 invitation.used_at])
+    has_registered_owner = bool(
+        obj.identity_user
+        or [invitation for invitation in obj.invitations if invitation.used_at or invitation.user_id]
+    )
 
     if user and has_admin_access(user):
         invitations = [invitation for invitation in obj.invitations if
-                       not invitation.used_at and not invitation.deleted_at]
+                       not invitation.used_at and not invitation.user_id and not invitation.deleted_at]
 
         if invitations:
             invitation = present_invitation(invitations[0])

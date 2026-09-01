@@ -27,6 +27,12 @@ export async function createInvitations(typeCode, role) {
     });
 }
 
+export async function createInvitationForObject(objectId) {
+    return await api_client.fetch(`/invitations/objects/${objectId}`, {
+        method: "POST",
+    });
+}
+
 export async function deleteInvitation(invitationId) {
     return await api_client.fetch(`/invitations/${invitationId}`, {
         method: "DELETE",

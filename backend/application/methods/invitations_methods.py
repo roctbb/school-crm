@@ -6,6 +6,12 @@ from application.helpers.decorators import transaction
 from application.helpers.exceptions import LogicException
 
 
+INVITATION_ROLES_BY_OBJECT_TYPE = {
+    'student': 'student',
+    'students': 'student',
+}
+
+
 def get_invitations():
     return Invitation.query.filter_by(user_id=None, used_at=None, deleted_at=None).order_by(
         Invitation.created_at.desc(), Invitation.id.desc()
@@ -21,6 +27,50 @@ def get_unused_invitation_by_id(invitation_id):
     ).first()
     if not invitation:
         raise LogicException("Инвайт не найден", 404)
+    return invitation
+
+
+@transaction
+def create_invitation_for_object(user, object_id):
+    locked_object_id = (
+        db.session.query(Object.id)
+        .filter_by(id=object_id, deleted_at=None)
+        .with_for_update()
+        .scalar()
+    )
+    if not locked_object_id:
+        raise LogicException("Объект не найден", 404)
+    obj = db.session.get(Object, locked_object_id)
+
+    role = INVITATION_ROLES_BY_OBJECT_TYPE.get(obj.type.code)
+    if not role:
+        raise LogicException("Инвайт можно создать только для ученика", 422)
+
+    existing_invitation = (
+        Invitation.query
+        .filter_by(object_id=obj.id, deleted_at=None)
+        .order_by(Invitation.created_at.desc(), Invitation.id.desc())
+        .first()
+    )
+    has_linked_user = bool(
+        obj.identity_user
+        or (
+            existing_invitation
+            and (existing_invitation.used_at or existing_invitation.user_id)
+        )
+    )
+    if has_linked_user:
+        raise LogicException("К ученику уже привязан пользователь", 409)
+    if existing_invitation:
+        raise LogicException("У ученика уже есть активный инвайт", 409)
+
+    invitation = Invitation(
+        object_id=obj.id,
+        key=secrets.token_urlsafe(16),
+        role=role,
+        creator_id=user.id,
+    )
+    db.session.add(invitation)
     return invitation
 
 
