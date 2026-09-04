@@ -14,6 +14,14 @@ def present_user(user):
     }
 
 
+def present_admin_user(user):
+    return {
+        **present_user(user),
+        'identity_object': present_connected_object(user.identity_object)
+        if user.identity_object else None,
+    }
+
+
 def present_oauth_client(client):
     return {
         'id': client.id,
@@ -115,6 +123,8 @@ def present_object(obj, user=None):
         'updated_at': obj.updated_at.isoformat(),
         'deleted_at': obj.deleted_at.isoformat() if obj.deleted_at else None,
         'owners': [present_user(owner) for owner in obj.owners],
+        'identity_user': present_user(obj.identity_user)
+        if user and has_admin_access(user) and obj.identity_user else None,
         'children': [present_connected_object(child) for child in obj.children if not child.deleted_at],
         'parents': [present_connected_object(child) for child in obj.parents if not child.deleted_at],
         'comments': comments,

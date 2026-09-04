@@ -82,6 +82,15 @@
               <i class="bi bi-stop-circle me-1"></i> Отменить изменения
             </button>
           </li>
+          <li v-if="canOpenUser"><hr class="dropdown-divider"></li>
+          <li v-if="canOpenUser">
+            <router-link
+              :to="{name: 'UsersAdmin', params: {userId: object.identity_user.id}}"
+              class="dropdown-item"
+            >
+              <i class="bi bi-person me-1"></i> Перейти к пользователю
+            </router-link>
+          </li>
           <li v-if="showInvitationActions"><hr class="dropdown-divider"></li>
           <li v-if="canCreateInvitation">
             <button
@@ -173,6 +182,9 @@ export default {
         && hasAdminAccess()
         && !this.object.invitation
         && !this.object.has_registered_owner;
+    },
+    canOpenUser() {
+      return hasAdminAccess() && Boolean(this.object.identity_user);
     },
     canCopyInvitation() {
       return this.isStudentObject

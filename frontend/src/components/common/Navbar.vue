@@ -95,6 +95,15 @@
                             <li><h6 class="dropdown-header">Администрирование</h6></li>
                             <li>
                                 <router-link
+                                    :to="{name: 'UsersAdmin'}"
+                                    class="dropdown-item"
+                                    active-class="active"
+                                >
+                                    <i class="bi bi-people me-2"></i>Пользователи
+                                </router-link>
+                            </li>
+                            <li>
+                                <router-link
                                     :to="{name: 'ObjectTypesAdmin'}"
                                     class="dropdown-item"
                                     active-class="active"

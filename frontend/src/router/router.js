@@ -45,6 +45,12 @@ const routes = [
         })
     },
     {
+        path: '/admin/users/:userId?',
+        name: 'UsersAdmin',
+        component: () => import('@/views/Admin/UsersAdminView.vue'),
+        meta: {requiresAuth: true, requiresAdmin: true}
+    },
+    {
         path: '/admin/object-types',
         name: 'ObjectTypesAdmin',
         component: () => import('@/views/Admin/ObjectTypesAdminView.vue'),
