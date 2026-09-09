@@ -6,6 +6,18 @@ const NO_GROUPING_QUERY_VALUE = '__none__';
 
 const routes = [
     {
+        path: '/public/birthdays',
+        name: 'BirthdayDisplay',
+        component: () => import('@/views/Public/BirthdayDisplayView.vue'),
+        meta: {publicPage: true}
+    },
+    {
+        path: '/settings/birthday-display',
+        name: 'BirthdayDisplaySettings',
+        component: () => import('@/views/Settings/BirthdayDisplaySettingsView.vue'),
+        meta: {requiresAuth: true, requiresAdmin: true}
+    },
+    {
         path: '/login',
         name: 'Login',
         component: () => import('@/views/Auth/LoginView.vue'),
@@ -224,6 +236,7 @@ const router = createRouter({
 
 router.beforeEach(async (to) => {
     startNavigationLoading();
+    if (to.meta.publicPage) return true;
     const store = useMainStore();
     const has_auth = await store.checkAuth();
     console.log("Router auth check: ", has_auth ? "OK" : "FAIL");

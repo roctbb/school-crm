@@ -4,6 +4,13 @@ import time
 import uuid
 
 
+class BirthdayDisplay(db.Model):
+    __tablename__ = 'birthday_display'
+
+    id = db.Column(db.Integer, primary_key=True)
+    key = db.Column(db.String(64), nullable=True)
+
+
 class User(db.Model):
     __tablename__ = 'users'
 

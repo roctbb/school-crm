@@ -20,11 +20,12 @@ app.config.globalProperties.$appName = APP_NAME;
 
 app.use(pinia);
 
-useMainStore().loadStateFromLocalStorage().then(() => {
+const publicPage = router.resolve(window.location.pathname).meta.publicPage;
+const initializeSession = publicPage ? Promise.resolve() : useMainStore().loadStateFromLocalStorage();
+initializeSession.then(() => {
     app.use(router);
     app.mount('#app');
 })
-
 
 
 

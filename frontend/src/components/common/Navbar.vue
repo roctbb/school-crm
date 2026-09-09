@@ -94,6 +94,11 @@
                         <template v-if="hasAdminAccess()">
                             <li><h6 class="dropdown-header">Администрирование</h6></li>
                             <li>
+                                <router-link :to="{name: 'BirthdayDisplaySettings'}" class="dropdown-item" active-class="active">
+                                    <i class="bi bi-display me-2"></i>Экран дней рождения
+                                </router-link>
+                            </li>
+                            <li>
                                 <router-link
                                     :to="{name: 'UsersAdmin'}"
                                     class="dropdown-item"
