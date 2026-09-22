@@ -80,6 +80,27 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  scheduler:
+    build: ./backend
+    container_name: crm_scheduler
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/postgres
+      FLASK_ENV: production
+    command: celery -A wsgi.celery beat --loglevel=info --schedule=/tmp/celerybeat-schedule
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   telegram-bot:
     build: ./backend
     container_name: crm_telegram_bot

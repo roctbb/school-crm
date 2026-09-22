@@ -74,6 +74,12 @@ def create_app(config_name=None):
     celery.conf.update(app.config)
     celery.conf.broker_url = app.config['CELERY_BROKER_URL']
     celery.conf.result_backend = app.config['CELERY_BACKEND']
+    celery.conf.beat_schedule = {
+        'admin-birthday-notifications': {
+            'task': 'application.tasks.birthdays.send_admin_birthday_notifications',
+            'schedule': 300.0,
+        },
+    }
 
     limiter.init_app(app)
 

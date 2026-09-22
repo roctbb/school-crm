@@ -163,6 +163,7 @@ class Notification(db.Model):
         db.UniqueConstraint(
             'source_client_id', 'idempotency_key', name='uq_notifications_client_idempotency'
         ),
+        db.UniqueConstraint('system_key', name='uq_notifications_system_key'),
     )
 
     id = db.Column(db.Integer, primary_key=True)
@@ -172,6 +173,7 @@ class Notification(db.Model):
     )
     source_name = db.Column(db.String(120), nullable=False)
     idempotency_key = db.Column(db.String(128), nullable=True)
+    system_key = db.Column(db.String(128), nullable=True)
     payload_hash = db.Column(db.String(64), nullable=False)
     title = db.Column(db.String(200), nullable=False)
     message = db.Column(db.Text, nullable=False)

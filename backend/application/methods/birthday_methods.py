@@ -7,8 +7,12 @@ from flask import current_app
 from application.models import Object, ObjectType
 
 
+def school_now():
+    return datetime.now(ZoneInfo(current_app.config['SCHOOL_TIMEZONE']))
+
+
 def school_today():
-    return datetime.now(ZoneInfo(current_app.config['SCHOOL_TIMEZONE'])).date()
+    return school_now().date()
 
 
 def week_dates(today):
