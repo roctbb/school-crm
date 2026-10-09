@@ -69,11 +69,14 @@ def present_connected_object(obj):
     return {
         'id': obj.id,
         'name': obj.name,
-        'type': obj.type.code
+        'type': obj.type.code,
+        'is_hidden': obj.is_hidden,
     }
 
 
-def present_object(obj, user=None):
+def present_object(obj, user=None, include_hidden=None):
+    if include_hidden is None:
+        include_hidden = user is None or has_admin_access(user)
     def filter_attributes(attributes):
         if not user or has_admin_access(user):
             return attributes
@@ -116,6 +119,7 @@ def present_object(obj, user=None):
         'attributes': filter_attributes(obj.attributes),
         'type': obj.type.code,
         'is_approved': obj.is_approved,
+        'is_hidden': obj.is_hidden,
         'has_unapproved_submissions': obj.has_unapproved_submissions,
         'creator': present_user(obj.created_by) if obj.created_by else None,
         'deleter': present_user(obj.deleted_by) if obj.deleted_by else None,
@@ -125,8 +129,10 @@ def present_object(obj, user=None):
         'owners': [present_user(owner) for owner in obj.owners],
         'identity_user': present_user(obj.identity_user)
         if user and has_admin_access(user) and obj.identity_user else None,
-        'children': [present_connected_object(child) for child in obj.children if not child.deleted_at],
-        'parents': [present_connected_object(child) for child in obj.parents if not child.deleted_at],
+        'children': [present_connected_object(child) for child in obj.children
+                     if not child.deleted_at and (not child.is_hidden or include_hidden)],
+        'parents': [present_connected_object(child) for child in obj.parents
+                    if not child.deleted_at and (not child.is_hidden or include_hidden)],
         'comments': comments,
         'invitation': invitation,
         'has_registered_owner': has_registered_owner

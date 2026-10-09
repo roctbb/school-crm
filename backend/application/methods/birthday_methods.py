@@ -42,6 +42,7 @@ def display_students():
         ObjectType.code == 'students',
         Object.deleted_at.is_(None),
         Object.is_approved.is_(True),
+        Object.is_hidden.is_(False),
     )
 
 

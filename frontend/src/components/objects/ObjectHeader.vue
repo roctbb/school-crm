@@ -40,6 +40,7 @@
         <i class="bi bi-person-check" v-if="object.has_registered_owner"></i>
       </h2>
       <div>
+        <span v-if="object.is_hidden" class="badge text-bg-light border mb-2"><i class="bi bi-eye-slash me-1"></i>Скрыта</span>
         <button
           v-if="!object.is_approved && hasTeacherAccess()"
           class="badge bg-warning border-0 mb-2"

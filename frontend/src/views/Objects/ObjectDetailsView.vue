@@ -47,6 +47,7 @@
 
             <BackButton class="mt-4" />
         </div>
+        <div v-else-if="notFound" class="alert alert-secondary">Запись не найдена или недоступна.</div>
         <Loading v-else />
     </BaseLayout>
 </template>
@@ -79,6 +80,7 @@ export default {
     data() {
         return {
             object: null,
+            notFound: false,
             object_type: null,
             store: useMainStore(),
             connectedTypes: [],
@@ -113,6 +115,7 @@ export default {
             }
         },
         async load() {
+            this.notFound = false;
             this.connectedTypes = [];
             let { object_type, object_id } = this.$route.params;
             object_id = parseInt(object_id);
@@ -129,6 +132,10 @@ export default {
             await this.store.loadObjects();
             this.object_type = this.store.getObjectTypeByCode(object_type);
             this.object = this.store.getObject(object_type, object_id);
+            if (!this.object) {
+                this.notFound = true;
+                return;
+            }
             await this.object.loadSubmissions();
 
             const unique_children_codes = [

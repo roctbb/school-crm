@@ -29,6 +29,14 @@
                     />
                 </div>
 
+                <div v-if="hasAdminAccess()" class="visibility-settings mb-4">
+                    <div class="form-check mb-1">
+                        <input id="object-is-hidden" v-model="object.is_hidden" class="form-check-input" type="checkbox" aria-describedby="visibility-help" />
+                        <label class="form-check-label fw-semibold" for="object-is-hidden">Скрыть запись</label>
+                    </div>
+                    <p id="visibility-help" class="small text-muted mb-0">Запись будет доступна администратору при включённом фильтре «Показывать скрытые». Скрытые ученики не показываются на экране дней рождения.</p>
+                </div>
+
                 <!-- Редактор атрибутов -->
                 <div class="mb-3">
                     <AttributesEditor
@@ -67,12 +75,14 @@
                 </div>
             </form>
         </div>
+        <div v-else-if="notFound" class="alert alert-secondary">Запись не найдена или недоступна.</div>
         <Loading v-else/>
     </BaseLayout>
 </template>
 
 <script>
 // Подключаем нужные объекты
+import {hasAdminAccess} from "@/utils/access.js";
 import useMainStore from "@/stores/mainStore.js";
 import CrmObject from "@/models/CrmObject.js";
 import BaseLayout from "@/components/layouts/BaseLayout.vue";
@@ -112,6 +122,7 @@ export default {
         return {
             store: useMainStore(),
             object: null,
+            notFound: false,
             object_type: null,
             error: null,
             childrenOptions: [], // Группированные варианты детей по типам
@@ -129,15 +140,18 @@ export default {
 
         // Устанавливаем сам объект (редактирование или новый экземпляр)
         if (this.isEditMode) {
-            this.object = this.store.objects[this.objectTypeCode]?.find(
+            const storedObject = this.store.objects[this.objectTypeCode]?.find(
                 (obj) => obj.id === parseInt(this.objectId)
             );
+            this.object = storedObject ? new CrmObject(JSON.parse(JSON.stringify({
+                ...storedObject._present(), children: storedObject.children,
+            })), this.store) : null;
         } else {
             this.object = new CrmObject({type: this.objectTypeCode}, this.store);
         }
 
         // Подготавливаем список групп возможных детей
-        if (this.object_type.params?.possible_children?.length) {
+        if (this.object_type?.params?.possible_children?.length) {
             const possibleChildrenCodes = this.object_type.params?.possible_children;
             // Можно сгруппировать по коду или создавать объекты с дополнительными параметрами
             this.childrenOptions = possibleChildrenCodes.map((code) =>
@@ -145,12 +159,15 @@ export default {
             ).filter(Boolean);
         }
         this.initialSnapshot = this.objectSnapshot();
+        this.notFound = !this.object;
     },
     methods: {
         capitalize,
+        hasAdminAccess,
         objectSnapshot() {
             return JSON.stringify({
                 name: this.object?.name || "",
+                is_hidden: Boolean(this.object?.is_hidden),
                 attributes: this.object?.attributes || {},
                 children: this.object?.children || [],
             });
@@ -174,6 +191,10 @@ export default {
 
                 if (!this.isEditMode) {
                     this.store.objects[this.object.type].push(this.object);
+                } else {
+                    const objects = this.store.objects[this.object.type];
+                    const index = objects.findIndex(item => item.id === this.object.id);
+                    if (index >= 0) objects.splice(index, 1, this.object);
                 }
 
                 this.initialSnapshot = this.objectSnapshot();
@@ -195,5 +216,11 @@ export default {
 </script>
 
 <style scoped>
-/* При необходимости ваши стили */
+.visibility-settings {
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--silaeder-border);
+    border-radius: 0.75rem;
+    background: var(--silaeder-primary-soft);
+}
+.visibility-settings p { max-width: 48rem; padding-left: 1.5rem; }
 </style>

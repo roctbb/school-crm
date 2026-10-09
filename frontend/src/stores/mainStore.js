@@ -252,7 +252,7 @@ const useMainStore = defineStore("mainStore", {
         async fetchObjects() {
             try {
                 this.isLoading = true;
-                const objects = await fetchObjects();
+                const objects = await fetchObjects(this.profile?.role === 'admin');
 
                 for (const type of this.objectTypes) {
                     this.objects[type.code] = []
@@ -301,7 +301,7 @@ const useMainStore = defineStore("mainStore", {
             if (!id) {
                 return this.allObjects().find(obj => obj.id === typeCode);
             }
-            return this.objects[typeCode].find(obj => obj.id === parseInt(id));
+            return this.objects[typeCode]?.find(obj => obj.id === parseInt(id));
         },
 
         getObjectTypeByCode(code) {
@@ -310,8 +310,8 @@ const useMainStore = defineStore("mainStore", {
     },
 
     getters: {
-        getObjectsByType: (state) => (typeCode) => {
-            return state.objects[typeCode] || [];
+        getObjectsByType: (state) => (typeCode, includeHidden = false) => {
+            return (state.objects[typeCode] || []).filter(object => !object.is_hidden || (includeHidden && state.profile?.role === 'admin'));
         },
     },
 });

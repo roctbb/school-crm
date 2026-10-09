@@ -65,6 +65,7 @@
                         <i class="bi bi-x-lg"></i>
                     </button>
                 </div>
+                <ShowHiddenControl v-model="showHidden" @update:model-value="toggleHidden" />
                 <!-- Кнопка -->
                 <div class="dropdown" :class="{ show: isMenuOpen }">
                     <button
@@ -217,6 +218,7 @@
 </template>
 
 <script>
+import ShowHiddenControl from "@/components/objects/ShowHiddenControl.vue";
 import useMainStore from "@/stores/mainStore.js";
 import BaseLayout from "@/components/layouts/BaseLayout.vue";
 import Loading from "@/components/common/Loading.vue";
@@ -229,7 +231,7 @@ import TabNavigation from "@/components/objects/TabNavigation.vue";
 import CreateObjectArea from "@/components/objects/CreateObjectArea.vue";
 import PaginationControls from "@/components/common/PaginationControls.vue";
 
-import {canCreateByType, hasTeacherAccess} from "@/utils/access.js";
+import {canCreateByType, hasTeacherAccess, hasAdminAccess} from "@/utils/access.js";
 import {
     buildGroupingOptions,
     compareGroupedObjects,
@@ -263,6 +265,10 @@ export default {
             type: String,
             default: "",
         },
+        hidden: {
+            type: Boolean,
+            default: false,
+        },
         unconfirmed: {
             type: Boolean,
             default: false,
@@ -274,6 +280,7 @@ export default {
     },
 
     components: {
+        ShowHiddenControl,
         BaseLayout,
         Loading,
         TableView,
@@ -295,6 +302,7 @@ export default {
             sortDirection: "asc",
             isMenuOpen: false,
             onlyUnconfirmed: false,
+            showHidden: false,
             currentPage: 1,
             pageSize: 48,
             searchUpdateTimer: null,
@@ -314,7 +322,7 @@ export default {
             const userId = this.store.profile?.id;
             if (!userId || hasTeacherAccess()) return [];
             return this.store.allObjects().filter((obj) =>
-                obj.owners.some((owner) => owner.id === userId)
+                !obj.is_hidden && obj.owners.some((owner) => owner.id === userId)
             );
         },
         objectTypesWithPortfolio() {
@@ -329,7 +337,7 @@ export default {
         objectCounts() {
             const counts = {};
             this.store.objectTypes.forEach((type) => {
-                counts[type.code] = this.store.getObjectsByType(type.code).length;
+                counts[type.code] = this.store.getObjectsByType(type.code, this.showHidden).length;
             });
             if (this.portfolioObjects.length > 0) {
                 counts["portfolio"] = this.portfolioObjects.length;
@@ -340,13 +348,13 @@ export default {
             if (this.activeTab === "portfolio") {
                 return this.portfolioObjects;
             }
-            return this.store.getObjectsByType(this.activeTab).filter(
+            return this.store.getObjectsByType(this.activeTab, this.showHidden).filter(
                 (obj) => !this.onlyUnconfirmed || obj.isNotApproved()
             );
         },
         nonConfirmedObjects() {
             return this.store
-                .getObjectsByType(this.activeTab)
+                .getObjectsByType(this.activeTab, this.showHidden)
                 .filter((obj) => obj.isNotApproved());
         },
         filteredObjects() {
@@ -450,7 +458,7 @@ export default {
             return this.sortedObjects.slice(start, start + this.pageSize);
         },
         hasActiveFilters() {
-            return Boolean(this.searchQuery || this.selectedAttributes.length || this.onlyUnconfirmed);
+            return Boolean(this.searchQuery || this.selectedAttributes.length || this.onlyUnconfirmed || this.showHidden);
         },
         hasVisibleResults() {
             return Boolean(
@@ -469,6 +477,7 @@ export default {
         this.isTableView = this.view === "table";
         this.searchQuery = this.search;
         this.onlyUnconfirmed = this.unconfirmed;
+        this.showHidden = hasAdminAccess() && this.hidden;
         this.currentPage = this.page;
 
         let shouldNormalizePath = false;
@@ -513,6 +522,9 @@ export default {
         },
         search(newVal) {
             if (newVal !== this.searchQuery) this.searchQuery = newVal;
+        },
+        hidden(newVal) {
+            this.showHidden = hasAdminAccess() && newVal;
         },
         unconfirmed(newVal) {
             this.onlyUnconfirmed = newVal;
@@ -593,8 +605,12 @@ export default {
             return this.selectedAttributes.length < 2 || this.isGroupingSelected(attribute);
         },
         hasUnconfirmed(typeCode) {
-            const objects = this.store.getObjectsByType(typeCode);
+            const objects = this.store.getObjectsByType(typeCode, this.showHidden);
             return objects.some((obj) => obj.isNotApproved());
+        },
+        toggleHidden() {
+            this.currentPage = 1;
+            this.updatePath();
         },
         toggleUnconfirmed() {
             this.onlyUnconfirmed = !this.onlyUnconfirmed;
@@ -610,6 +626,7 @@ export default {
             this.searchQuery = "";
             this.selectedAttributes = [];
             this.onlyUnconfirmed = false;
+            this.showHidden = false;
             this.currentPage = 1;
             window.clearTimeout(this.searchUpdateTimer);
             this.updatePath({replace: true});
@@ -622,6 +639,7 @@ export default {
                     ? this.selectedAttributes.map(attribute => attribute.code).join(",")
                     : NO_GROUPING_QUERY_VALUE,
                 unconfirmed: String(this.onlyUnconfirmed),
+                hidden: this.showHidden && hasAdminAccess() ? "true" : undefined,
                 page: String(this.currentPage),
             };
         },

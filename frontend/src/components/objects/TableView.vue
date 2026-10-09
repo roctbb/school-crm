@@ -84,6 +84,7 @@
                             <router-link :to="`/${object.type}/${object.id}`" class="fw-medium text-decoration-none">
                                 {{ object.name }}
                             </router-link>
+                            <span v-if="object.is_hidden" class="badge text-bg-light border ms-2"><i class="bi bi-eye-slash me-1"></i>Скрыта</span>
                         </td>
                         <td
                             v-for="attr in attributes"
@@ -166,6 +167,7 @@
                         <router-link :to="`/${object.type}/${object.id}`" class="fw-medium text-decoration-none">
                             {{ object.name }}
                         </router-link>
+                        <span v-if="object.is_hidden" class="badge text-bg-light border ms-2"><i class="bi bi-eye-slash me-1"></i>Скрыта</span>
                     </td>
                     <td
                         v-for="attr in attributes"

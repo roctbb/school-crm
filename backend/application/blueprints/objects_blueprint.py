@@ -1,5 +1,6 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 
+from application import LogicException
 from application.helpers.decorators import requires_user, validate_request_with, requires_roles
 from application.methods import *
 from application.presenters import *
@@ -8,6 +9,13 @@ from application.validators import (
 )
 
 objects_blueprint = Blueprint('objects', __name__, url_prefix='/objects')
+
+
+def include_hidden_records(user):
+    include_hidden = request.args.get('include_hidden', '').lower() in ('true', '1')
+    if include_hidden and not has_admin_access(user):
+        raise LogicException("Скрытые записи доступны только администратору.", 403)
+    return include_hidden
 
 
 @objects_blueprint.route('/types', methods=['GET'])
@@ -57,15 +65,17 @@ def object_type_revisions_endpoint(user, object_type_id):
 @objects_blueprint.route('/<string:type_code>', methods=['GET'])
 @requires_user
 def object_type_endpoint(user, type_code):
-    objects = get_available_objects_by_type_code(type_code)
-    return jsonify([present_object(obj, user) for obj in objects if can_get_object(user, obj)]), 200
+    include_hidden = include_hidden_records(user)
+    objects = get_available_objects_by_type_code(type_code, include_hidden)
+    return jsonify([present_object(obj, user, include_hidden) for obj in objects if can_get_object(user, obj)]), 200
 
 
 @objects_blueprint.route('', methods=['GET'])
 @requires_user
 def objects_endpoint(user):
-    objects = get_available_objects()
-    return jsonify([present_object(obj, user) for obj in objects if can_get_object(user, obj)]), 200
+    include_hidden = include_hidden_records(user)
+    objects = get_available_objects(include_hidden)
+    return jsonify([present_object(obj, user, include_hidden) for obj in objects if can_get_object(user, obj)]), 200
 
 
 @objects_blueprint.route('/<string:type_code>/create', methods=['POST'])
@@ -100,6 +110,7 @@ def restore_object_endpoint(user, object_id, ):
 def update_object_endpoint(validated_data, user, object_id):
     obj = get_object_by_id(object_id)
     if can_modify_object(user, obj):
+        validate_visibility_change(user, validated_data, obj.is_hidden)
         validated_data = filter_object_description_for_update(user, obj, validated_data)
 
         if not has_teacher_access(user) and check_changes_in_object(obj, validated_data):
@@ -127,7 +138,8 @@ def update_object_children_endpoint(validated_data, user, object_id):
     children_ids = validated_data.get('children', [])
     if can_modify_object(user, obj):
         updated_object = update_object_children(user, obj, children_ids)
-        return jsonify([present_connected_object(child) for child in updated_object.children]), 200
+        return jsonify([present_connected_object(child) for child in updated_object.children
+                        if not child.is_hidden or has_admin_access(user)]), 200
 
 
 @objects_blueprint.route('/<int:object_id>/children/<int:child_id>', methods=['DELETE'])

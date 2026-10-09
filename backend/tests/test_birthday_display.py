@@ -107,6 +107,7 @@ def test_public_payload_is_limited_sorted_and_filters_students(client, db_sessio
     add_student(db_session, display, 'Следующая неделя', '14.09.2008')
     add_student(db_session, display, 'Удалён', deleted_at=datetime.now())
     add_student(db_session, display, 'Не подтверждён', is_approved=False)
+    add_student(db_session, display, 'Скрыт', is_hidden=True)
     add_student(db_session, display, 'Нет даты', birthday=None)
     event_type = ObjectType(name='События', code='events')
     add_student(db_session, event_type, 'Не ученик')
@@ -170,6 +171,11 @@ def test_only_current_eligible_photo_is_available(client, db_session, display, t
         assert client.get(PUBLIC, headers=headers()).json['students'][0]['photo_path'] is None
 
     display.available_attributes = [{'code': 'photo', 'type': 'file'}]
+    student.is_hidden = True
+    db_session.commit()
+    assert client.get(path, headers=headers()).status_code == 404
+    assert client.get(PUBLIC, headers=headers()).json['students'] == []
+    student.is_hidden = False
     student.deleted_at = datetime.now()
     db_session.commit()
     assert client.get(path, headers=headers()).status_code == 404

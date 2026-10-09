@@ -37,6 +37,7 @@ def test_only_todays_approved_students_are_sent_to_all_admins(db_session, birthd
     for birthday in ('21.09.2010', '23.09.2010', '22.10.2010', None, '', 'bad', ['22.09.2010']):
         add_student(db_session, student_type, birthday=birthday)
     add_student(db_session, student_type, is_approved=False)
+    add_student(db_session, student_type, is_hidden=True)
     add_student(db_session, student_type, deleted_at=datetime.now())
     add_student(db_session, ObjectType(name='Учителя', code='teachers'))
     db_session.add_all([User(email=f'{role}@example.test', role=role)

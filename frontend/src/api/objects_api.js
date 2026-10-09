@@ -38,8 +38,8 @@ export async function fetchObjectsByType(objectTypeCode) {
     });
 }
 
-export async function fetchObjects() {
-    return await api_client.fetch(`/objects`, {
+export async function fetchObjects(includeHidden = false) {
+    return await api_client.fetch(`/objects${includeHidden ? "?include_hidden=true" : ""}`, {
         method: "GET",
     });
 }

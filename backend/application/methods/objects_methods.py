@@ -69,10 +69,13 @@ def deapprove_object(object):
     object.is_approved = False
 
 
-def get_available_objects_by_type_code(type_code):
+def get_available_objects_by_type_code(type_code, include_hidden=False):
     object_type = get_object_type_by_code(type_code)
 
-    result = Object.query.filter_by(type_id=object_type.id, deleted_at=None).options(selectinload(Object.type),
+    query = Object.query.filter_by(type_id=object_type.id, deleted_at=None)
+    if not include_hidden:
+        query = query.filter(Object.is_hidden.is_(False))
+    result = query.options(selectinload(Object.type),
                                                                                      selectinload(Object.parents),
                                                                                      selectinload(Object.children),
                                                                                      selectinload(Object.owners),
@@ -82,10 +85,13 @@ def get_available_objects_by_type_code(type_code):
     return result
 
 
-def get_available_objects():
+def get_available_objects(include_hidden=False):
     logging.log(
         logging.INFO, "Begin query!!!")
-    result = Object.query.filter_by(deleted_at=None).options(selectinload(Object.type), selectinload(Object.parents),
+    query = Object.query.filter_by(deleted_at=None)
+    if not include_hidden:
+        query = query.filter(Object.is_hidden.is_(False))
+    result = query.options(selectinload(Object.type), selectinload(Object.parents),
                                                              selectinload(Object.children),
                                                              selectinload(Object.owners),
                                                              selectinload(Object.identity_user),
@@ -99,13 +105,15 @@ def get_available_objects():
 
 @transaction
 def create_object(user, type, data):
+    validate_visibility_change(user, data, False)
     new_object = Object(
         name=data["name"],
         type_id=type.id,
         attributes=data.get("attributes", {}),
         params=data.get("params", {}),
         creator_id=user.id,
-        is_approved=user.role != 'student'
+        is_approved=user.role != 'student',
+        is_hidden=data.get('is_hidden', False),
     )
 
     new_object.owners.append(user)
@@ -122,11 +130,19 @@ def delete_object(user, obj):
 
 @transaction
 def update_object(user, obj, data):
+    validate_visibility_change(user, data, obj.is_hidden)
     obj.name = data.get("name", obj.name)
     obj.params = data.get("params", obj.params)
     obj.attributes = data.get("attributes", obj.attributes)
+    if has_admin_access(user) and 'is_hidden' in data:
+        obj.is_hidden = data['is_hidden']
 
     return obj
+
+
+def validate_visibility_change(user, data, current):
+    if 'is_hidden' in data and data['is_hidden'] != current and not has_admin_access(user):
+        raise LogicException("Только администратор может скрывать записи.", 403)
 
 
 @transaction
@@ -150,6 +166,11 @@ def update_object_children(user, obj, children_ids):
     if len(children) != len(children_ids):
         raise LogicException("Некоторые объекты из списка children не найдены или удалены.", 422)
 
+    if not has_admin_access(user):
+        if any(child.is_hidden and child not in obj.children for child in children):
+            raise LogicException("Скрытые записи доступны только администратору.", 403)
+        # A visible-only editor must not silently remove existing hidden relationships.
+        children += [child for child in obj.children if child.is_hidden and child not in children]
     obj.children = children
 
     if not has_teacher_access(user):

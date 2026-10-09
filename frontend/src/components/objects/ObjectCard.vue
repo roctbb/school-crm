@@ -35,6 +35,8 @@
                 ></i>
             </h5>
 
+            <span v-if="object.is_hidden" class="badge text-bg-light border mb-2"><i class="bi bi-eye-slash me-1"></i>Скрыта</span>
+
             <!-- Метка «Не подтвержден» -->
             <div
                 class="badge bg-warning mt-0"

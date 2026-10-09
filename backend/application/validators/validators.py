@@ -32,6 +32,9 @@ OAUTH_SCOPES = {'openid', 'profile', 'email', 'roles', 'avatar', 'offline_access
 def validate_object(data):
     should_have(data, 'name', min_length=1, max_length=1024)
 
+    if 'is_hidden' in data and not isinstance(data['is_hidden'], bool):
+        raise LogicException("Поле is_hidden должно быть boolean.", 422, field='is_hidden')
+
     # Check "params" and "attributes" are JSON and optional
     if not isinstance(data.get('params', {}), dict):
         raise LogicException("Поле params должно быть объектом JSON.", 422)

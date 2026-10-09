@@ -1,5 +1,6 @@
 <template>
   <div class="connected-types-stack">
+    <ShowHiddenControl v-model="showHidden" />
     <div v-if="relationError" class="alert alert-danger py-2 small mb-0" role="alert">
       {{ relationError }}
     </div>
@@ -46,6 +47,7 @@
 </template>
 
 <script>
+import ShowHiddenControl from "@/components/objects/ShowHiddenControl.vue";
 import useMainStore from "@/stores/mainStore.js";
 import TableView from "@/components/objects/TableView.vue";
 import CardView from "@/components/objects/CardView.vue";
@@ -54,6 +56,7 @@ import {canModifyObject} from "@/utils/access.js";
 export default {
   name: "ConnectedTypes",
   components: {
+    ShowHiddenControl,
     TableView,
     CardView
   },
@@ -83,6 +86,7 @@ export default {
     return {
       store: useMainStore(),
       relationError: "",
+      showHidden: false,
       removingRelationIds: []
     };
   },
@@ -92,7 +96,7 @@ export default {
         ...this.object.children.filter(child => child.type === type.code),
         ...this.object.parents.filter(parent => parent.type === type.code)
       ].map(relative => this.store.getObject(relative.type, relative.id));
-      return relatives.sort((a, b) => a.name.localeCompare(b.name));
+      return relatives.filter(relative => relative && (!relative.is_hidden || this.showHidden)).sort((a, b) => a.name.localeCompare(b.name));
     },
     findRelationship(relative) {
       const childReference = this.object.children.find(child => child.id === relative.id);

@@ -20,6 +20,7 @@ class CrmObject extends Model {
 
     init(description) {
         super.init(description);
+        this.is_hidden = Boolean(description?.is_hidden);
 
         if (!this.children) {
             this.children = []
@@ -156,7 +157,8 @@ class CrmObject extends Model {
         return {
             id: this.id,
             type: this.type,
-            name: this.name
+            name: this.name,
+            is_hidden: this.is_hidden
         }
     }
 

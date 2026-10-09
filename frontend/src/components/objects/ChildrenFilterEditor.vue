@@ -68,7 +68,7 @@
                         v-model="localChildren"
                     />
                     <label class="form-check-label" :for="'child-' + child.id">
-                        {{ child.name }}
+                        {{ child.name }}<span v-if="child.is_hidden" class="small text-muted ms-1">(скрыта)</span>
                     </label>
                 </div>
             </div>
@@ -117,7 +117,7 @@
                                 v-model="localChildren"
                             />
                             <label class="form-check-label" :for="'child-' + child.id">
-                                {{ child.name }}
+                                {{ child.name }}<span v-if="child.is_hidden" class="small text-muted ms-1">(скрыта)</span>
                             </label>
                         </div>
                     </div>
@@ -173,6 +173,7 @@ export default {
         // Сначала получаем все объекты нужного типа/группы, доступные в системе
         filteredChildrenOptions() {
             return (this.store.objects[this.group.code] || [])
+                .filter(obj => !obj.is_hidden || this.children.some(child => child.id === obj.id))
                 .map((obj) => obj.asChild())
                 .filter((child) => child.type === this.group.code)
                 .filter((child) => {

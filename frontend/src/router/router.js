@@ -53,6 +53,7 @@ const routes = [
             groupingSpecified: Boolean(route.query.grouping),
             search: route.query.search || '',
             unconfirmed: route.query.unconfirmed === 'true',
+            hidden: route.query.hidden === 'true',
             page: Math.max(1, Number.parseInt(route.query.page, 10) || 1)
         })
     },
@@ -116,6 +117,7 @@ const routes = [
             groupingSpecified: Boolean(route.query.grouping),
             search: route.query.search || '',
             unconfirmed: route.query.unconfirmed === 'true',
+            hidden: route.query.hidden === 'true',
             page: Math.max(1, Number.parseInt(route.query.page, 10) || 1)
         })
     },

@@ -358,6 +358,7 @@ class Object(db.Model):
     backup = db.Column(db.JSON, server_default=db.text("'{}'::json"))
 
     is_approved = db.Column(db.Boolean, nullable=False, server_default=db.text("'true'::boolean"))
+    is_hidden = db.Column(db.Boolean, nullable=False, default=False, server_default=db.false())
     has_unapproved_submissions = db.Column(db.Boolean, nullable=False, server_default=db.text("'false'::boolean"))
 
     # foreign keys
