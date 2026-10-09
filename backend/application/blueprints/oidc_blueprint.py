@@ -58,7 +58,7 @@ def openid_configuration():
         'claims_supported': [
             'iss', 'sub', 'aud', 'exp', 'iat', 'auth_time', 'nonce',
             'name', 'preferred_username', 'email', 'email_verified', 'role', 'roles', 'picture',
-            'object_id', 'object_type', 'crm_object',
+            'object_id', 'object_type', 'crm_object', 'grade', 'birthdate', 'gender',
         ],
         'code_challenge_methods_supported': ['S256'],
     })

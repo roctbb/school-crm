@@ -200,7 +200,7 @@ def test_authorization_code_pkce_userinfo_refresh_and_revocation(client):
     registered, _admin = _create_registered_client(client)
     secret = registered['client_secret']
     user = _create_user()
-    user.identity_object.attributes = {'grade': '9'}
+    user.identity_object.attributes = {'grade': '9', 'birthday': '1.2.2012', 'gender': 'Женский'}
     db.session.commit()
     verifier, params = _authorization_params()
     code = _authorize(client, user, params)
@@ -233,6 +233,8 @@ def test_authorization_code_pkce_userinfo_refresh_and_revocation(client):
     assert claims['object_id'] == user.identity_object.id
     assert claims['object_type'] == 'students'
     assert claims['grade'] == 9
+    assert claims['birthdate'] == '2012-02-01'
+    assert claims['gender'] == 'female'
     assert claims['crm_object'] == {
         'id': user.identity_object.id,
         'type': 'students',
@@ -259,6 +261,8 @@ def test_authorization_code_pkce_userinfo_refresh_and_revocation(client):
     assert userinfo.get_json()['sub'] == user.identity_object.sso_subject
     assert userinfo.get_json()['crm_object']['id'] == user.identity_object.id
     assert userinfo.get_json()['grade'] == 9
+    assert userinfo.get_json()['birthdate'] == '2012-02-01'
+    assert userinfo.get_json()['gender'] == 'female'
 
     replay = _exchange_code(client, code, verifier, secret)
     assert replay.status_code == 400
@@ -496,3 +500,60 @@ def test_oidc_rejects_account_without_identity_object(client):
 
     assert response.status_code == 403
     assert 'не привязан к объекту' in response.get_json()['message']
+
+
+@pytest.mark.parametrize('birthday, expected', [
+    ('29.02.2012', '2012-02-29'),
+    ('2012-02-29', '2012-02-29'),
+    (' 1.2.2012 ', '2012-02-01'),
+    ('29.02.2011', None),
+    ('not a date', None),
+    (None, None),
+    (['01.01.2012'], None),
+])
+def test_profile_birthdate_is_normalized_and_scope_protected(client, birthday, expected):
+    from application.oidc import oidc_user_info
+
+    user = _create_user()
+    user.identity_object.attributes = {'birthday': birthday}
+    assert oidc_user_info(user, 'openid profile')['birthdate'] == expected
+    assert 'birthdate' not in oidc_user_info(user, 'openid email roles')
+
+
+@pytest.mark.parametrize('gender, expected', [
+    ('Мужской', 'male'), ('Женский', 'female'),
+    (' female ', 'female'), (None, None), ('unknown', None), ([], None),
+])
+def test_profile_gender_is_normalized_and_scope_protected(client, gender, expected):
+    from application.oidc import oidc_user_info
+
+    user = _create_user()
+    user.identity_object.attributes = {'gender': gender}
+    assert oidc_user_info(user, 'openid profile')['gender'] == expected
+    assert 'gender' not in oidc_user_info(user, 'openid email roles')
+
+
+def test_gender_field_migration_preserves_existing_schema_and_values(client, monkeypatch):
+    import importlib.util
+    from pathlib import Path
+
+    path = Path(__file__).parents[1] / 'migrations/versions/f6b7c8d9e012_add_identity_gender_attribute.py'
+    spec = importlib.util.spec_from_file_location('gender_migration', path)
+    migration = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(migration)
+    existing = {'code': 'birthday', 'name': 'Дата рождения', 'type': 'date'}
+    custom_gender = {'code': 'gender', 'name': 'Custom', 'type': 'string'}
+    student_type = ObjectType(name='Students', code='students', available_attributes=[existing])
+    teacher_type = ObjectType(name='Teachers', code='teachers', available_attributes=[custom_gender])
+    db.session.add_all([student_type, teacher_type])
+    db.session.commit()
+    monkeypatch.setattr(migration.op, 'get_bind', lambda: db.session.connection())
+    migration.upgrade()
+    migration.upgrade()
+    db.session.expire_all()
+    assert student_type.available_attributes == [existing, migration.GENDER_ATTRIBUTE]
+    assert teacher_type.available_attributes == [custom_gender]
+    migration.downgrade()
+    db.session.expire_all()
+    assert student_type.available_attributes == [existing]
+    assert teacher_type.available_attributes == [custom_gender]

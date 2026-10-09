@@ -119,6 +119,29 @@ def get_oidc_identity_grade(identity):
     return grade if 1 <= grade <= 11 else None
 
 
+def get_oidc_identity_birthdate(identity):
+    """Normalize the CRM date field to the full OIDC birthdate format."""
+    value = (identity.attributes or {}).get('birthday')
+    if not isinstance(value, str):
+        return None
+    for date_format in ('%d.%m.%Y', '%Y-%m-%d'):
+        try:
+            return datetime.strptime(value.strip(), date_format).date().isoformat()
+        except ValueError:
+            continue
+    return None
+
+
+def get_oidc_identity_gender(identity):
+    value = (identity.attributes or {}).get('gender')
+    if not isinstance(value, str):
+        return None
+    return {
+        'мужской': 'male', 'женский': 'female',
+        'male': 'male', 'female': 'female',
+    }.get(value.strip().lower())
+
+
 def save_token(token, request):
     issued_at = int(time.time())
     refresh_token = token.get('refresh_token')
@@ -243,6 +266,8 @@ def oidc_user_info(user, scope):
             'object_id': identity.id,
             'object_type': identity.type.code,
             'grade': grade,
+            'birthdate': get_oidc_identity_birthdate(identity),
+            'gender': get_oidc_identity_gender(identity),
             'crm_object': {
                 'id': identity.id,
                 'type': identity.type.code,
