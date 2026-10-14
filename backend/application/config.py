@@ -27,6 +27,7 @@ class Config:
     JWT_REFRESH_CSRF_HEADER_NAME = 'X-CSRF-TOKEN'
     MAIL_SERVER = os.getenv('MAIL_SERVER', 'smtp.mailtrap.io')
     MAIL_PORT = int(os.getenv('MAIL_PORT', 2525))
+    MAIL_TIMEOUT = float(os.getenv('MAIL_TIMEOUT', 30))
     MAIL_USE_TLS = os.getenv('MAIL_USE_TLS', 'True').lower() in ('true', '1')
     MAIL_USE_SSL = os.getenv('MAIL_USE_SSL', 'False').lower() in ('true', '1')
     MAIL_USERNAME = os.getenv('MAIL_USERNAME')

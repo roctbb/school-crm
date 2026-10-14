@@ -78,6 +78,7 @@ def create_app(config_name=None):
         'admin-birthday-notifications': {
             'task': 'application.tasks.birthdays.send_admin_birthday_notifications',
             'schedule': 300.0,
+            'options': {'expires': 300},
         },
     }
 
