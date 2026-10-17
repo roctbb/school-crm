@@ -10,6 +10,7 @@ from .oidc_blueprint import oidc_blueprint
 from .notifications_blueprint import notifications_blueprint
 from .users_blueprint import users_blueprint
 from .birthdays_blueprint import birthdays_blueprint
+from .external_objects_blueprint import external_objects_blueprint
 
 api_blueprint = Blueprint('api', __name__, url_prefix='/api')
 api_blueprint.register_blueprint(auth_blueprint)
@@ -23,3 +24,4 @@ api_blueprint.register_blueprint(oidc_blueprint)
 api_blueprint.register_blueprint(notifications_blueprint)
 api_blueprint.register_blueprint(users_blueprint)
 api_blueprint.register_blueprint(birthdays_blueprint)
+api_blueprint.register_blueprint(external_objects_blueprint)

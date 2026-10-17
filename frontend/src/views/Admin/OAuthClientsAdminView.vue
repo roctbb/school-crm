@@ -144,6 +144,28 @@
                                         <span class="form-check-label font-monospace">{{ scope }}</span>
                                     </label>
                                 </div>
+                                <div class="col-12">
+                                    <hr />
+                                    <h6>Списки объектов через внешнее API</h6>
+                                    <p class="form-text mt-0">
+                                        Сервис получит имена и идентификаторы объектов выбранных типов,
+                                        включая людей, которые ещё не зарегистрировались. Для учеников также передаётся класс.
+                                    </p>
+                                    <label v-for="objectType in objectTypes" :key="objectType.code" class="form-check">
+                                        <input
+                                            v-model="draft.allowed_object_types"
+                                            :value="objectType.code"
+                                            class="form-check-input"
+                                            type="checkbox"
+                                            :disabled="!draft.is_confidential"
+                                        />
+                                        <span class="form-check-label">{{ objectType.name }}</span>
+                                    </label>
+                                    <div class="form-text">
+                                        Доступно только конфиденциальным серверным клиентам.
+                                        Если ничего не выбрано, доступ к спискам закрыт.
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -185,6 +207,7 @@ import {
     updateOAuthClient,
 } from '@/api/oidc_api.js';
 import unsavedChangesMixin from '@/mixins/unsavedChangesMixin.js';
+import {fetchObjectTypes} from '@/api/objects_api.js';
 
 const clone = value => JSON.parse(JSON.stringify(value));
 const lines = value => value.split('\n').map(item => item.trim()).filter(Boolean);
@@ -196,6 +219,7 @@ export default {
     data() {
         return {
             clients: [],
+            objectTypes: [],
             draft: null,
             saving: false,
             saved: false,
@@ -221,7 +245,9 @@ export default {
     },
     async created() {
         try {
-            this.clients = await fetchOAuthClients();
+            [this.clients, this.objectTypes] = await Promise.all([
+                fetchOAuthClients(), fetchObjectTypes(),
+            ]);
             if (this.clients.length) this.selectClient(this.clients[0]);
             else this.startCreate();
         } catch (error) {
@@ -232,6 +258,7 @@ export default {
         prepareDraft(client) {
             return {
                 ...clone(client),
+                allowed_object_types: [...(client.allowed_object_types || [])],
                 redirectUrisText: (client.redirect_uris || []).join('\n'),
                 logoutUrisText: (client.post_logout_redirect_uris || []).join('\n'),
             };
@@ -259,6 +286,7 @@ export default {
                 is_confidential: true,
                 is_active: true,
                 can_send_notifications: false,
+                allowed_object_types: [],
             });
             this.error = null;
             this.saved = false;
@@ -278,6 +306,8 @@ export default {
                 is_active: this.draft.is_active,
                 can_send_notifications: this.draft.is_confidential
                     && this.draft.can_send_notifications,
+                allowed_object_types: this.draft.is_confidential
+                    ? [...this.draft.allowed_object_types] : [],
             };
         },
         async save() {

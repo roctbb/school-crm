@@ -121,6 +121,29 @@ def validate_oauth_client(data):
             field='can_send_notifications',
         )
 
+    object_types = data.get('allowed_object_types', [])
+    if not isinstance(object_types, list) or not all(
+        isinstance(code, str) for code in object_types
+    ):
+        raise LogicException(
+            'Поле allowed_object_types должно быть списком кодов типов объектов.', 422,
+            field='allowed_object_types',
+        )
+    object_types = list(dict.fromkeys(object_types))
+    if object_types and not data['is_confidential']:
+        raise LogicException(
+            'Читать списки объектов может только конфиденциальный клиент.', 422,
+            field='allowed_object_types',
+        )
+    if object_types:
+        existing = {row.code for row in ObjectType.query.filter(ObjectType.code.in_(object_types))}
+        if set(object_types) - existing:
+            raise LogicException(
+                'В allowed_object_types указаны неизвестные типы объектов.', 422,
+                field='allowed_object_types',
+            )
+    data['allowed_object_types'] = object_types
+
     data['name'] = data['name'].strip()
     data['description'] = description.strip()
     return data

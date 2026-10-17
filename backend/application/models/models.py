@@ -85,6 +85,9 @@ class OAuthClient(db.Model):
     is_confidential = db.Column(db.Boolean, nullable=False, server_default=db.true())
     is_active = db.Column(db.Boolean, nullable=False, server_default=db.true())
     can_send_notifications = db.Column(db.Boolean, nullable=False, server_default=db.false())
+    allowed_object_types = db.Column(
+        db.JSON, nullable=False, server_default=db.text("'[]'::json")
+    )
     created_at = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
     updated_at = db.Column(
         db.DateTime, nullable=False, server_default=db.func.now(), onupdate=db.func.now()

@@ -55,6 +55,7 @@ def create_oauth_client(user, data):
         is_confidential=data['is_confidential'],
         is_active=data['is_active'],
         can_send_notifications=data['can_send_notifications'],
+        allowed_object_types=data['allowed_object_types'],
         creator_id=user.id,
     )
     db.session.add(client)
@@ -93,6 +94,7 @@ def update_oauth_client(client, data):
     client.is_confidential = data['is_confidential']
     client.is_active = data['is_active']
     client.can_send_notifications = data['can_send_notifications']
+    client.allowed_object_types = data['allowed_object_types']
 
     OAuthAuthorizationCode.query.filter_by(client_id=client.client_id).delete()
     if revoke_consents:

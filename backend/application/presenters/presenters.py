@@ -35,6 +35,7 @@ def present_oauth_client(client):
         'is_confidential': client.is_confidential,
         'is_active': client.is_active,
         'can_send_notifications': client.can_send_notifications,
+        'allowed_object_types': client.allowed_object_types or [],
         'created_at': client.created_at.isoformat(),
         'updated_at': client.updated_at.isoformat(),
         'creator': present_user(client.creator) if client.creator else None,
