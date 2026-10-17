@@ -2,6 +2,7 @@ import os
 import re
 from urllib.parse import urlsplit
 from werkzeug.utils import secure_filename
+from werkzeug.security import safe_join
 from application import db
 from application.constants import ALLOWED_EXTENSIONS, UPLOAD_FOLDER
 from application.helpers.decorators import transaction
@@ -19,7 +20,10 @@ def get_uploaded_file(folder, filename):
     if not match:
         raise LogicException("Файл не найден", 404)
 
-    uploaded_file = db.session.get(UploadedFile, int(match.group(1)))
+    file_id = match.group(1)
+    if len(file_id) > 10 or int(file_id) > 2147483647:
+        raise LogicException("Файл не найден", 404)
+    uploaded_file = db.session.get(UploadedFile, int(file_id))
     if not uploaded_file or uploaded_file.stored_filename != filename:
         raise LogicException("Файл не найден", 404)
 
@@ -61,7 +65,11 @@ def can_get_uploaded_file(user, uploaded_file):
 
 def get_user_avatar_file(user):
     """Return the current photo of the CRM object used as the OIDC identity."""
-    obj = user.identity_object
+    return get_object_avatar_file(user.identity_object, allow_private=True)
+
+
+def get_object_avatar_file(obj, *, allow_private=False):
+    """Resolve a visible photo without requiring the object to have an account."""
     if not obj or obj.deleted_at:
         return None
     photo_definition = next((
@@ -70,6 +78,7 @@ def get_user_avatar_file(user):
         and attribute.get('type') == 'file'
         and not attribute.get('is_secret')
         and not attribute.get('is_hidden')
+        and (allow_private or not attribute.get('is_private'))
     ), None)
     if not photo_definition:
         return None
@@ -79,15 +88,19 @@ def get_user_avatar_file(user):
     for candidate in reversed(candidates):
         if not isinstance(candidate, str):
             continue
-        path = urlsplit(candidate).path
+        try:
+            path = urlsplit(candidate).path
+        except ValueError:
+            continue
         match = re.fullmatch(r'(?:/api)?/files/(folder_[1-9]\d*)/(.+)', path)
         if not match:
             continue
         try:
             uploaded_file = get_uploaded_file(match.group(1), match.group(2))
-            if os.path.isfile(os.path.join(
-                UPLOAD_FOLDER, match.group(1), uploaded_file.stored_filename
-            )):
+            path = safe_join(
+                os.path.join(UPLOAD_FOLDER, match.group(1)), uploaded_file.stored_filename
+            )
+            if path and os.path.isfile(path):
                 return uploaded_file
         except LogicException:
             continue

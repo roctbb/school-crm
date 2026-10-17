@@ -1,11 +1,12 @@
 import base64
+import importlib
 from datetime import datetime, timezone
 
 import pytest
 from flask_jwt_extended import create_access_token
 
 from application.infrastructure import bcrypt, db
-from application.models import Invitation, Object, ObjectType, OAuthClient, User
+from application.models import Invitation, Object, ObjectType, OAuthClient, UploadedFile, User
 from application.oidc import oidc_user_info
 from .fixtures import *
 
@@ -56,7 +57,7 @@ def test_list_includes_unregistered_students_and_excludes_private_data(client, o
     assert response.get_json() == {
         'items': [{
             'sub': obj.sso_subject, 'object_id': obj.id, 'object_type': 'students',
-            'name': obj.name, 'grade': grade,
+            'name': obj.name, 'grade': grade, 'picture': None,
         } for obj, grade in [(unregistered, 7), (registered, 8)]],
         'next_after_id': None,
     }
@@ -112,8 +113,9 @@ def test_cursor_pagination_and_name_search(client, object_api):
     {}, {'Authorization': 'Bearer user-token'}, _basic_auth('wrong-secret'),
     _basic_auth(client_id='missing-client'), {'Authorization': 'Basic invalid'},
 ])
-def test_authentication_is_required(client, object_api, headers):
-    response = client.get('/api/external/objects/students', headers=headers)
+@pytest.mark.parametrize('suffix', ['', '/11111111-1111-4111-8111-111111111111/avatar'])
+def test_authentication_is_required(client, object_api, headers, suffix):
+    response = client.get('/api/external/objects/students' + suffix, headers=headers)
     assert response.status_code == 401
     assert response.headers['WWW-Authenticate'].startswith('Basic ')
     assert response.headers['Cache-Control'] == 'no-store'
@@ -166,7 +168,7 @@ def test_other_object_types_are_supported_without_student_grade(client, object_a
     assert response.status_code == 200
     assert response.get_json()['items'] == [{
         'sub': teacher.sso_subject, 'object_id': teacher.id, 'object_type': 'teachers',
-        'name': teacher.name, 'grade': None,
+        'name': teacher.name, 'grade': None, 'picture': None,
     }]
 
 
@@ -222,3 +224,175 @@ def test_admin_rejects_invalid_object_access(client, object_api, test_user, over
                            headers=_admin_headers(test_user))
     assert response.status_code == 422, response.get_json()
     assert response.get_json()['field'] == 'allowed_object_types'
+
+
+@pytest.fixture
+def student_avatar(object_api, test_user, tmp_path, monkeypatch):
+    api_client, students, _teachers = object_api
+    api_client.allowed_scopes = ['openid', 'profile', 'avatar']
+    students.available_attributes = [{'code': 'photo', 'name': 'Фото', 'type': 'file'}]
+    uploaded_file = UploadedFile(
+        user_id=test_user.id, original_filename='photo.png', stored_filename='photo.png',
+    )
+    db.session.add(uploaded_file)
+    db.session.flush()
+    folder = tmp_path / f'folder_{uploaded_file.id}'
+    folder.mkdir()
+    (folder / uploaded_file.stored_filename).write_bytes(b'\x89PNG\r\n\x1a\nphoto contents')
+    photo = f'/api/files/folder_{uploaded_file.id}/photo.png'
+    student = Object(name='Ученик без аккаунта', type=students, attributes={'photo': photo})
+    db.session.add(student)
+    db.session.commit()
+    for module in ['application.methods.files_methods',
+                   'application.blueprints.external_objects_blueprint']:
+        monkeypatch.setattr(importlib.import_module(module), 'UPLOAD_FOLDER', str(tmp_path))
+    return student, uploaded_file, tmp_path
+
+
+def _avatar_path(student):
+    return f'/api/external/objects/students/{student.sso_subject}/avatar'
+
+
+def test_avatar_is_available_before_signup_and_stays_at_the_same_url(client, student_avatar):
+    student, _uploaded_file, _storage = student_avatar
+    assert student.identity_user is None
+    roster = client.get('/api/external/objects/students', headers=_basic_auth()).get_json()
+    picture = roster['items'][0]['picture']
+    assert picture == 'http://localhost:5173' + _avatar_path(student)
+    response = client.get(_avatar_path(student), headers=_basic_auth())
+    assert response.status_code == 200
+    assert response.data == b'\x89PNG\r\n\x1a\nphoto contents'
+    assert response.mimetype == 'image/png'
+    assert response.headers['Cache-Control'] == 'no-store'
+    assert response.headers['Vary'] == 'Authorization'
+    assert response.headers['X-Content-Type-Options'] == 'nosniff'
+
+    invite = Invitation(key='student-with-photo', role='student', object=student)
+    db.session.add(invite)
+    db.session.commit()
+    signup = client.post('/api/signup', json={
+        'name': 'Новый аккаунт', 'email': 'photo-student@example.test',
+        'password': 'securepassword', 'invite': invite.key,
+    })
+    assert signup.status_code == 201, signup.get_json()
+    assert client.get('/api/external/objects/students', headers=_basic_auth()).get_json() == roster
+    assert client.get(_avatar_path(student), headers=_basic_auth()).data == response.data
+
+
+def test_avatar_checks_scope_type_permission_and_client_status_on_every_download(
+        client, object_api, student_avatar):
+    api_client, _students, _teachers = object_api
+    student, _uploaded_file, _storage = student_avatar
+    path = _avatar_path(student)
+    initial = client.get(path, headers=_basic_auth())
+    assert initial.status_code == 200
+    cached_headers = {**_basic_auth(), 'If-None-Match': initial.headers['ETag']}
+
+    api_client.allowed_scopes = ['openid', 'profile']
+    db.session.commit()
+    assert client.get(path, headers=cached_headers).status_code == 403
+    assert client.get('/api/external/objects/students', headers=_basic_auth()).get_json()['items'][0]['picture'] is None
+    api_client.allowed_scopes = ['openid', 'avatar']
+    api_client.allowed_object_types = []
+    db.session.commit()
+    assert client.get(path, headers=cached_headers).status_code == 403
+    api_client.allowed_object_types = ['students']
+    api_client.is_active = False
+    db.session.commit()
+    assert client.get(path, headers=cached_headers).status_code == 401
+    api_client.is_active = True
+    api_client.is_confidential = False
+    db.session.commit()
+    assert client.get(path, headers=cached_headers).status_code == 401
+
+
+@pytest.mark.parametrize('definition', [
+    {'code': 'photo', 'type': 'file', 'is_hidden': True},
+    {'code': 'photo', 'type': 'file', 'is_secret': True},
+    {'code': 'photo', 'type': 'file', 'is_private': True},
+    {'code': 'photo', 'type': 'string'},
+    {'code': 'document', 'type': 'file'},
+])
+def test_avatar_respects_photo_field_visibility(client, object_api, student_avatar, definition):
+    _api_client, students, _teachers = object_api
+    student, _uploaded_file, _storage = student_avatar
+    students.available_attributes = [definition]
+    db.session.commit()
+    assert client.get(_avatar_path(student), headers=_basic_auth()).status_code == 404
+    items = client.get('/api/external/objects/students', headers=_basic_auth()).get_json()['items']
+    assert items[0]['picture'] is None
+
+
+@pytest.mark.parametrize('hidden', ['object', 'deleted', 'type'])
+def test_hidden_or_deleted_objects_cannot_disclose_avatars(client, object_api, student_avatar, hidden):
+    _api_client, students, _teachers = object_api
+    student, _uploaded_file, _storage = student_avatar
+    if hidden == 'object':
+        student.is_hidden = True
+    elif hidden == 'deleted':
+        student.deleted_at = datetime.now(timezone.utc).replace(tzinfo=None)
+    else:
+        students.params = {'is_hidden': True}
+    db.session.commit()
+    assert client.get(_avatar_path(student), headers=_basic_auth()).status_code == 404
+
+
+@pytest.mark.parametrize('photo', [None, '', 'https://[invalid', '/api/files/folder_99999/missing.png',
+                                   '/api/files/folder_1/wrong-name.png',
+                                   '/api/files/folder_2147483648/photo.png',
+                                   '/api/files/folder_' + '9' * 5000 + '/photo.png'])
+def test_missing_or_invalid_photos_return_null_and_404(client, student_avatar, photo):
+    student, _uploaded_file, _storage = student_avatar
+    student.attributes = {'photo': photo}
+    db.session.commit()
+    assert client.get(_avatar_path(student), headers=_basic_auth()).status_code == 404
+    assert client.get('/api/external/objects/students', headers=_basic_auth()).get_json()['items'][0]['picture'] is None
+
+
+def test_avatar_only_serves_the_current_photo_and_cannot_escape_its_folder(client, student_avatar):
+    student, uploaded_file, storage = student_avatar
+    second = UploadedFile(user_id=uploaded_file.user_id,
+                          original_filename='new.png', stored_filename='new.png')
+    db.session.add(second)
+    db.session.flush()
+    second_folder = storage / f'folder_{second.id}'
+    second_folder.mkdir()
+    (second_folder / second.stored_filename).write_bytes(b'new photo')
+    student.attributes = {'photo': [student.attributes['photo'],
+                                  f'/files/folder_{second.id}/{second.stored_filename}']}
+    db.session.commit()
+    assert client.get(_avatar_path(student), headers=_basic_auth()).data == b'new photo'
+    (second_folder / second.stored_filename).unlink()
+    assert client.get(_avatar_path(student), headers=_basic_auth()).data.endswith(b'photo contents')
+
+    (storage / 'outside.png').write_bytes(b'must not be disclosed')
+    uploaded_file.stored_filename = '../outside.png'
+    student.attributes = {'photo': f'/api/files/folder_{uploaded_file.id}/../outside.png'}
+    db.session.commit()
+    assert client.get(_avatar_path(student), headers=_basic_auth()).status_code == 404
+
+
+def test_avatar_subject_is_scoped_to_the_requested_type(client, object_api, student_avatar):
+    api_client, _students, teachers = object_api
+    student, _uploaded_file, _storage = student_avatar
+    api_client.allowed_object_types = ['students', 'teachers']
+    teacher = Object(name='Учитель', type=teachers, attributes=student.attributes)
+    db.session.add(teacher)
+    db.session.commit()
+    assert client.get(f'/api/external/objects/teachers/{student.sso_subject}/avatar',
+                      headers=_basic_auth()).status_code == 404
+    assert client.get(f'/api/external/objects/students/{teacher.sso_subject}/avatar',
+                      headers=_basic_auth()).status_code == 404
+
+
+def test_private_photo_remains_available_to_its_owner_through_oidc(
+        client, object_api, student_avatar, test_user):
+    from application.methods.files_methods import get_user_avatar_file
+
+    _api_client, students, _teachers = object_api
+    student, uploaded_file, _storage = student_avatar
+    students.available_attributes = [{'code': 'photo', 'type': 'file', 'is_private': True}]
+    test_user.identity_object = student
+    db.session.commit()
+    assert get_user_avatar_file(test_user).id == uploaded_file.id
+    assert client.get(_avatar_path(student), headers=_basic_auth()).status_code == 404

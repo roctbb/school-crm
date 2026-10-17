@@ -1,10 +1,11 @@
 from functools import wraps
+import os
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, send_from_directory
 
-from application.helpers.exceptions import LogicException
+from application.constants import UPLOAD_FOLDER
 from application.infrastructure import limiter
-from application.methods.external_objects_methods import get_external_objects
+from application.methods.external_objects_methods import get_external_object_avatar, get_external_objects
 from application.models import OAuthClient
 
 
@@ -41,6 +42,21 @@ def prevent_caching(response):
 @limiter.limit('600 per minute')
 @requires_object_api_client
 def external_objects(client, type_code):
-    if type_code not in (client.allowed_object_types or []):
-        raise LogicException('Клиенту запрещено читать этот тип объектов.', 403)
-    return jsonify(get_external_objects(type_code, request.args))
+    return jsonify(get_external_objects(client, type_code, request.args))
+
+
+@external_objects_blueprint.route(
+    '/external/objects/<string:type_code>/<uuid:subject>/avatar', methods=['GET'],
+)
+@limiter.limit('600 per minute')
+@requires_object_api_client
+def external_object_avatar(client, type_code, subject):
+    uploaded_file = get_external_object_avatar(client, type_code, str(subject))
+    response = send_from_directory(
+        os.path.join(UPLOAD_FOLDER, f'folder_{uploaded_file.id}'),
+        uploaded_file.stored_filename,
+        as_attachment=False,
+    )
+    response.headers['Vary'] = 'Authorization'
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    return response
