@@ -71,6 +71,15 @@ def require_display_key():
         raise LogicException('Ссылка недействительна или отключена. Обратитесь к администратору.', 403)
 
 
+def photo_path(obj):
+    reference = current_photo_reference(obj)
+    if not reference:
+        return None
+    # Each upload gets its own folder, so the folder id versions the photo:
+    # the display caches photos by path and picks up a replaced one.
+    return f'/public/birthdays/{obj.id}/photo?v={reference[0].removeprefix("folder_")}'
+
+
 @birthdays_blueprint.route('/public/birthdays', methods=['GET'])
 def get_birthdays():
     require_display_key()
@@ -83,7 +92,7 @@ def get_birthdays():
             students.append({
                 'id': obj.id, 'name': obj.name, 'date': birthday.isoformat(),
                 'is_today': birthday == today,
-                'photo_path': f'/public/birthdays/{obj.id}/photo' if current_photo_reference(obj) else None,
+                'photo_path': photo_path(obj),
             })
     students.sort(key=lambda item: (not item['is_today'], item['date'], item['name'], item['id']))
     return jsonify({'today': today.isoformat(), 'week_start': days[0].isoformat(),

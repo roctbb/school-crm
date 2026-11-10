@@ -156,6 +156,13 @@ def test_only_current_eligible_photo_is_available(client, db_session, display, t
     assert response.headers['Cache-Control'] == 'no-store'
     assert client.get(path).status_code == 403
     assert client.get(f'/api/files/folder_{old.id}/old.jpg', headers=headers()).status_code == 401
+    # The listed path is versioned by upload, so a replaced photo gets a new path.
+    listed = client.get(PUBLIC, headers=headers()).json['students'][0]['photo_path']
+    assert listed == f'/public/birthdays/{student.id}/photo?v={new.id}'
+    assert client.get(f'/api{listed}', headers=headers()).data == b'current-photo'
+    student.attributes = {**student.attributes, 'photo': f'/files/folder_{old.id}/old.jpg'}
+    db_session.commit()
+    assert client.get(PUBLIC, headers=headers()).json['students'][0]['photo_path'].endswith(f'?v={old.id}')
 
     for changes in ({'birthday': '14.09.2010'}, {'photo': '/files/folder_1/secret.pdf'},
                     {'photo': '/files/folder_1/../../secret.jpg'}):

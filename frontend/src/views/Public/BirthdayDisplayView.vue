@@ -52,7 +52,7 @@ import {computed, onBeforeUnmount, onMounted, ref, watch} from 'vue';
 import {useRoute} from 'vue-router';
 import {APP_NAME} from '@/config/app.js';
 import BirthdayPortrait from '@/components/widgets/BirthdayPortrait.vue';
-import {fetchBirthdayResource} from '@/api/birthdays_api.js';
+import {fetchBirthdayResource, retainBirthdayPhotos} from '@/api/birthdays_api.js';
 
 const route = useRoute();
 const accessKey = computed(() => new URLSearchParams(route.hash.slice(1)).get('key') || '');
@@ -110,6 +110,7 @@ async function refresh() {
         if (controller !== request || request.signal.aborted) return;
         if (data.value?.today !== result.today) page.value = 0;
         data.value = result;
+        retainBirthdayPhotos(result.students.map(student => student.photo_path).filter(Boolean), accessKey.value);
         page.value = Math.min(page.value, pageCount.value - 1);
         revision.value += 1;
         error.value = '';
@@ -118,7 +119,7 @@ async function refresh() {
         if (controller !== request) return;
         unavailable.value = e.code === 403;
         error.value = unavailable.value ? e.message : 'Проверяем подключение. Страница восстановится автоматически.';
-        if (unavailable.value) data.value = null;
+        if (unavailable.value) { data.value = null; retainBirthdayPhotos([], accessKey.value); }
         else clearStaleDay();
     } finally {
         window.clearTimeout(timeout);

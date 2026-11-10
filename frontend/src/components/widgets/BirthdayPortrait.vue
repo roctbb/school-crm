@@ -7,34 +7,35 @@
 
 <script setup>
 import {computed, onBeforeUnmount, ref, watch} from 'vue';
-import {fetchBirthdayResource} from '@/api/birthdays_api.js';
+import {fetchBirthdayPhoto} from '@/api/birthdays_api.js';
 
 const props = defineProps({name: String, path: String, accessKey: String, revision: Number});
 const photoUrl = ref('');
 const failed = ref(false);
 const initials = computed(() => props.name?.trim().split(/\s+/).slice(0, 2).map(part => part[0]).join(''));
-let controller;
+let shownBlob = null;
+let requestId = 0;
 function clearPhoto() {
     if (photoUrl.value) URL.revokeObjectURL(photoUrl.value);
     photoUrl.value = '';
+    shownBlob = null;
 }
+// Revisions retry photos that failed to load; cached photos cost no request.
 watch(() => [props.path, props.accessKey, props.revision], async () => {
-    controller?.abort();
-    const request = new AbortController();
-    controller = request;
-    const timeout = window.setTimeout(() => request.abort(), 15000);
-    if (!props.path) { clearPhoto(); window.clearTimeout(timeout); return; }
+    const request = ++requestId;
+    if (!props.path) { clearPhoto(); return; }
     try {
-        const blob = await fetchBirthdayResource(props.path, props.accessKey, request.signal, true);
-        if (request.signal.aborted) return;
+        const blob = await fetchBirthdayPhoto(props.path, props.accessKey);
+        if (request !== requestId || blob === shownBlob) return;
         clearPhoto();
+        shownBlob = blob;
         photoUrl.value = URL.createObjectURL(blob);
         failed.value = false;
-    } catch (error) {
-        if (controller === request && error.name !== 'AbortError') clearPhoto();
-    } finally { window.clearTimeout(timeout); }
+    } catch {
+        if (request === requestId) clearPhoto();
+    }
 }, {immediate: true});
-onBeforeUnmount(() => { controller?.abort(); clearPhoto(); });
+onBeforeUnmount(() => { requestId += 1; clearPhoto(); });
 </script>
 
 <style scoped>
